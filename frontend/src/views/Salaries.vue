@@ -331,10 +331,67 @@ onMounted(load)
       </div>
 
       <div class="table-container" v-loading="loading">
-        <div v-if="filteredList.length === 0 && !loading" class="empty-state">
-          <DollarSign class="empty-icon" />
-          <h3>{{ list.length === 0 ? '暂无工资记录' : '没有符合条件的记录' }}</h3>
-          <p>{{ list.length === 0 ? '点击上方按钮添加第一条工资记录' : '请调整筛选条件或清除筛选' }}</p>
+        <div v-if="filteredList.length === 0 && !loading" class="empty-state-container">
+          <div class="empty-state-card">
+            <div class="empty-state">
+              <div class="empty-illustration">
+                <div class="empty-icon-container">
+                  <DollarSign class="empty-icon-main" />
+                  <div class="empty-icon-dots">
+                    <span class="dot dot-1"></span>
+                    <span class="dot dot-2"></span>
+                    <span class="dot dot-3"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="empty-content">
+                <h3 class="empty-title">
+                  {{ list.length === 0 ? '暂无工资记录' : '没有符合条件的记录' }}
+                </h3>
+                <p class="empty-description">
+                  {{ list.length === 0 
+                    ? '还没有添加任何工资记录，开始记录用户的工资信息，建立完整的薪资档案。' 
+                    : '当前筛选条件下没有找到匹配的工资记录，请尝试调整筛选条件或清除筛选。' 
+                  }}
+                </p>
+                
+                <div class="empty-features">
+                  <div class="feature-item">
+                    <div class="feature-icon">💰</div>
+                    <span>详细工资构成记录</span>
+                  </div>
+                  <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <span>自动计算税费扣除</span>
+                  </div>
+                  <div class="feature-item">
+                    <div class="feature-icon">📈</div>
+                    <span>工资趋势统计分析</span>
+                  </div>
+                </div>
+                
+                <el-button 
+                  v-if="list.length === 0"
+                  type="primary" 
+                  size="large"
+                  @click="openCreate"
+                  class="empty-action"
+                >
+                  <Plus class="button-icon" />
+                  添加工资记录
+                </el-button>
+                <el-button 
+                  v-else
+                  type="primary" 
+                  size="large"
+                  @click="clearFilters"
+                  class="empty-action"
+                >
+                  清除筛选条件
+                </el-button>
+              </div>
+            </div>
+          </div>
         </div>
         
         <div v-else class="table-wrapper">
@@ -855,6 +912,221 @@ onMounted(load)
   font-size: 0.875rem;
 }
 
+/* 空状态样式 - 与 Stats.vue 保持一致 */
+.empty-state-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 40px 20px;
+}
+
+.empty-state-card {
+  background: white;
+  border-radius: 20px;
+  padding: 48px 40px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  max-width: 1000px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  animation: pulse 4s infinite ease-in-out;
+}
+
+.empty-state-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  text-align: left;
+  padding: 40px 60px;
+  justify-content: center;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+    gap: 32px;
+    padding: 32px 24px;
+  }
+}
+
+.empty-illustration {
+  flex-shrink: 0;
+}
+
+.empty-icon-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  animation: float 6s infinite ease-in-out;
+}
+
+.empty-icon-main {
+  width: 50px;
+  height: 50px;
+  color: #667eea;
+  opacity: 0.9;
+}
+
+.empty-icon-dots {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.dot {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #764ba2;
+  opacity: 0.7;
+}
+
+.dot-1 {
+  top: 20%;
+  right: 10%;
+  animation: float 3s infinite ease-in-out;
+}
+
+.dot-2 {
+  bottom: 20%;
+  right: 20%;
+  width: 15px;
+  height: 15px;
+  background: #667eea;
+  animation: float 3.5s infinite ease-in-out;
+}
+
+.dot-3 {
+  bottom: 30%;
+  left: 15%;
+  width: 12px;
+  height: 12px;
+  background: #43e97b;
+  animation: float 4s infinite ease-in-out;
+}
+
+.empty-content {
+  flex: 1;
+  max-width: 500px;
+  margin: 0 auto;
+  
+  @media (min-width: 768px) {
+    margin: 0;
+  }
+}
+
+.empty-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-description {
+  font-size: 16px;
+  color: #7f8c8d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+}
+
+.empty-features {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  
+  @media (min-width: 768px) {
+    justify-content: flex-start;
+  }
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+}
+
+.feature-icon {
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+.empty-action {
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+}
+
+.empty-action:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 20px rgba(102, 126, 234, 0.4);
+}
+
+.button-icon {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 /* 表格样式优化 */
 .table-wrapper {
   overflow-x: auto;
@@ -1158,17 +1430,35 @@ onMounted(load)
     overflow-x: scroll;
   }
   
-  .salary-table {
-    min-width: 800px;
+  /* Mobile responsive for empty state */
+  .empty-state-card {
+    padding: 32px 24px;
+    margin: 0 16px;
   }
   
-  .action-buttons {
-    flex-direction: column;
-    gap: 0.25rem;
+  .empty-title {
+    font-size: 20px;
   }
   
-  .form-row {
+  .empty-description {
+    font-size: 14px;
+  }
+  
+  .empty-features {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 20px;
+  }
+  
+  .empty-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .primary-action,
+  .secondary-action {
+    width: 100%;
+    max-width: 280px;
   }
 }
 

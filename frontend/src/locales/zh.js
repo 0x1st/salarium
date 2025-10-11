@@ -1,7 +1,7 @@
 export default {
   // Navigation
   nav: {
-    persons: '人员管理',
+    persons: '信息管理',
     stats: '统计分析',
     salaries: '薪资记录'
   },
@@ -14,8 +14,8 @@ export default {
     username: '用户名',
     password: '密码',
     confirmPassword: '确认密码',
-    loginTitle: '欢迎回来',
-    salaryManagement: '薪资管理系统',
+    loginTitle: 'Salarium',
+    salaryManagement: 'Salarium',
     registerTitle: '创建账户',
     loggedIn: '已登录',
     loginSuccess: '登录成功',
@@ -26,7 +26,7 @@ export default {
     enterUsername: '请输入用户名',
     enterPassword: '请输入密码',
     loggingIn: '登录中...',
-    tagline: '安全 · 简单 · 高效',
+    tagline: '简单 · 高效',
     passwordMismatch: '密码不匹配',
     noAccount: '还没有账户？',
     alreadyHaveAccount: '已有账户？'

@@ -1,13 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { ElMessage } from 'element-plus'
-import { User, Lock, Globe } from 'lucide-vue-next'
-import { useI18n } from 'vue-i18n'
-
-const { t, locale } = useI18n()
+import { User, Lock } from 'lucide-vue-next'
 
 // Form data
 const username = ref('')
@@ -19,18 +16,6 @@ const isRegisterMode = ref(false)
 // Router and store
 const router = useRouter()
 const user = useUserStore()
-
-// Language switching
-const currentLanguage = computed(() => locale.value)
-
-/**
- * Toggle between English and Chinese languages
- */
-function toggleLanguage() {
-  const newLocale = locale.value === 'en' ? 'zh' : 'en'
-  locale.value = newLocale
-  localStorage.setItem('language', newLocale)
-}
 
 /**
  * Toggle between login and register modes
@@ -48,17 +33,17 @@ function toggleMode() {
  */
 function validateForm() {
   if (!username.value.trim()) {
-    ElMessage.warning(t('auth.enterUsername'))
+    ElMessage.warning('请输入用户名')
     return false
   }
   
   if (!password.value) {
-    ElMessage.warning(t('auth.enterPassword'))
+    ElMessage.warning('请输入密码')
     return false
   }
   
   if (isRegisterMode.value && password.value !== confirmPassword.value) {
-    ElMessage.warning(t('auth.passwordMismatch'))
+    ElMessage.warning('密码不匹配')
     return false
   }
   
@@ -77,11 +62,11 @@ async function handleLogin() {
     
     user.setToken(data.access_token)
     user.setUsername(username.value)
-    ElMessage.success(t('auth.loginSuccess'))
-    router.push('/persons')
+    ElMessage.success('登录成功')
+    router.push('/stats')
   } catch (error) {
     console.error('Login error:', error)
-    ElMessage.error(t('auth.loginError'))
+    ElMessage.error('登录失败，请检查用户名和密码')
   }
 }
 
@@ -95,13 +80,13 @@ async function handleRegister() {
       password: password.value
     })
     
-    ElMessage.success(t('auth.registerSuccess'))
+    ElMessage.success('注册成功')
     
     // Auto login after successful registration
     await handleLogin()
   } catch (error) {
     console.error('Registration error:', error)
-    ElMessage.error(t('auth.registerError'))
+    ElMessage.error('注册失败')
   }
 }
 
@@ -138,18 +123,6 @@ async function onSubmit() {
       </div>
     </div>
 
-    <!-- Language Toggle Button -->
-    <div class="language-toggle">
-      <button
-        @click="toggleLanguage"
-        class="language-btn"
-        :title="$t('language.switch')"
-      >
-        <Globe class="w-4 h-4" />
-        <span class="text-sm font-medium">{{ currentLanguage === 'en' ? 'EN' : '中文' }}</span>
-      </button>
-    </div>
-
     <!-- Login/Register Card -->
     <div class="login-card">
       <!-- Logo and Title -->
@@ -163,10 +136,9 @@ async function onSubmit() {
           <div class="logo-glow"></div>
         </div>
         <h1 class="main-title">
-          {{ isRegisterMode ? $t('auth.registerTitle') : $t('auth.loginTitle') }}
+          {{ isRegisterMode ? '创建账户' : 'Salarium' }}
         </h1>
-        <p class="subtitle">{{ $t('auth.salaryManagement') }}</p>
-        <p class="tagline">{{ $t('auth.tagline') }}</p>
+        <p class="tagline">简单 · 高效</p>
       </div>
 
       <!-- Form -->
@@ -175,14 +147,14 @@ async function onSubmit() {
         <div class="input-group">
           <label class="input-label">
             <User class="input-icon" />
-            {{ $t('auth.username') }}
+            用户名
           </label>
           <div class="input-wrapper">
             <input
               v-model="username"
               type="text"
               class="form-input"
-              :placeholder="$t('auth.enterUsername')"
+              placeholder="请输入用户名"
               :disabled="loading"
               required
             />
@@ -194,14 +166,14 @@ async function onSubmit() {
         <div class="input-group">
           <label class="input-label">
             <Lock class="input-icon" />
-            {{ $t('auth.password') }}
+            密码
           </label>
           <div class="input-wrapper">
             <input
               v-model="password"
               type="password"
               class="form-input"
-              :placeholder="$t('auth.enterPassword')"
+              placeholder="请输入密码"
               :disabled="loading"
               required
             />
@@ -213,14 +185,14 @@ async function onSubmit() {
         <div v-if="isRegisterMode" class="input-group">
           <label class="input-label">
             <Lock class="input-icon" />
-            {{ $t('auth.confirmPassword') }}
+            确认密码
           </label>
           <div class="input-wrapper">
             <input
               v-model="confirmPassword"
               type="password"
               class="form-input"
-              :placeholder="$t('auth.confirmPassword')"
+              placeholder="请再次输入密码"
               :disabled="loading"
               required
             />
@@ -234,27 +206,25 @@ async function onSubmit() {
           class="submit-btn"
           :disabled="loading"
         >
-          <div class="btn-content">
-            <span v-if="loading" class="loading-text">{{ $t('auth.loggingIn') }}</span>
-            <span v-else>{{ isRegisterMode ? $t('auth.register') : $t('auth.login') }}</span>
-          </div>
-          <div class="btn-glow"></div>
+          <span v-if="loading" class="loading-spinner"></span>
+          <span v-else>{{ isRegisterMode ? '注册' : '登录' }}</span>
         </button>
-      </form>
 
-      <!-- Mode Toggle -->
-      <div class="mode-toggle">
-        <p class="toggle-text">
-          {{ isRegisterMode ? $t('auth.alreadyHaveAccount') : $t('auth.noAccount') }}
-          <button
-            @click="toggleMode"
-            class="toggle-btn"
-            :disabled="loading"
-          >
-            {{ isRegisterMode ? $t('auth.login') : $t('auth.register') }}
-          </button>
-        </p>
-      </div>
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <p class="toggle-text">
+            {{ isRegisterMode ? '已有账户？' : '还没有账户？' }}
+            <button
+              type="button"
+              @click="toggleMode"
+              class="toggle-link"
+              :disabled="loading"
+            >
+              {{ isRegisterMode ? '登录' : '注册' }}
+            </button>
+          </p>
+        </div>
+      </form>
     </div>
   </div>
 </template>

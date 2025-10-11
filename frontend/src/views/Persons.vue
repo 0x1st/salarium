@@ -1,12 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useUserStore } from '../store/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Users, DollarSign, Trash2, Edit, User, TrendingUp, Calendar, Award } from 'lucide-vue-next'
-import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
 
 const user = useUserStore()
 const list = ref([])
@@ -19,6 +17,19 @@ const api = axios.create({
   headers: { Authorization: `Bearer ${user.token}` },
 })
 
+// Computed properties for statistics
+const currentMonth = computed(() => {
+  const month = new Date().getMonth() + 1
+  return `${month}月`
+})
+
+const completeProfileRate = computed(() => {
+  if (list.value.length === 0) return '0%'
+  const completeProfiles = list.value.filter(person => person.note && person.note.trim()).length
+  const rate = Math.round((completeProfiles / list.value.length) * 100)
+  return `${rate}%`
+})
+
 // Load persons data
 async function load() {
   loading.value = true
@@ -26,7 +37,7 @@ async function load() {
     const { data } = await api.get('/persons/')
     list.value = data
   } catch (error) {
-    ElMessage.error(t('persons.loadError'))
+    ElMessage.error('加载人员数据失败')
   } finally {
     loading.value = false
   }
@@ -41,7 +52,7 @@ function openCreate() {
 // Submit new person
 async function submit() {
   if (!form.value.name.trim()) {
-    ElMessage.warning(t('persons.enterName'))
+    ElMessage.warning('请输入姓名')
     return
   }
   
@@ -49,9 +60,9 @@ async function submit() {
     const { data } = await api.post('/persons/', form.value)
     list.value.push(data)
     dialogVisible.value = false
-    ElMessage.success(t('persons.addSuccess'))
+    ElMessage.success('添加人员成功')
   } catch (error) {
-    ElMessage.error(t('persons.addError'))
+    ElMessage.error('添加人员失败')
   }
 }
 
@@ -59,21 +70,21 @@ async function submit() {
 async function remove(id, name) {
   try {
     await ElMessageBox.confirm(
-      t('persons.deleteConfirm', { name }),
-      t('persons.confirmDelete'),
+      `确定要删除 ${name} 吗？`,
+      '确认删除',
       {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
         type: 'warning',
       }
     )
     
     await api.delete(`/persons/${id}`)
     list.value = list.value.filter(i => i.id !== id)
-    ElMessage.success(t('persons.deleteSuccess'))
+    ElMessage.success('删除人员成功')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('persons.deleteError'))
+      ElMessage.error('删除人员失败')
     }
   }
 }
@@ -86,45 +97,47 @@ onMounted(load)
     <!-- Header Section -->
     <div class="persons-header">
       <div class="header-left">
-        <h2 class="page-title">{{ t('persons.title') }}</h2>
-        <p class="page-subtitle">{{ t('persons.subtitle') }}</p>
+        <h2 class="page-title">信息管理</h2>
+        <p class="page-subtitle">管理用户信息</p>
       </div>
       <div class="header-controls">
         <el-button type="primary" @click="openCreate" class="add-button">
           <Plus class="button-icon" />
-          {{ t('persons.addPerson') }}
+          添加用户
         </el-button>
       </div>
     </div>
 
     <!-- Statistics Cards -->
     <div class="stats-cards" v-loading="loading">
+      <div class="stat-card gradient-orange">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ new Date().getFullYear() }}</div>
+          <div class="stat-label">当前年份</div>
+        </div>
+      </div>
+
+      <div class="stat-card gradient-orange">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ currentMonth }}</div>
+          <div class="stat-label">当前月份</div>
+        </div>
+      </div>
+
       <div class="stat-card gradient-blue">
         <div class="stat-icon">👥</div>
         <div class="stat-content">
           <div class="stat-value">{{ list.length }}</div>
-          <div class="stat-label">{{ t('persons.totalCount') }}</div>
+          <div class="stat-label">总用户</div>
         </div>
       </div>
       <div class="stat-card gradient-green">
         <div class="stat-icon">✅</div>
         <div class="stat-content">
           <div class="stat-value">{{ list.length > 0 ? '100%' : '0%' }}</div>
-          <div class="stat-label">{{ t('persons.activeRate') }}</div>
-        </div>
-      </div>
-      <div class="stat-card gradient-orange">
-        <div class="stat-icon">📅</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ new Date().getFullYear() }}</div>
-          <div class="stat-label">{{ t('persons.currentYear') }}</div>
-        </div>
-      </div>
-      <div class="stat-card gradient-purple">
-        <div class="stat-icon">🏆</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ list.length }}</div>
-          <div class="stat-label">{{ t('persons.managedPersons') }}</div>
+          <div class="stat-label">活跃率</div>
         </div>
       </div>
     </div>
@@ -133,9 +146,9 @@ onMounted(load)
     <el-card class="persons-list-card" shadow="hover" v-if="list.length > 0">
       <template #header>
         <div class="card-header">
-          <span class="card-title">{{ t('persons.list') }}</span>
+          <span class="card-title">人员列表</span>
           <el-button @click="load" size="small" type="default">
-            {{ t('common.refresh') }}
+            刷新
           </el-button>
         </div>
       </template>
@@ -152,7 +165,7 @@ onMounted(load)
           <div class="person-info">
             <h3 class="person-name">{{ person.name }}</h3>
             <p class="person-note" v-if="person.note">{{ person.note }}</p>
-            <p class="person-note" v-else>{{ t('persons.noNote') }}</p>
+            <p class="person-note" v-else>暂无备注</p>
           </div>
           <div class="person-actions">
             <el-button 
@@ -161,7 +174,7 @@ onMounted(load)
               @click="$router.push(`/salaries/${person.id}`)"
               :icon="DollarSign"
             >
-              {{ t('persons.salary') }}
+              工资管理
             </el-button>
             <el-button 
               type="danger" 
@@ -169,7 +182,7 @@ onMounted(load)
               @click="remove(person.id, person.name)"
               :icon="Trash2"
             >
-              {{ t('common.delete') }}
+              删除
             </el-button>
           </div>
         </div>
@@ -179,37 +192,65 @@ onMounted(load)
     <!-- Empty State -->
     <el-card class="empty-state-card" shadow="hover" v-if="list.length === 0 && !loading">
       <div class="empty-state">
-        <div class="empty-icon">👥</div>
-        <h3 class="empty-title">{{ t('persons.noPersons') }}</h3>
-        <p class="empty-description">{{ t('persons.clickAddFirst') }}</p>
-        <el-button type="primary" @click="openCreate" class="empty-action">
-          <Plus class="button-icon" />
-          {{ t('persons.addPerson') }}
-        </el-button>
+        <div class="empty-illustration">
+          <div class="empty-icon-container">
+            <Users class="empty-icon-main" />
+            <div class="empty-icon-dots">
+              <span class="dot dot-1"></span>
+              <span class="dot dot-2"></span>
+              <span class="dot dot-3"></span>
+            </div>
+          </div>
+        </div>
+        <div class="empty-content">
+          <h3 class="empty-title">还没有任何用户信息</h3>
+          <p class="empty-description">
+            开始构建您的团队吧！添加第一位用户，<br>
+            开启高效的薪资管理之旅
+          </p>
+          <div class="empty-features">
+            <div class="feature-item">
+              <div class="feature-icon">📊</div>
+              <span>薪资统计</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">💰</div>
+              <span>工资管理</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">📈</div>
+              <span>数据分析</span>
+            </div>
+          </div>
+          <el-button type="primary" size="large" @click="openCreate" class="empty-action">
+            <Plus class="button-icon" />
+            添加第一位用户
+          </el-button>
+        </div>
       </div>
     </el-card>
 
     <!-- Add Person Dialog -->
     <el-dialog 
       v-model="dialogVisible" 
-      :title="t('persons.addPerson')" 
+      title="添加人员" 
       width="500px"
       class="person-dialog"
     >
       <el-form :model="form" label-width="80px">
-        <el-form-item :label="t('common.name')" required>
+        <el-form-item label="姓名" required>
           <el-input 
             v-model="form.name" 
-            :placeholder="t('persons.enterName')"
+            placeholder="请输入姓名"
             maxlength="50"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item :label="t('common.note')">
+        <el-form-item label="备注">
           <el-input 
             v-model="form.note" 
             type="textarea" 
-            :placeholder="t('persons.enterNote')"
+            placeholder="请输入备注"
             :rows="3"
             maxlength="200"
             show-word-limit
@@ -219,8 +260,8 @@ onMounted(load)
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
-          <el-button type="primary" @click="submit">{{ t('common.confirm') }}</el-button>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submit">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -231,7 +272,7 @@ onMounted(load)
 .persons-container {
   padding: 24px;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: calc(100vh - 60px);
+  min-height: auto;
 }
 
 .persons-header {
@@ -392,36 +433,80 @@ onMounted(load)
 }
 
 .person-card {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  transition: all 0.3s ease;
-  border: 1px solid #e9ecef;
+  gap: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(102, 126, 234, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.person-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .person-card:hover {
-  background: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.person-card:hover::before {
+  opacity: 1;
 }
 
 .person-avatar {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.person-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.person-card:hover .person-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.person-card:hover .person-avatar::after {
+  opacity: 0.2;
 }
 
 .avatar-icon {
-  font-size: 24px;
+  font-size: 28px;
   color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .person-info {
@@ -430,72 +515,306 @@ onMounted(load)
 }
 
 .person-name {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 4px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #1a202c;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  transition: color 0.3s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.person-card:hover .person-name {
+  color: #667eea;
 }
 
 .person-note {
   font-size: 14px;
-  color: #7f8c8d;
+  color: #718096;
   margin: 0;
-  white-space: nowrap;
+  font-weight: 400;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-height: 2.8em;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .person-actions {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.person-card:hover .person-actions {
+  opacity: 1;
+}
+
+.person-actions .el-button {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  width: 110px !important;
+  height: 36px !important;
+  min-width: 110px !important;
+  max-width: 110px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+.person-actions .el-button span {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.person-actions .el-button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.person-actions .el-button--primary:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.person-actions .el-button--danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+}
+
+.person-actions .el-button--danger:hover {
+  background: linear-gradient(135deg, #ff5252 0%, #e53e3e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.person-actions .el-button .el-icon {
+  margin-right: 4px;
 }
 
 .empty-state-card {
-  border-radius: 16px;
+  background: white;
+  border-radius: 20px;
+  padding: 48px 40px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  max-width: 1000px;
+  width: 100%;
+  position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  animation: pulse 4s infinite ease-in-out;
 }
 
 .empty-state {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 60px 20px;
+  text-align: center;
+  
+  @media (min-width: 768px) {
+    flex-direction: row;
+    text-align: left;
+    padding: 60px 80px;
+    justify-content: center;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
 }
 
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
-  opacity: 0.6;
+.empty-illustration {
+  margin-bottom: 30px;
+  position: relative;
+  
+  @media (min-width: 768px) {
+    margin-right: 60px;
+    margin-bottom: 0;
+  }
+}
+
+.empty-icon-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  animation: float 6s infinite ease-in-out;
+}
+
+.empty-icon-main {
+  width: 50px;
+  height: 50px;
+  color: #667eea;
+  opacity: 0.9;
+}
+
+.empty-icon-dots {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.dot {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #764ba2;
+  opacity: 0.7;
+}
+
+.dot-1 {
+  top: 20%;
+  right: 10%;
+  animation: float 3s infinite ease-in-out;
+}
+
+.dot-2 {
+  bottom: 20%;
+  right: 20%;
+  width: 15px;
+  height: 15px;
+  background: #667eea;
+  animation: float 3.5s infinite ease-in-out;
+}
+
+.dot-3 {
+  bottom: 30%;
+  left: 15%;
+  width: 12px;
+  height: 12px;
+  background: #43e97b;
+  animation: float 4s infinite ease-in-out;
+}
+
+.empty-content {
+  flex: 1;
+  max-width: 500px;
+  margin: 0 auto;
+  
+  @media (min-width: 768px) {
+    margin: 0;
+  }
 }
 
 .empty-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   color: #2c3e50;
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .empty-description {
   font-size: 16px;
   color: #7f8c8d;
-  margin: 0 0 24px 0;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+}
+
+.empty-features {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  
+  @media (min-width: 768px) {
+    justify-content: flex-start;
+  }
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+}
+
+.feature-icon {
+  font-size: 20px;
+  opacity: 0.8;
 }
 
 .empty-action {
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 12px 24px;
   font-weight: 600;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
 }
 
-.person-dialog {
-  border-radius: 16px;
+.empty-action:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 20px rgba(102, 126, 234, 0.4);
 }
 
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 /* Responsive Design */

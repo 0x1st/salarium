@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from './store/user'
-import { useI18n } from 'vue-i18n'
 import { 
   User, 
   BarChart3, 
@@ -10,13 +9,11 @@ import {
   Menu,
   X,
   Home,
-  LogOut,
-  Globe
+  LogOut
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const user = useUserStore()
-const { t, locale } = useI18n()
 const sidebarCollapsed = ref(false)
 const mobileMenuOpen = ref(false)
 
@@ -35,12 +32,6 @@ function toggleMobileMenu() {
 
 function closeMobileMenu() {
   mobileMenuOpen.value = false
-}
-
-function toggleLanguage() {
-  const newLocale = locale.value === 'en' ? 'zh' : 'en'
-  locale.value = newLocale
-  localStorage.setItem('language', newLocale)
 }
 </script>
 
@@ -65,36 +56,35 @@ function toggleLanguage() {
       </div>
       
       <nav class="sidebar-nav">
-        <router-link to="/persons" class="nav-item" @click="closeMobileMenu">
-          <Users class="nav-icon" />
-          <span v-if="!sidebarCollapsed" class="nav-text">{{ t('nav.persons') }}</span>
-        </router-link>
         <router-link to="/stats" class="nav-item" @click="closeMobileMenu">
           <BarChart3 class="nav-icon" />
-          <span v-if="!sidebarCollapsed" class="nav-text">{{ t('nav.stats') }}</span>
+          <span v-if="!sidebarCollapsed" class="nav-text">统计分析</span>
+        </router-link>
+        <router-link to="/persons" class="nav-item" @click="closeMobileMenu">
+          <Users class="nav-icon" />
+          <span v-if="!sidebarCollapsed" class="nav-text">信息管理</span>
         </router-link>
       </nav>
 
       <div class="sidebar-footer">
-        <!-- Language Toggle Button -->
-        <button class="language-btn" @click="toggleLanguage" :title="t('language.switch')">
-          <Globe class="language-icon" />
-          <span v-if="!sidebarCollapsed" class="language-text">
-            {{ locale === 'en' ? t('language.chinese') : t('language.english') }}
-          </span>
-        </button>
-        
-        <div v-if="user.token" class="user-info">
-          <User class="user-icon" />
-          <span v-if="!sidebarCollapsed" class="user-name">{{ user.username || t('auth.loggedIn') }}</span>
+        <div v-if="user.token" class="user-profile">
+          <div class="user-avatar">
+            <User class="avatar-icon" />
+          </div>
+          <div v-if="!sidebarCollapsed" class="user-details">
+            <div class="user-name">{{ user.username || '用户' }}</div>
+            <button class="logout-link" @click="handleLogout">
+              <LogOut class="logout-icon" />
+              退出登录
+            </button>
+          </div>
+          <button v-if="sidebarCollapsed" class="logout-btn-collapsed" @click="handleLogout" title="退出登录">
+            <LogOut class="logout-icon" />
+          </button>
         </div>
-        <button v-if="user.token" class="logout-btn" @click="handleLogout">
-          <LogOut class="logout-icon" />
-          <span v-if="!sidebarCollapsed">{{ t('auth.logout') }}</span>
-        </button>
         <button v-else class="login-btn" @click="router.push('/login')">
           <User class="login-icon" />
-          <span v-if="!sidebarCollapsed">{{ t('auth.login') }}</span>
+          <span v-if="!sidebarCollapsed">登录</span>
         </button>
       </div>
     </aside>
@@ -111,16 +101,11 @@ function toggleLanguage() {
           <span class="logo-text">Salarium</span>
         </div>
         <div class="mobile-user">
-          <!-- Mobile Language Toggle -->
-          <button class="mobile-language-btn" @click="toggleLanguage" :title="t('language.switch')">
-            <Globe />
-          </button>
-          
           <el-dropdown v-if="user.token">
             <User class="user-icon" />
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="handleLogout">{{ t('auth.logout') }}</el-dropdown-item>
+                <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -134,13 +119,13 @@ function toggleLanguage() {
     <!-- 移动端侧边栏 -->
     <aside class="sidebar mobile-sidebar" :class="{ open: mobileMenuOpen }">
       <nav class="sidebar-nav">
-        <router-link to="/persons" class="nav-item" @click="closeMobileMenu">
-          <Users class="nav-icon" />
-          <span class="nav-text">{{ t('nav.persons') }}</span>
-        </router-link>
         <router-link to="/stats" class="nav-item" @click="closeMobileMenu">
           <BarChart3 class="nav-icon" />
-          <span class="nav-text">{{ t('nav.stats') }}</span>
+          <span class="nav-text">统计分析</span>
+        </router-link>
+        <router-link to="/persons" class="nav-item" @click="closeMobileMenu">
+          <Users class="nav-icon" />
+          <span class="nav-text">信息管理</span>
         </router-link>
       </nav>
     </aside>
@@ -269,27 +254,99 @@ function toggleLanguage() {
   border-top: 1px solid #e2e8f0;
 }
 
-.user-info {
+.user-profile {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
-  background-color: #f8fafc;
-  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
 }
 
-.user-icon {
-  width: 20px;
-  height: 20px;
-  color: #64748b;
+.user-profile:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #ddd6fe 100%);
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.avatar-icon {
+  width: 18px;
+  height: 18px;
+  color: white;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
 }
 
 .user-name {
-  font-weight: 500;
+  font-weight: 600;
   color: #1e293b;
+  font-size: 14px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+.logout-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.logout-link:hover {
+  color: #ef4444;
+}
+
+.logout-link .logout-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.logout-btn-collapsed {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.logout-btn-collapsed:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.logout-btn-collapsed .logout-icon {
+  width: 16px;
+  height: 16px;
+}
 .language-btn {
   width: 100%;
   display: flex;

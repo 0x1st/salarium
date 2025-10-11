@@ -13,7 +13,7 @@ from config import CORS_ORIGINS, DB_PATH
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Salary Manager", version="0.1.0")
+    app = FastAPI(title="Salarium", version="0.1.0")
 
     app.add_middleware(
         CORSMiddleware,

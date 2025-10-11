@@ -1,7 +1,7 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "salary.db")
+DB_PATH = os.path.join(BASE_DIR, "salarium.db")
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "super-secret-change-me")
 JWT_ALGORITHM = "HS256"

@@ -17,6 +17,7 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         performance_fixed=rec.performance_fixed,
         allowances=rec.allowances,
         bonuses=rec.bonuses,
+        deductions=rec.deductions,
         ins_pension=rec.ins_pension,
         ins_medical=rec.ins_medical,
         ins_unemployment=rec.ins_unemployment,
@@ -34,6 +35,7 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         performance=data["performance"],
         allowances_total=data["allowances_total"],
         bonuses_total=data["bonuses_total"],
+        deductions_total=data["deductions_total"],
         insurance_total=data["insurance_total"],
         tax=data["tax"],
         gross_income=data["gross_income"],
@@ -71,6 +73,7 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         performance_fixed=payload.performance_fixed,
         allowances=payload.allowances,
         bonuses=payload.bonuses,
+        deductions=payload.deductions,
         ins_pension=payload.ins_pension,
         ins_medical=payload.ins_medical,
         ins_unemployment=payload.ins_unemployment,
@@ -89,6 +92,7 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         performance_fixed=payload.performance_fixed,
         allowances=payload.allowances,
         bonuses=payload.bonuses,
+        deductions=payload.deductions,
         ins_pension=payload.ins_pension,
         ins_medical=payload.ins_medical,
         ins_unemployment=payload.ins_unemployment,
@@ -124,6 +128,7 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
         performance_fixed=rec.performance_fixed,
         allowances=rec.allowances,
         bonuses=rec.bonuses,
+        deductions=rec.deductions,
         ins_pension=rec.ins_pension,
         ins_medical=rec.ins_medical,
         ins_unemployment=rec.ins_unemployment,
@@ -140,7 +145,11 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
 
 @router.delete("/{record_id}")
 async def delete_salary(record_id: int, user=Depends(get_current_user)):
-    deleted = await SalaryRecord.filter(id=record_id, person__user_id=user.id).delete()
-    if not deleted:
+    # 先查询记录是否存在并属于当前用户
+    rec = await SalaryRecord.filter(id=record_id, person__user_id=user.id).first()
+    if not rec:
         raise HTTPException(status_code=404, detail="记录不存在")
+    
+    # 直接删除记录
+    await rec.delete()
     return {"ok": True}

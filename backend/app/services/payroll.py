@@ -47,6 +47,7 @@ def compute_payroll(
     performance_fixed: Optional[float],
     allowances: Optional[Dict[str, float]],
     bonuses: Optional[Dict[str, float]],
+    deductions: Optional[Dict[str, float]],
     ins_pension: float,
     ins_medical: float,
     ins_unemployment: float,
@@ -59,16 +60,18 @@ def compute_payroll(
     performance = compute_performance(base_salary, performance_percent, performance_fixed)
     allowances_total = sum_map(allowances)
     bonuses_total = sum_map(bonuses)
+    deductions_total = sum_map(deductions)
     gross_income = base_salary + performance + allowances_total + bonuses_total
     insurance_total = compute_insurance_total(
         ins_pension, ins_medical, ins_unemployment, ins_injury, ins_maternity, housing_fund
     )
     tax_final = compute_tax_auto(gross_income, insurance_total) if auto_tax else tax
-    net_income = gross_income - insurance_total - tax_final
+    net_income = gross_income - insurance_total - deductions_total - tax_final
     return {
         "performance": performance,
         "allowances_total": allowances_total,
         "bonuses_total": bonuses_total,
+        "deductions_total": deductions_total,
         "gross_income": gross_income,
         "insurance_total": insurance_total,
         "tax": tax_final,

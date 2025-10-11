@@ -10,6 +10,7 @@ class SalaryCreate(BaseModel):
     performance_fixed: Optional[float] = None
     allowances: Optional[Dict[str, float]] = None
     bonuses: Optional[Dict[str, float]] = None
+    deductions: Optional[Dict[str, float]] = None
     ins_pension: float = 0.0
     ins_medical: float = 0.0
     ins_unemployment: float = 0.0
@@ -27,6 +28,7 @@ class SalaryUpdate(BaseModel):
     performance_fixed: Optional[float] = None
     allowances: Optional[Dict[str, float]] = None
     bonuses: Optional[Dict[str, float]] = None
+    deductions: Optional[Dict[str, float]] = None
     ins_pension: Optional[float] = None
     ins_medical: Optional[float] = None
     ins_unemployment: Optional[float] = None
@@ -46,6 +48,7 @@ class SalaryOut(BaseModel):
     performance: float
     allowances_total: float
     bonuses_total: float
+    deductions_total: float
     insurance_total: float
     tax: float
     gross_income: float

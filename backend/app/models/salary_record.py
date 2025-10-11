@@ -14,6 +14,7 @@ class SalaryRecord(Model):
 
     allowances = fields.JSONField(null=True)  # {"交通": 100, "餐补": 200}
     bonuses = fields.JSONField(null=True)  # {"年终奖": 5000}
+    deductions = fields.JSONField(null=True)  # {"迟到扣款": 50, "其他扣除": 100}
 
     ins_pension = fields.FloatField(default=0.0)
     ins_medical = fields.FloatField(default=0.0)

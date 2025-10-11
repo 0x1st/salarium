@@ -36,6 +36,11 @@ const editingId = ref(null)
 const filterYear = ref(null)
 const filterMonth = ref(null)
 
+// 动态类别输入
+const newAllowanceName = ref('')
+const newBonusName = ref('')
+const newDeductionName = ref('')
+
 const form = ref({
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
@@ -44,6 +49,7 @@ const form = ref({
   performance_fixed: null,
   allowances: {},
   bonuses: {},
+  deductions: {},
   ins_pension: 0,
   ins_medical: 0,
   ins_unemployment: 0,
@@ -128,6 +134,7 @@ function openCreate() {
     performance_fixed: null,
     allowances: {},
     bonuses: {},
+    deductions: {},
     ins_pension: 0,
     ins_medical: 0,
     ins_unemployment: 0,
@@ -152,6 +159,7 @@ function openEdit(salary) {
     performance_fixed: salary.performance_fixed,
     allowances: salary.allowances || {},
     bonuses: salary.bonuses || {},
+    deductions: salary.deductions || {},
     ins_pension: salary.ins_pension,
     ins_medical: salary.ins_medical,
     ins_unemployment: salary.ins_unemployment,
@@ -233,6 +241,43 @@ function goBack() {
 function clearFilters() {
   filterYear.value = null
   filterMonth.value = null
+}
+
+// 动态类别管理函数
+function addAllowance() {
+  const name = newAllowanceName.value.trim()
+  if (name && !form.value.allowances[name]) {
+    form.value.allowances[name] = 0
+    newAllowanceName.value = ''
+  }
+}
+
+function removeAllowance(key) {
+  delete form.value.allowances[key]
+}
+
+function addBonus() {
+  const name = newBonusName.value.trim()
+  if (name && !form.value.bonuses[name]) {
+    form.value.bonuses[name] = 0
+    newBonusName.value = ''
+  }
+}
+
+function removeBonus(key) {
+  delete form.value.bonuses[key]
+}
+
+function addDeduction() {
+  const name = newDeductionName.value.trim()
+  if (name && !form.value.deductions[name]) {
+    form.value.deductions[name] = 0
+    newDeductionName.value = ''
+  }
+}
+
+function removeDeduction(key) {
+  delete form.value.deductions[key]
 }
 
 watch(() => route.params.personId, (v) => { 
@@ -403,6 +448,7 @@ onMounted(load)
                 <th class="col-currency">绩效</th>
                 <th class="col-currency">补贴</th>
                 <th class="col-currency">奖金福利</th>
+                <th class="col-currency">其他扣除</th>
                 <th class="col-currency">五险一金</th>
                 <th class="col-currency">个税</th>
                 <th class="col-currency">实发工资</th>
@@ -421,6 +467,7 @@ onMounted(load)
                 <td class="col-currency">{{ formatCurrency(salary.performance) }}</td>
                 <td class="col-currency">{{ formatCurrency(salary.allowances_total) }}</td>
                 <td class="col-currency">{{ formatCurrency(salary.bonuses_total) }}</td>
+                <td class="col-currency text-danger">-{{ formatCurrency(salary.deductions_total || 0) }}</td>
                 <td class="col-currency text-danger">-{{ formatCurrency(salary.insurance_total) }}</td>
                 <td class="col-currency text-danger">-{{ formatCurrency(salary.tax) }}</td>
                 <td class="col-currency net-income">{{ formatCurrency(salary.net_income) }}</td>
@@ -629,6 +676,161 @@ onMounted(load)
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- 动态补贴类别 -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <Award class="section-icon" />
+            补贴津贴
+          </h3>
+          <div class="dynamic-categories">
+            <div v-for="(value, key) in form.allowances" :key="key" class="category-item">
+              <div class="category-input-group">
+                <span class="category-label">{{ key }}</span>
+                <input 
+                  v-model="form.allowances[key]" 
+                  type="number" 
+                  class="form-control category-amount" 
+                  :min="0"
+                  step="0.01"
+                  :placeholder="`${key}金额`"
+                />
+                <button 
+                  type="button" 
+                  class="btn-remove-category" 
+                  @click="removeAllowance(key)"
+                  title="删除此项"
+                >
+                  <Trash2 class="remove-icon" />
+                </button>
+              </div>
+            </div>
+            <div class="add-category">
+              <input 
+                v-model="newAllowanceName" 
+                type="text" 
+                class="form-control category-name-input" 
+                placeholder="输入补贴名称"
+                @keyup.enter="addAllowance"
+              />
+              <button 
+                type="button" 
+                class="btn btn-outline-primary btn-add-category" 
+                @click="addAllowance"
+                :disabled="!newAllowanceName.trim()"
+              >
+                <Plus class="add-icon" />
+                添加补贴
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 动态奖金类别 -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <TrendingUp class="section-icon" />
+            奖金福利
+          </h3>
+          <div class="dynamic-categories">
+            <div v-for="(value, key) in form.bonuses" :key="key" class="category-item">
+              <div class="category-input-group">
+                <span class="category-label">{{ key }}</span>
+                <input 
+                  v-model="form.bonuses[key]" 
+                  type="number" 
+                  class="form-control category-amount" 
+                  :min="0"
+                  step="0.01"
+                  :placeholder="`${key}金额`"
+                />
+                <button 
+                  type="button" 
+                  class="btn-remove-category" 
+                  @click="removeBonus(key)"
+                  title="删除此项"
+                >
+                  <Trash2 class="remove-icon" />
+                </button>
+              </div>
+            </div>
+            <div class="add-category">
+              <input 
+                v-model="newBonusName" 
+                type="text" 
+                class="form-control category-name-input" 
+                placeholder="输入奖金名称"
+                @keyup.enter="addBonus"
+              />
+              <button 
+                type="button" 
+                class="btn btn-outline-primary btn-add-category" 
+                @click="addBonus"
+                :disabled="!newBonusName.trim()"
+              >
+                <Plus class="add-icon" />
+                添加奖金
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 动态扣除类别 -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <Calculator class="section-icon" />
+            其他扣除
+          </h3>
+          <div class="dynamic-categories">
+            <div v-for="(value, key) in form.deductions" :key="key" class="category-item">
+              <div class="category-input-group">
+                <span class="category-label">{{ key }}</span>
+                <input 
+                  v-model="form.deductions[key]" 
+                  type="number" 
+                  class="form-control category-amount" 
+                  :min="0"
+                  step="0.01"
+                  :placeholder="`${key}金额`"
+                />
+                <button 
+                  type="button" 
+                  class="btn-remove-category" 
+                  @click="removeDeduction(key)"
+                  title="删除此项"
+                >
+                  <Trash2 class="remove-icon" />
+                </button>
+              </div>
+            </div>
+            <div class="add-category">
+              <input 
+                v-model="newDeductionName" 
+                type="text" 
+                class="form-control category-name-input" 
+                placeholder="输入扣除项名称"
+                @keyup.enter="addDeduction"
+              />
+              <button 
+                type="button" 
+                class="btn btn-outline-primary btn-add-category" 
+                @click="addDeduction"
+                :disabled="!newDeductionName.trim()"
+              >
+                <Plus class="add-icon" />
+                添加扣除
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 备注 -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <FileText class="section-icon" />
+            备注信息
+          </h3>
           <div class="form-group">
             <label class="form-label">备注</label>
             <textarea 
@@ -1479,5 +1681,149 @@ onMounted(load)
   .stat-number {
     font-size: 1.25rem;
   }
+/* 动态类别样式 */
+.dynamic-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.category-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.category-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.category-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  min-width: 80px;
+  flex-shrink: 0;
+  background: #f3f4f6;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.category-amount {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.category-amount:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-remove-category {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-remove-category:hover {
+  background: #fecaca;
+  border-color: #f87171;
+  color: #b91c1c;
+  transform: scale(1.05);
+}
+
+.remove-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.add-category {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin-top: 0.25rem;
+}
+
+.add-category:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.category-name-input {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.category-name-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-add-category {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-add-category:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add-category:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.add-icon {
+  width: 12px;
+  height: 12px;
+}
 }
 </style>

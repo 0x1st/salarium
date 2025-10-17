@@ -8,22 +8,27 @@ class SalaryRecord(Model):
     year = fields.IntField()
     month = fields.IntField()  # 1-12
 
+    # Fixed income fields
     base_salary = fields.FloatField(default=0.0)
-    performance_percent = fields.FloatField(null=True)  # e.g., 0.1 for 10%
-    performance_fixed = fields.FloatField(null=True)
+    performance_salary = fields.FloatField(default=0.0)
+    high_temp_allowance = fields.FloatField(default=0.0)
+    low_temp_allowance = fields.FloatField(default=0.0)
+    meal_allowance = fields.FloatField(default=0.0)
+    mid_autumn_benefit = fields.FloatField(default=0.0)
+    dragon_boat_benefit = fields.FloatField(default=0.0)
+    spring_festival_benefit = fields.FloatField(default=0.0)
+    other_income = fields.FloatField(default=0.0)
 
-    allowances = fields.JSONField(null=True)  # {"交通": 100, "餐补": 200}
-    bonuses = fields.JSONField(null=True)  # {"年终奖": 5000}
-    deductions = fields.JSONField(null=True)  # {"迟到扣款": 50, "其他扣除": 100}
-
-    ins_pension = fields.FloatField(default=0.0)
-    ins_medical = fields.FloatField(default=0.0)
-    ins_unemployment = fields.FloatField(default=0.0)
-    ins_injury = fields.FloatField(default=0.0)
-    ins_maternity = fields.FloatField(default=0.0)
+    # Fixed deduction fields
+    pension_insurance = fields.FloatField(default=0.0)
+    medical_insurance = fields.FloatField(default=0.0)
+    unemployment_insurance = fields.FloatField(default=0.0)
+    critical_illness_insurance = fields.FloatField(default=0.0)
+    enterprise_annuity = fields.FloatField(default=0.0)
     housing_fund = fields.FloatField(default=0.0)
+    other_deductions = fields.FloatField(default=0.0)
 
-    tax = fields.FloatField(default=0.0)  # 个人所得税（自动或手动）
+    tax = fields.FloatField(default=0.0)
 
     note = fields.CharField(max_length=255, null=True)
     created_at = fields.DatetimeField(auto_now_add=True)

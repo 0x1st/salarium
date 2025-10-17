@@ -1,6 +1,5 @@
-from typing import List, Dict, Any
+from typing import List
 from fastapi import APIRouter, Depends
-from collections import defaultdict
 
 from ..models import SalaryRecord
 from ..schemas.salary_template import CategoryStatsOut
@@ -9,71 +8,70 @@ from ..utils.auth import get_current_user
 
 router = APIRouter()
 
+INCOME_CATEGORIES = [
+    ('基本工资', 'base_salary'),
+    ('绩效工资', 'performance_salary'),
+    ('高温补贴', 'high_temp_allowance'),
+    ('低温补贴', 'low_temp_allowance'),
+    ('餐补', 'meal_allowance'),
+    ('中秋福利', 'mid_autumn_benefit'),
+    ('端午福利', 'dragon_boat_benefit'),
+    ('春节福利', 'spring_festival_benefit'),
+    ('其他收入', 'other_income'),
+]
+
+DEDUCTION_CATEGORIES = [
+    ('养老保险', 'pension_insurance'),
+    ('医疗保险', 'medical_insurance'),
+    ('失业保险', 'unemployment_insurance'),
+    ('大病互助保险', 'critical_illness_insurance'),
+    ('企业年金', 'enterprise_annuity'),
+    ('住房公积金', 'housing_fund'),
+    ('其他扣除', 'other_deductions'),
+]
+
 
 @router.get("/categories", response_model=List[CategoryStatsOut])
 async def get_category_statistics(user=Depends(get_current_user)):
     """
-    Get statistics for all custom categories (allowances, bonuses, deductions)
+    Get statistics for all fixed categories (income and deductions)
     """
     records = await SalaryRecord.filter(person__user_id=user.id).all()
-    
-    # Collect all categories and their usage
-    category_stats = defaultdict(lambda: {
-        'total_amount': 0.0,
-        'usage_count': 0,
-        'amounts': []
-    })
-    
     total_records = len(records)
     
-    for record in records:
-        # Process allowances
-        if record.allowances:
-            for category, amount in record.allowances.items():
-                key = f"allowances_{category}"
-                category_stats[key]['total_amount'] += amount
-                category_stats[key]['usage_count'] += 1
-                category_stats[key]['amounts'].append(amount)
-                category_stats[key]['type'] = 'allowances'
-                category_stats[key]['name'] = category
-        
-        # Process bonuses
-        if record.bonuses:
-            for category, amount in record.bonuses.items():
-                key = f"bonuses_{category}"
-                category_stats[key]['total_amount'] += amount
-                category_stats[key]['usage_count'] += 1
-                category_stats[key]['amounts'].append(amount)
-                category_stats[key]['type'] = 'bonuses'
-                category_stats[key]['name'] = category
-        
-        # Process deductions
-        if record.deductions:
-            for category, amount in record.deductions.items():
-                key = f"deductions_{category}"
-                category_stats[key]['total_amount'] += amount
-                category_stats[key]['usage_count'] += 1
-                category_stats[key]['amounts'].append(amount)
-                category_stats[key]['type'] = 'deductions'
-                category_stats[key]['name'] = category
-    
-    # Convert to output format
     result = []
-    for key, stats in category_stats.items():
-        average_amount = stats['total_amount'] / stats['usage_count'] if stats['usage_count'] > 0 else 0
-        usage_percentage = (stats['usage_count'] / total_records * 100) if total_records > 0 else 0
+    
+    for category_name, field_name in INCOME_CATEGORIES:
+        total_amount = sum(getattr(record, field_name, 0) for record in records)
+        usage_count = sum(1 for record in records if getattr(record, field_name, 0) > 0)
+        average_amount = total_amount / usage_count if usage_count > 0 else 0
+        usage_percentage = (usage_count / total_records * 100) if total_records > 0 else 0
         
         result.append(CategoryStatsOut(
-            category_name=stats['name'],
-            category_type=stats['type'],
-            total_amount=stats['total_amount'],
+            category_name=category_name,
+            category_type='income',
+            total_amount=total_amount,
             average_amount=average_amount,
-            usage_count=stats['usage_count'],
+            usage_count=usage_count,
             usage_percentage=usage_percentage
         ))
     
-    # Sort by usage count descending
-    result.sort(key=lambda x: x.usage_count, reverse=True)
+    for category_name, field_name in DEDUCTION_CATEGORIES:
+        total_amount = sum(getattr(record, field_name, 0) for record in records)
+        usage_count = sum(1 for record in records if getattr(record, field_name, 0) > 0)
+        average_amount = total_amount / usage_count if usage_count > 0 else 0
+        usage_percentage = (usage_count / total_records * 100) if total_records > 0 else 0
+        
+        result.append(CategoryStatsOut(
+            category_name=category_name,
+            category_type='deduction',
+            total_amount=total_amount,
+            average_amount=average_amount,
+            usage_count=usage_count,
+            usage_percentage=usage_percentage
+        ))
+    
+    result.sort(key=lambda x: x.total_amount, reverse=True)
     
     return result
 
@@ -85,34 +83,23 @@ async def get_category_summary(user=Depends(get_current_user)):
     """
     records = await SalaryRecord.filter(person__user_id=user.id).all()
     
-    summary = {
-        'allowances': {'total': 0.0, 'count': 0, 'categories': set()},
-        'bonuses': {'total': 0.0, 'count': 0, 'categories': set()},
-        'deductions': {'total': 0.0, 'count': 0, 'categories': set()}
-    }
+    income_total = 0.0
+    deduction_total = 0.0
     
     for record in records:
-        if record.allowances:
-            for category, amount in record.allowances.items():
-                summary['allowances']['total'] += amount
-                summary['allowances']['count'] += 1
-                summary['allowances']['categories'].add(category)
+        for _, field_name in INCOME_CATEGORIES:
+            income_total += getattr(record, field_name, 0)
         
-        if record.bonuses:
-            for category, amount in record.bonuses.items():
-                summary['bonuses']['total'] += amount
-                summary['bonuses']['count'] += 1
-                summary['bonuses']['categories'].add(category)
-        
-        if record.deductions:
-            for category, amount in record.deductions.items():
-                summary['deductions']['total'] += amount
-                summary['deductions']['count'] += 1
-                summary['deductions']['categories'].add(category)
+        for _, field_name in DEDUCTION_CATEGORIES:
+            deduction_total += getattr(record, field_name, 0)
     
-    # Convert sets to counts
-    for category_type in summary:
-        summary[category_type]['unique_categories'] = len(summary[category_type]['categories'])
-        del summary[category_type]['categories']
-    
-    return summary
+    return {
+        'income': {
+            'total': income_total,
+            'categories_count': len(INCOME_CATEGORIES)
+        },
+        'deductions': {
+            'total': deduction_total,
+            'categories_count': len(DEDUCTION_CATEGORIES)
+        }
+    }

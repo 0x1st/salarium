@@ -32,30 +32,28 @@ const loading = ref(false)
 const isEditing = ref(false)
 const editingId = ref(null)
 
-// 筛选条件
 const filterYear = ref(null)
 const filterMonth = ref(null)
-
-// 动态类别输入
-const newAllowanceName = ref('')
-const newBonusName = ref('')
-const newDeductionName = ref('')
 
 const form = ref({
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
   base_salary: 0,
-  performance_percent: null,
-  performance_fixed: null,
-  allowances: {},
-  bonuses: {},
-  deductions: {},
-  ins_pension: 0,
-  ins_medical: 0,
-  ins_unemployment: 0,
-  ins_injury: 0,
-  ins_maternity: 0,
+  performance_salary: 0,
+  high_temp_allowance: 0,
+  low_temp_allowance: 0,
+  meal_allowance: 0,
+  mid_autumn_benefit: 0,
+  dragon_boat_benefit: 0,
+  spring_festival_benefit: 0,
+  other_income: 0,
+  pension_insurance: 0,
+  medical_insurance: 0,
+  unemployment_insurance: 0,
+  critical_illness_insurance: 0,
+  enterprise_annuity: 0,
   housing_fund: 0,
+  other_deductions: 0,
   tax: 0,
   auto_tax: false,
   note: '',
@@ -63,7 +61,6 @@ const form = ref({
 
 const api = axios.create({ baseURL: '/api', headers: { Authorization: `Bearer ${user.token}` } })
 
-// 计算统计数据 - 基于筛选后的数据
 const stats = computed(() => {
   if (filteredList.value.length === 0) return { total: 0, average: 0, latest: 0 }
   
@@ -74,13 +71,11 @@ const stats = computed(() => {
   return { total, average, latest }
 })
 
-// 获取年份选项
 const yearOptions = computed(() => {
   const years = [...new Set(list.value.map(item => item.year))].sort((a, b) => b - a)
   return years
 })
 
-// 筛选数据
 const filterData = () => {
   let filtered = [...list.value]
   
@@ -92,7 +87,6 @@ const filterData = () => {
     filtered = filtered.filter(item => item.month === filterMonth.value)
   }
   
-  // 按时间排序
   filtered.sort((a, b) => {
     if (a.year !== b.year) return b.year - a.year
     return b.month - a.month
@@ -101,7 +95,6 @@ const filterData = () => {
   filteredList.value = filtered
 }
 
-// 监听筛选条件变化
 watch([filterYear, filterMonth], filterData)
 watch(list, filterData, { immediate: true })
 
@@ -112,7 +105,6 @@ async function load() {
     const { data } = await api.get('/salaries/', { params: { person_id: personId.value } })
     list.value = data
     
-    // 获取人员姓名
     const { data: persons } = await api.get('/persons/')
     const person = persons.find(p => p.id === personId.value)
     personName.value = person ? person.name : `人员 ${personId.value}`
@@ -130,17 +122,21 @@ function openCreate() {
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
     base_salary: 0,
-    performance_percent: null,
-    performance_fixed: null,
-    allowances: {},
-    bonuses: {},
-    deductions: {},
-    ins_pension: 0,
-    ins_medical: 0,
-    ins_unemployment: 0,
-    ins_injury: 0,
-    ins_maternity: 0,
+    performance_salary: 0,
+    high_temp_allowance: 0,
+    low_temp_allowance: 0,
+    meal_allowance: 0,
+    mid_autumn_benefit: 0,
+    dragon_boat_benefit: 0,
+    spring_festival_benefit: 0,
+    other_income: 0,
+    pension_insurance: 0,
+    medical_insurance: 0,
+    unemployment_insurance: 0,
+    critical_illness_insurance: 0,
+    enterprise_annuity: 0,
     housing_fund: 0,
+    other_deductions: 0,
     tax: 0,
     auto_tax: false,
     note: '',
@@ -155,19 +151,23 @@ function openEdit(salary) {
     year: salary.year,
     month: salary.month,
     base_salary: salary.base_salary,
-    performance_percent: salary.performance_percent,
-    performance_fixed: salary.performance_fixed,
-    allowances: salary.allowances || {},
-    bonuses: salary.bonuses || {},
-    deductions: salary.deductions || {},
-    ins_pension: salary.ins_pension,
-    ins_medical: salary.ins_medical,
-    ins_unemployment: salary.ins_unemployment,
-    ins_injury: salary.ins_injury,
-    ins_maternity: salary.ins_maternity,
+    performance_salary: salary.performance_salary,
+    high_temp_allowance: salary.high_temp_allowance,
+    low_temp_allowance: salary.low_temp_allowance,
+    meal_allowance: salary.meal_allowance,
+    mid_autumn_benefit: salary.mid_autumn_benefit,
+    dragon_boat_benefit: salary.dragon_boat_benefit,
+    spring_festival_benefit: salary.spring_festival_benefit,
+    other_income: salary.other_income,
+    pension_insurance: salary.pension_insurance,
+    medical_insurance: salary.medical_insurance,
+    unemployment_insurance: salary.unemployment_insurance,
+    critical_illness_insurance: salary.critical_illness_insurance,
+    enterprise_annuity: salary.enterprise_annuity,
     housing_fund: salary.housing_fund,
+    other_deductions: salary.other_deductions,
     tax: salary.tax,
-    auto_tax: salary.auto_tax,
+    auto_tax: false,
     note: salary.note || '',
   }
   dialogVisible.value = true
@@ -181,7 +181,6 @@ async function submit() {
   
   try {
     if (isEditing.value) {
-      // 更新记录
       const { data } = await api.put(`/salaries/${editingId.value}`, form.value)
       const index = list.value.findIndex(item => item.id === editingId.value)
       if (index !== -1) {
@@ -189,7 +188,6 @@ async function submit() {
       }
       ElMessage.success('工资记录更新成功')
     } else {
-      // 新增记录
       const { data } = await api.post(`/salaries/${personId.value}`, form.value)
       list.value.push(data)
       ElMessage.success('工资记录添加成功')
@@ -243,43 +241,6 @@ function clearFilters() {
   filterMonth.value = null
 }
 
-// 动态类别管理函数
-function addAllowance() {
-  const name = newAllowanceName.value.trim()
-  if (name && !form.value.allowances[name]) {
-    form.value.allowances[name] = 0
-    newAllowanceName.value = ''
-  }
-}
-
-function removeAllowance(key) {
-  delete form.value.allowances[key]
-}
-
-function addBonus() {
-  const name = newBonusName.value.trim()
-  if (name && !form.value.bonuses[name]) {
-    form.value.bonuses[name] = 0
-    newBonusName.value = ''
-  }
-}
-
-function removeBonus(key) {
-  delete form.value.bonuses[key]
-}
-
-function addDeduction() {
-  const name = newDeductionName.value.trim()
-  if (name && !form.value.deductions[name]) {
-    form.value.deductions[name] = 0
-    newDeductionName.value = ''
-  }
-}
-
-function removeDeduction(key) {
-  delete form.value.deductions[key]
-}
-
 watch(() => route.params.personId, (v) => { 
   personId.value = Number(v)
   load() 
@@ -290,7 +251,6 @@ onMounted(load)
 
 <template>
   <div class="salaries-container">
-    <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-content">
         <div class="header-nav">
@@ -300,142 +260,108 @@ onMounted(load)
           </button>
         </div>
         <div class="header-title">
-          <DollarSign class="title-icon" />
+          <User class="title-icon" />
           <div>
-            <h1>{{ personName }} 的工资记录</h1>
-            <p class="header-subtitle">管理和查看工资详情</p>
+            <h1>{{ personName }} - 工资记录</h1>
+            <p class="header-subtitle">管理员工工资明细和历史记录</p>
           </div>
         </div>
       </div>
-      <button class="btn btn-primary" @click="openCreate" :disabled="!personId">
-        <Plus class="btn-icon" />
-        新增记录
+      <button class="btn btn-primary btn-create" @click="openCreate">
+        <Plus class="button-icon" />
+        添加工资记录
       </button>
     </div>
 
-    <!-- 统计卡片 -->
-    <div class="stats-grid">
+    <div class="stats-section">
       <div class="stat-card">
-        <div class="stat-icon stat-icon-primary">
-          <Calculator />
+        <div class="stat-icon stat-icon-total">
+          <DollarSign />
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ formatCurrency(stats.latest) }}</div>
-          <div class="stat-label">最新工资</div>
+          <div class="stat-label">累计实发工资</div>
+          <div class="stat-value">{{ formatCurrency(stats.total) }}</div>
         </div>
       </div>
-      
       <div class="stat-card">
-        <div class="stat-icon stat-icon-success">
+        <div class="stat-icon stat-icon-average">
           <TrendingUp />
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ formatCurrency(stats.average) }}</div>
-          <div class="stat-label">平均工资</div>
+          <div class="stat-label">平均实发工资</div>
+          <div class="stat-value">{{ formatCurrency(stats.average) }}</div>
         </div>
       </div>
-      
       <div class="stat-card">
-        <div class="stat-icon stat-icon-info">
+        <div class="stat-icon stat-icon-latest">
           <Award />
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ filteredList.length }}</div>
-          <div class="stat-label">筛选记录数</div>
+          <div class="stat-label">最近实发工资</div>
+          <div class="stat-value">{{ formatCurrency(stats.latest) }}</div>
         </div>
       </div>
     </div>
 
-    <!-- 工资记录列表 -->
-    <div class="content-card">
-      <div class="card-header">
-        <h2 class="card-title">工资记录</h2>
-      </div>
-      
-      <!-- 筛选器  -->
+    <div class="table-container">
       <div class="filter-section">
+        <div class="filter-header">
+          <Filter class="filter-icon" />
+          <h3>筛选条件</h3>
+        </div>
         <div class="filter-controls">
           <div class="filter-group">
-            <label class="filter-label">年份：</label>
+            <label class="filter-label">年份</label>
             <select v-model="filterYear" class="filter-select">
               <option :value="null">全部年份</option>
               <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}年</option>
             </select>
           </div>
           <div class="filter-group">
-            <label class="filter-label">月份：</label>
+            <label class="filter-label">月份</label>
             <select v-model="filterMonth" class="filter-select">
               <option :value="null">全部月份</option>
-              <option v-for="month in 12" :key="month" :value="month">{{ month }}月</option>
+              <option v-for="m in 12" :key="m" :value="m">{{ m }}月</option>
             </select>
           </div>
-          <button class="btn btn-clear" @click="clearFilters">
+          <button class="btn btn-secondary btn-clear" @click="clearFilters" v-if="filterYear || filterMonth">
             清除筛选
           </button>
         </div>
       </div>
 
-      <div class="table-container" v-loading="loading">
-        <div v-if="filteredList.length === 0 && !loading" class="empty-state-container">
-          <div class="empty-state-card">
-            <div class="empty-state">
-              <div class="empty-illustration">
-                <div class="empty-icon-container">
-                  <DollarSign class="empty-icon-main" />
-                  <div class="empty-icon-dots">
-                    <span class="dot dot-1"></span>
-                    <span class="dot dot-2"></span>
-                    <span class="dot dot-3"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="empty-content">
-                <h3 class="empty-title">
-                  {{ list.length === 0 ? '暂无工资记录' : '没有符合条件的记录' }}
-                </h3>
-                <p class="empty-description">
-                  {{ list.length === 0 
-                    ? '还没有添加任何工资记录，开始记录用户的工资信息，建立完整的薪资档案。' 
-                    : '当前筛选条件下没有找到匹配的工资记录，请尝试调整筛选条件或清除筛选。' 
-                  }}
-                </p>
-                
-                <div class="empty-features">
-                  <div class="feature-item">
-                    <div class="feature-icon">💰</div>
-                    <span>详细工资构成记录</span>
-                  </div>
-                  <div class="feature-item">
-                    <div class="feature-icon">📊</div>
-                    <span>自动计算税费扣除</span>
-                  </div>
-                  <div class="feature-item">
-                    <div class="feature-icon">📈</div>
-                    <span>工资趋势统计分析</span>
-                  </div>
-                </div>
-                
-                <el-button 
-                  v-if="list.length === 0"
-                  type="primary" 
-                  size="large"
-                  @click="openCreate"
-                  class="empty-action"
-                >
-                  <Plus class="button-icon" />
-                  添加工资记录
-                </el-button>
-                <el-button 
-                  v-else
-                  type="primary" 
-                  size="large"
-                  @click="clearFilters"
-                  class="empty-action"
-                >
-                  清除筛选条件
-                </el-button>
-              </div>
-            </div>
+      <div class="table-content">
+        <div v-if="loading" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>加载中...</p>
+        </div>
+        
+        <div v-else-if="filteredList.length === 0" class="empty-container">
+          <div class="empty-content">
+            <div class="empty-icon">💼</div>
+            <h3 class="empty-title">暂无工资记录</h3>
+            <p class="empty-description">
+              {{ list.length === 0 ? '还没有添加任何工资记录，点击下面的按钮开始添加' : '当前筛选条件下没有找到匹配的记录' }}
+            </p>
+            <el-button 
+              v-if="list.length === 0"
+              type="primary" 
+              size="large"
+              @click="openCreate"
+              class="empty-action"
+            >
+              <Plus class="button-icon" />
+              添加工资记录
+            </el-button>
+            <el-button 
+              v-else
+              type="primary" 
+              size="large"
+              @click="clearFilters"
+              class="empty-action"
+            >
+              清除筛选条件
+            </el-button>
           </div>
         </div>
         
@@ -444,12 +370,12 @@ onMounted(load)
             <thead>
               <tr>
                 <th class="col-date">时间</th>
-                <th class="col-currency">基础工资</th>
-                <th class="col-currency">绩效</th>
-                <th class="col-currency">补贴</th>
-                <th class="col-currency">奖金福利</th>
-                <th class="col-currency">其他扣除</th>
+                <th class="col-currency">基本工资</th>
+                <th class="col-currency">绩效工资</th>
+                <th class="col-currency">补贴福利</th>
+                <th class="col-currency">总收入</th>
                 <th class="col-currency">五险一金</th>
+                <th class="col-currency">其他扣除</th>
                 <th class="col-currency">个税</th>
                 <th class="col-currency">实发工资</th>
                 <th class="col-actions">操作</th>
@@ -464,11 +390,26 @@ onMounted(load)
                   </div>
                 </td>
                 <td class="col-currency">{{ formatCurrency(salary.base_salary) }}</td>
-                <td class="col-currency">{{ formatCurrency(salary.performance) }}</td>
-                <td class="col-currency">{{ formatCurrency(salary.allowances_total) }}</td>
-                <td class="col-currency">{{ formatCurrency(salary.bonuses_total) }}</td>
-                <td class="col-currency text-danger">-{{ formatCurrency(salary.deductions_total || 0) }}</td>
-                <td class="col-currency text-danger">-{{ formatCurrency(salary.insurance_total) }}</td>
+                <td class="col-currency">{{ formatCurrency(salary.performance_salary) }}</td>
+                <td class="col-currency">{{ formatCurrency(
+                  salary.high_temp_allowance + 
+                  salary.low_temp_allowance + 
+                  salary.meal_allowance + 
+                  salary.mid_autumn_benefit + 
+                  salary.dragon_boat_benefit + 
+                  salary.spring_festival_benefit + 
+                  salary.other_income
+                ) }}</td>
+                <td class="col-currency">{{ formatCurrency(salary.total_income) }}</td>
+                <td class="col-currency text-danger">-{{ formatCurrency(
+                  salary.pension_insurance + 
+                  salary.medical_insurance + 
+                  salary.unemployment_insurance + 
+                  salary.critical_illness_insurance + 
+                  salary.enterprise_annuity + 
+                  salary.housing_fund
+                ) }}</td>
+                <td class="col-currency text-danger">-{{ formatCurrency(salary.other_deductions) }}</td>
                 <td class="col-currency text-danger">-{{ formatCurrency(salary.tax) }}</td>
                 <td class="col-currency net-income">{{ formatCurrency(salary.net_income) }}</td>
                 <td class="col-actions">
@@ -496,15 +437,13 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- 新增/编辑工资记录对话框 -->
     <el-dialog 
       v-model="dialogVisible" 
-      :title="isEditing ? '编辑工资记录' : '新增工资记录'" 
+      :title="isEditing ? '编辑工资记录' : '添加工资记录'"
       width="800px"
       :close-on-click-modal="false"
     >
       <form @submit.prevent="submit" class="salary-form">
-        <!-- 基本信息 -->
         <div class="form-section">
           <h3 class="section-title">
             <Calendar class="section-icon" />
@@ -512,320 +451,131 @@ onMounted(load)
           </h3>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">年份 <span class="required">*</span></label>
-              <input 
-                v-model.number="form.year" 
-                type="number" 
-                class="form-control" 
-                :min="2000" 
-                :max="2100"
-              />
+              <label class="form-label">年份</label>
+              <input v-model.number="form.year" type="number" class="form-control" min="2000" max="2100" />
             </div>
             <div class="form-group">
-              <label class="form-label">月份 <span class="required">*</span></label>
-              <input 
-                v-model.number="form.month" 
-                type="number" 
-                class="form-control" 
-                :min="1" 
-                :max="12"
-              />
+              <label class="form-label">月份</label>
+              <input v-model.number="form.month" type="number" class="form-control" min="1" max="12" />
             </div>
           </div>
         </div>
 
-        <!-- 工资构成 -->
         <div class="form-section">
           <h3 class="section-title">
             <DollarSign class="section-icon" />
-            工资构成
+            收入明细
           </h3>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">基础工资 <span class="required">*</span></label>
-              <input 
-                v-model.number="form.base_salary" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <label class="form-label">基本工资</label>
+              <input v-model.number="form.base_salary" type="number" class="form-control" step="0.01" min="0" />
             </div>
             <div class="form-group">
-              <label class="form-label">绩效比例</label>
-              <input 
-                v-model.number="form.performance_percent" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-                placeholder="如 0.2 表示 20%"
-              />
+              <label class="form-label">绩效工资</label>
+              <input v-model.number="form.performance_salary" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">高温补贴</label>
+              <input v-model.number="form.high_temp_allowance" type="number" class="form-control" step="0.01" min="0" />
             </div>
             <div class="form-group">
-              <label class="form-label">绩效固定</label>
-              <input 
-                v-model.number="form.performance_fixed" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <label class="form-label">低温补贴</label>
+              <input v-model.number="form.low_temp_allowance" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">餐补</label>
+              <input v-model.number="form.meal_allowance" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">中秋福利</label>
+              <input v-model.number="form.mid_autumn_benefit" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">端午福利</label>
+              <input v-model.number="form.dragon_boat_benefit" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">春节福利</label>
+              <input v-model.number="form.spring_festival_benefit" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">其他收入</label>
+              <input v-model.number="form.other_income" type="number" class="form-control" step="0.01" min="0" />
             </div>
           </div>
         </div>
 
-        <!-- 五险一金 -->
         <div class="form-section">
           <h3 class="section-title">
             <Shield class="section-icon" />
-            五险一金
+            扣除明细
           </h3>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">养老保险</label>
-              <input 
-                v-model.number="form.ins_pension" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <input v-model.number="form.pension_insurance" type="number" class="form-control" step="0.01" min="0" />
             </div>
             <div class="form-group">
               <label class="form-label">医疗保险</label>
-              <input 
-                v-model.number="form.ins_medical" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">失业保险</label>
-              <input 
-                v-model.number="form.ins_unemployment" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <input v-model.number="form.medical_insurance" type="number" class="form-control" step="0.01" min="0" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">工伤保险</label>
-              <input 
-                v-model.number="form.ins_injury" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <label class="form-label">失业保险</label>
+              <input v-model.number="form.unemployment_insurance" type="number" class="form-control" step="0.01" min="0" />
             </div>
             <div class="form-group">
-              <label class="form-label">生育保险</label>
-              <input 
-                v-model.number="form.ins_maternity" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <label class="form-label">大病互助保险</label>
+              <input v-model.number="form.critical_illness_insurance" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">企业年金</label>
+              <input v-model.number="form.enterprise_annuity" type="number" class="form-control" step="0.01" min="0" />
             </div>
             <div class="form-group">
               <label class="form-label">住房公积金</label>
-              <input 
-                v-model.number="form.housing_fund" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <input v-model.number="form.housing_fund" type="number" class="form-control" step="0.01" min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">其他扣除</label>
+              <input v-model.number="form.other_deductions" type="number" class="form-control" step="0.01" min="0" />
             </div>
           </div>
         </div>
 
-        <!-- 其他信息 -->
         <div class="form-section">
           <h3 class="section-title">
-            <FileText class="section-icon" />
-            其他信息
+            <Calculator class="section-icon" />
+            税费计算
           </h3>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">个人所得税</label>
-              <input 
-                v-model.number="form.tax" 
-                type="number" 
-                class="form-control" 
-                :min="0"
-                step="0.01"
-              />
+              <input v-model.number="form.tax" type="number" class="form-control" step="0.01" min="0" :disabled="form.auto_tax" />
             </div>
             <div class="form-group">
-              <label class="form-label">自动计税</label>
-              <div class="switch-container">
-                <input 
-                  v-model="form.auto_tax" 
-                  type="checkbox" 
-                  class="form-switch"
-                />
-                <span class="switch-text">{{ form.auto_tax ? '开启' : '关闭' }}</span>
-              </div>
+              <label class="form-label checkbox-label">
+                <input v-model="form.auto_tax" type="checkbox" class="form-checkbox" />
+                自动计算个税
+              </label>
             </div>
           </div>
         </div>
 
-        <!-- 动态补贴类别 -->
-        <div class="form-section">
-          <h3 class="section-title">
-            <Award class="section-icon" />
-            补贴津贴
-          </h3>
-          <div class="dynamic-categories">
-            <div v-for="(value, key) in form.allowances" :key="key" class="category-item">
-              <div class="category-input-group">
-                <span class="category-label">{{ key }}</span>
-                <input 
-                  v-model="form.allowances[key]" 
-                  type="number" 
-                  class="form-control category-amount" 
-                  :min="0"
-                  step="0.01"
-                  :placeholder="`${key}金额`"
-                />
-                <button 
-                  type="button" 
-                  class="btn-remove-category" 
-                  @click="removeAllowance(key)"
-                  title="删除此项"
-                >
-                  <Trash2 class="remove-icon" />
-                </button>
-              </div>
-            </div>
-            <div class="add-category">
-              <input 
-                v-model="newAllowanceName" 
-                type="text" 
-                class="form-control category-name-input" 
-                placeholder="输入补贴名称"
-                @keyup.enter="addAllowance"
-              />
-              <button 
-                type="button" 
-                class="btn btn-outline-primary btn-add-category" 
-                @click="addAllowance"
-                :disabled="!newAllowanceName.trim()"
-              >
-                <Plus class="add-icon" />
-                添加补贴
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 动态奖金类别 -->
-        <div class="form-section">
-          <h3 class="section-title">
-            <TrendingUp class="section-icon" />
-            奖金福利
-          </h3>
-          <div class="dynamic-categories">
-            <div v-for="(value, key) in form.bonuses" :key="key" class="category-item">
-              <div class="category-input-group">
-                <span class="category-label">{{ key }}</span>
-                <input 
-                  v-model="form.bonuses[key]" 
-                  type="number" 
-                  class="form-control category-amount" 
-                  :min="0"
-                  step="0.01"
-                  :placeholder="`${key}金额`"
-                />
-                <button 
-                  type="button" 
-                  class="btn-remove-category" 
-                  @click="removeBonus(key)"
-                  title="删除此项"
-                >
-                  <Trash2 class="remove-icon" />
-                </button>
-              </div>
-            </div>
-            <div class="add-category">
-              <input 
-                v-model="newBonusName" 
-                type="text" 
-                class="form-control category-name-input" 
-                placeholder="输入奖金名称"
-                @keyup.enter="addBonus"
-              />
-              <button 
-                type="button" 
-                class="btn btn-outline-primary btn-add-category" 
-                @click="addBonus"
-                :disabled="!newBonusName.trim()"
-              >
-                <Plus class="add-icon" />
-                添加奖金
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 动态扣除类别 -->
-        <div class="form-section">
-          <h3 class="section-title">
-            <Calculator class="section-icon" />
-            其他扣除
-          </h3>
-          <div class="dynamic-categories">
-            <div v-for="(value, key) in form.deductions" :key="key" class="category-item">
-              <div class="category-input-group">
-                <span class="category-label">{{ key }}</span>
-                <input 
-                  v-model="form.deductions[key]" 
-                  type="number" 
-                  class="form-control category-amount" 
-                  :min="0"
-                  step="0.01"
-                  :placeholder="`${key}金额`"
-                />
-                <button 
-                  type="button" 
-                  class="btn-remove-category" 
-                  @click="removeDeduction(key)"
-                  title="删除此项"
-                >
-                  <Trash2 class="remove-icon" />
-                </button>
-              </div>
-            </div>
-            <div class="add-category">
-              <input 
-                v-model="newDeductionName" 
-                type="text" 
-                class="form-control category-name-input" 
-                placeholder="输入扣除项名称"
-                @keyup.enter="addDeduction"
-              />
-              <button 
-                type="button" 
-                class="btn btn-outline-primary btn-add-category" 
-                @click="addDeduction"
-                :disabled="!newDeductionName.trim()"
-              >
-                <Plus class="add-icon" />
-                添加扣除
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 备注 -->
         <div class="form-section">
           <h3 class="section-title">
             <FileText class="section-icon" />
@@ -930,11 +680,71 @@ onMounted(load)
   margin: 0.25rem 0 0 0;
 }
 
-/* 筛选器样式 */
-.filter-section {
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
   background: white;
   border-radius: 12px;
-  margin: 1.5rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.stat-icon-total {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.stat-icon-average {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stat-icon-latest {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.filter-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .filter-header {
@@ -994,395 +804,82 @@ onMounted(load)
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.btn-clear {
-  background: #f3f4f6;
-  color: #6b7280;
-  border-color: #d1d5db;
-  padding: 0.5rem 1rem;
-  font-size: 0.8rem;
-}
-
-.btn-clear:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-  color: #374151;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.stat-icon-primary {
-  background: #3b82f6;
-}
-
-.stat-icon-success {
-  background: #10b981;
-}
-
-.stat-icon-info {
-  background: #6366f1;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
-}
-
-.content-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-}
-
-.table-container {
+.table-content {
   padding: 1.5rem;
 }
 
-.empty-state {
+.loading-container {
   text-align: center;
-  padding: 3rem 1rem;
-  color: #6b7280;
+  padding: 3rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-container {
+  padding: 3rem;
+  text-align: center;
 }
 
 .empty-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 1rem;
-  opacity: 0.5;
-}
-
-.empty-state h3 {
-  font-size: 1.25rem;
-  margin: 0 0 0.5rem 0;
-  color: #111827;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-/* 空状态样式 - 与 Stats.vue 保持一致 */
-.empty-state-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-  padding: 40px 20px;
-}
-
-.empty-state-card {
-  background: white;
-  border-radius: 20px;
-  padding: 48px 40px;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  max-width: 1000px;
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-  margin: 0 auto;
-  animation: pulse 4s infinite ease-in-out;
-}
-
-.empty-state-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.empty-state {
-  display: flex;
-  align-items: center;
-  gap: 48px;
-  text-align: left;
-  padding: 40px 60px;
-  justify-content: center;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    text-align: center;
-    gap: 32px;
-    padding: 32px 24px;
-  }
-}
-
-.empty-illustration {
-  flex-shrink: 0;
-}
-
-.empty-icon-container {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  animation: float 6s infinite ease-in-out;
-}
-
-.empty-icon-main {
-  width: 50px;
-  height: 50px;
-  color: #667eea;
-  opacity: 0.9;
-}
-
-.empty-icon-dots {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-
-.dot {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #764ba2;
-  opacity: 0.7;
-}
-
-.dot-1 {
-  top: 20%;
-  right: 10%;
-  animation: float 3s infinite ease-in-out;
-}
-
-.dot-2 {
-  bottom: 20%;
-  right: 20%;
-  width: 15px;
-  height: 15px;
-  background: #667eea;
-  animation: float 3.5s infinite ease-in-out;
-}
-
-.dot-3 {
-  bottom: 30%;
-  left: 15%;
-  width: 12px;
-  height: 12px;
-  background: #43e97b;
-  animation: float 4s infinite ease-in-out;
-}
-
-.empty-content {
-  flex: 1;
-  max-width: 500px;
-  margin: 0 auto;
-  
-  @media (min-width: 768px) {
-    margin: 0;
-  }
+  font-size: 4rem;
+  margin-bottom: 1rem;
 }
 
 .empty-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 16px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
 }
 
 .empty-description {
-  font-size: 16px;
-  color: #7f8c8d;
-  margin: 0 0 30px 0;
-  line-height: 1.6;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
 }
 
-.empty-features {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-  
-  @media (min-width: 768px) {
-    justify-content: flex-start;
-  }
-}
-
-.feature-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  
-  @media (min-width: 768px) {
-    flex-direction: row;
-  }
-}
-
-.feature-icon {
-  font-size: 20px;
-  opacity: 0.8;
-}
-
-.empty-action {
-  border-radius: 12px;
-  padding: 12px 24px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
-}
-
-.empty-action:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 20px rgba(102, 126, 234, 0.4);
-}
-
-.button-icon {
-  margin-right: 8px;
-  width: 16px;
-  height: 16px;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-/* 表格样式优化 */
 .table-wrapper {
   overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
 }
 
 .salary-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
-  background: white;
 }
 
 .salary-table th {
-  background: #f8fafc;
-  color: #374151;
-  font-weight: 600;
-  padding: 1rem 0.75rem;
+  background: #f9fafb;
+  padding: 0.75rem 1rem;
   text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
   border-bottom: 2px solid #e5e7eb;
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 .salary-table td {
-  padding: 1rem 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: middle;
-}
-
-.table-row:hover {
-  background: #f9fafb;
-}
-
-/* 列宽定义 */
-.col-date {
-  width: 120px;
-  min-width: 120px;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
 }
 
 .col-currency {
-  width: 110px;
-  min-width: 110px;
   text-align: right;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-  font-weight: 500;
 }
 
 .col-actions {
-  width: 120px;
-  min-width: 120px;
+  width: 100px;
   text-align: center;
 }
 
@@ -1390,23 +887,21 @@ onMounted(load)
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 500;
 }
 
 .date-icon {
   width: 16px;
   height: 16px;
   color: #6b7280;
-  flex-shrink: 0;
-}
-
-.net-income {
-  color: #10b981;
-  font-weight: 600;
 }
 
 .text-danger {
-  color: #ef4444;
+  color: #dc2626;
+}
+
+.net-income {
+  font-weight: 600;
+  color: #10b981;
 }
 
 .action-buttons {
@@ -1416,15 +911,29 @@ onMounted(load)
 }
 
 .action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   padding: 0.5rem;
+  border: none;
   border-radius: 6px;
-  transition: all 0.2s ease;
-  border: 1px solid;
   cursor: pointer;
-  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-edit {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.btn-edit:hover {
+  background: #dbeafe;
+}
+
+.btn-delete {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.btn-delete:hover {
+  background: #fee2e2;
 }
 
 .action-icon {
@@ -1432,90 +941,54 @@ onMounted(load)
   height: 16px;
 }
 
-.btn-edit {
-  color: #3b82f6;
-  border-color: #3b82f6;
-}
-
-.btn-edit:hover {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-delete {
-  color: #ef4444;
-  border-color: #ef4444;
-}
-
-.btn-delete:hover {
-  background: #ef4444;
-  color: white;
-}
-
-/* 按钮样式 */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
+  border: none;
   border-radius: 8px;
-  font-weight: 500;
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid;
-  text-decoration: none;
 }
 
 .btn-primary {
   background: #3b82f6;
   color: white;
-  border-color: #3b82f6;
 }
 
 .btn-primary:hover {
   background: #2563eb;
-  border-color: #2563eb;
-}
-
-.btn-primary:disabled {
-  background: #9ca3af;
-  border-color: #9ca3af;
-  cursor: not-allowed;
 }
 
 .btn-secondary {
-  background: #6b7280;
-  color: white;
-  border-color: #6b7280;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .btn-secondary:hover {
-  background: #4b5563;
-  border-color: #4b5563;
+  background: #e5e7eb;
 }
 
-.btn-icon {
+.btn-create {
+  white-space: nowrap;
+}
+
+.button-icon {
   width: 16px;
   height: 16px;
 }
 
-/* 表单样式 */
 .salary-form {
   max-height: 60vh;
   overflow-y: auto;
-  padding: 0.5rem 0;
+  padding: 0.5rem;
 }
 
 .form-section {
   margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.form-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
 }
 
 .section-title {
@@ -1525,7 +998,9 @@ onMounted(load)
   font-size: 1rem;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 1rem 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
 }
 
 .section-icon {
@@ -1538,27 +1013,30 @@ onMounted(load)
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-}
-
-.form-group {
   margin-bottom: 1rem;
 }
 
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #111827;
-  font-size: 0.875rem;
+.form-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.required {
-  color: #ef4444;
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
 }
 
 .form-control {
-  width: 100%;
-  padding: 0.75rem;
+  padding: 0.625rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -1571,25 +1049,20 @@ onMounted(load)
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.form-control:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.form-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
 .textarea {
   resize: vertical;
   min-height: 80px;
-}
-
-.switch-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.form-switch {
-  width: 20px;
-  height: 20px;
-}
-
-.switch-text {
-  font-size: 0.875rem;
-  color: #6b7280;
 }
 
 .dialog-footer {
@@ -1597,233 +1070,34 @@ onMounted(load)
   justify-content: flex-end;
   gap: 1rem;
   padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .salaries-container {
-    padding: 1rem;
-  }
-  
   .page-header {
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
   }
-  
+
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
   .filter-controls {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filter-group {
-    width: 100%;
-  }
-  
-  .filter-select {
-    min-width: auto;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .table-wrapper {
-    overflow-x: scroll;
-  }
-  
-  /* Mobile responsive for empty state */
-  .empty-state-card {
-    padding: 32px 24px;
-    margin: 0 16px;
-  }
-  
-  .empty-title {
-    font-size: 20px;
-  }
-  
-  .empty-description {
-    font-size: 14px;
-  }
-  
-  .empty-features {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 20px;
-  }
-  
-  .empty-actions {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
   }
-  
-  .primary-action,
-  .secondary-action {
+
+  .filter-select {
     width: 100%;
-    max-width: 280px;
   }
-}
-
-@media (max-width: 480px) {
-  .header-title h1 {
-    font-size: 1.5rem;
-  }
-  
-  .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-  }
-  
-  .stat-card {
-    padding: 1rem;
-  }
-  
-  .stat-number {
-    font-size: 1.25rem;
-  }
-/* 动态类别样式 */
-.dynamic-categories {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.category-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.category-item:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.category-input-group {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.category-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  min-width: 80px;
-  flex-shrink: 0;
-  background: #f3f4f6;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-}
-
-.category-amount {
-  flex: 1;
-  min-width: 120px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  background: white;
-  transition: border-color 0.2s ease;
-}
-
-.category-amount:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.btn-remove-category {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  color: #dc2626;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.btn-remove-category:hover {
-  background: #fecaca;
-  border-color: #f87171;
-  color: #b91c1c;
-  transform: scale(1.05);
-}
-
-.remove-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.add-category {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  margin-top: 0.25rem;
-}
-
-.add-category:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-}
-
-.category-name-input {
-  flex: 1;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-}
-
-.category-name-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.btn-add-category {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.btn-add-category:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-add-category:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.add-icon {
-  width: 12px;
-  height: 12px;
-}
 }
 </style>

@@ -29,7 +29,6 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         housing_fund=rec.housing_fund,
         other_deductions=rec.other_deductions,
         tax=rec.tax,
-        auto_tax=False,
     )
     return SalaryOut(
         id=rec.id,
@@ -101,7 +100,6 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         housing_fund=payload.housing_fund,
         other_deductions=payload.other_deductions,
         tax=payload.tax,
-        auto_tax=payload.auto_tax,
     )
     rec = await SalaryRecord.create(
         person_id=person_id,
@@ -143,30 +141,7 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
     if not rec:
         raise HTTPException(status_code=404, detail="记录不存在")
     for field, value in payload.model_dump(exclude_unset=True).items():
-        if field != 'auto_tax':
-            setattr(rec, field, value)
-    await rec.save()
-    calc = compute_payroll(
-        base_salary=rec.base_salary,
-        performance_salary=rec.performance_salary,
-        high_temp_allowance=rec.high_temp_allowance,
-        low_temp_allowance=rec.low_temp_allowance,
-        meal_allowance=rec.meal_allowance,
-        mid_autumn_benefit=rec.mid_autumn_benefit,
-        dragon_boat_benefit=rec.dragon_boat_benefit,
-        spring_festival_benefit=rec.spring_festival_benefit,
-        other_income=rec.other_income,
-        pension_insurance=rec.pension_insurance,
-        medical_insurance=rec.medical_insurance,
-        unemployment_insurance=rec.unemployment_insurance,
-        critical_illness_insurance=rec.critical_illness_insurance,
-        enterprise_annuity=rec.enterprise_annuity,
-        housing_fund=rec.housing_fund,
-        other_deductions=rec.other_deductions,
-        tax=rec.tax,
-        auto_tax=payload.auto_tax or False,
-    )
-    rec.tax = calc["tax"]
+        setattr(rec, field, value)
     await rec.save()
     return to_out(rec)
 

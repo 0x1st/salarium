@@ -29,19 +29,22 @@ async def monthly_stats(
     for r in recs:
         calc = compute_payroll(
             base_salary=r.base_salary,
-            performance_percent=r.performance_percent,
-            performance_fixed=r.performance_fixed,
-            allowances=r.allowances,
-            bonuses=r.bonuses,
-            deductions=r.deductions,
-            ins_pension=r.ins_pension,
-            ins_medical=r.ins_medical,
-            ins_unemployment=r.ins_unemployment,
-            ins_injury=r.ins_injury,
-            ins_maternity=r.ins_maternity,
+            performance_salary=r.performance_salary,
+            high_temp_allowance=r.high_temp_allowance,
+            low_temp_allowance=r.low_temp_allowance,
+            meal_allowance=r.meal_allowance,
+            mid_autumn_benefit=r.mid_autumn_benefit,
+            dragon_boat_benefit=r.dragon_boat_benefit,
+            spring_festival_benefit=r.spring_festival_benefit,
+            other_income=r.other_income,
+            pension_insurance=r.pension_insurance,
+            medical_insurance=r.medical_insurance,
+            unemployment_insurance=r.unemployment_insurance,
+            critical_illness_insurance=r.critical_illness_insurance,
+            enterprise_annuity=r.enterprise_annuity,
             housing_fund=r.housing_fund,
+            other_deductions=r.other_deductions,
             tax=r.tax,
-            auto_tax=False,
         )
         result.append(
             MonthlyStats(
@@ -49,10 +52,10 @@ async def monthly_stats(
                 year=r.year,
                 month=r.month,
                 base_salary=r.base_salary,
-                performance=calc["performance"],
-                allowances_total=calc["allowances_total"],
-                bonuses_total=calc["bonuses_total"],
-                insurance_total=calc["insurance_total"],
+                performance=r.performance_salary,
+                allowances_total=(r.high_temp_allowance + r.low_temp_allowance + r.meal_allowance),
+                bonuses_total=(r.mid_autumn_benefit + r.dragon_boat_benefit + r.spring_festival_benefit + r.other_income),
+                insurance_total=(r.pension_insurance + r.medical_insurance + r.unemployment_insurance + r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund),
                 tax=calc["tax"],
                 gross_income=calc["gross_income"],
                 net_income=calc["net_income"],
@@ -74,30 +77,37 @@ async def yearly_stats(user= Depends(get_current_user), person_id: Optional[int]
     for r in recs:
         calc = compute_payroll(
             base_salary=r.base_salary,
-            performance_percent=r.performance_percent,
-            performance_fixed=r.performance_fixed,
-            allowances=r.allowances,
-            bonuses=r.bonuses,
-            deductions=r.deductions,
-            ins_pension=r.ins_pension,
-            ins_medical=r.ins_medical,
-            ins_unemployment=r.ins_unemployment,
-            ins_injury=r.ins_injury,
-            ins_maternity=r.ins_maternity,
+            performance_salary=r.performance_salary,
+            high_temp_allowance=r.high_temp_allowance,
+            low_temp_allowance=r.low_temp_allowance,
+            meal_allowance=r.meal_allowance,
+            mid_autumn_benefit=r.mid_autumn_benefit,
+            dragon_boat_benefit=r.dragon_boat_benefit,
+            spring_festival_benefit=r.spring_festival_benefit,
+            other_income=r.other_income,
+            pension_insurance=r.pension_insurance,
+            medical_insurance=r.medical_insurance,
+            unemployment_insurance=r.unemployment_insurance,
+            critical_illness_insurance=r.critical_illness_insurance,
+            enterprise_annuity=r.enterprise_annuity,
             housing_fund=r.housing_fund,
+            other_deductions=r.other_deductions,
             tax=r.tax,
-            auto_tax=False,
         )
+        allowances_total = r.high_temp_allowance + r.low_temp_allowance + r.meal_allowance
+        bonuses_total = r.mid_autumn_benefit + r.dragon_boat_benefit + r.spring_festival_benefit + r.other_income
+        insurance_total = r.pension_insurance + r.medical_insurance + r.unemployment_insurance + r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund
+        
         s = stats_map.get(r.person_id, {
             "months": 0, "gross": 0.0, "net": 0.0, "insurance": 0.0, "tax": 0.0, "allowances": 0.0, "bonuses": 0.0
         })
         s["months"] += 1
         s["gross"] += calc["gross_income"]
         s["net"] += calc["net_income"]
-        s["insurance"] += calc["insurance_total"]
+        s["insurance"] += insurance_total
         s["tax"] += calc["tax"]
-        s["allowances"] += calc["allowances_total"]
-        s["bonuses"] += calc["bonuses_total"]
+        s["allowances"] += allowances_total
+        s["bonuses"] += bonuses_total
         stats_map[r.person_id] = s
     result: List[YearlyStats] = []
     for pid, s in stats_map.items():
@@ -130,22 +140,27 @@ async def family_summary(user= Depends(get_current_user), year: int = Query(...)
     for r in recs:
         calc = compute_payroll(
             base_salary=r.base_salary,
-            performance_percent=r.performance_percent,
-            performance_fixed=r.performance_fixed,
-            allowances=r.allowances,
-            bonuses=r.bonuses,
-            deductions=r.deductions,
-            ins_pension=r.ins_pension,
-            ins_medical=r.ins_medical,
-            ins_unemployment=r.ins_unemployment,
-            ins_injury=r.ins_injury,
-            ins_maternity=r.ins_maternity,
+            performance_salary=r.performance_salary,
+            high_temp_allowance=r.high_temp_allowance,
+            low_temp_allowance=r.low_temp_allowance,
+            meal_allowance=r.meal_allowance,
+            mid_autumn_benefit=r.mid_autumn_benefit,
+            dragon_boat_benefit=r.dragon_boat_benefit,
+            spring_festival_benefit=r.spring_festival_benefit,
+            other_income=r.other_income,
+            pension_insurance=r.pension_insurance,
+            medical_insurance=r.medical_insurance,
+            unemployment_insurance=r.unemployment_insurance,
+            critical_illness_insurance=r.critical_illness_insurance,
+            enterprise_annuity=r.enterprise_annuity,
             housing_fund=r.housing_fund,
+            other_deductions=r.other_deductions,
             tax=r.tax,
-            auto_tax=False,
         )
+        record_insurance_total = r.pension_insurance + r.medical_insurance + r.unemployment_insurance + r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund
+        
         totals[r.person_id] += calc["net_income"]
-        insurance_total += calc["insurance_total"]
+        insurance_total += record_insurance_total
         tax_total += calc["tax"]
         total_gross += calc["gross_income"]
         total_net += calc["net_income"]

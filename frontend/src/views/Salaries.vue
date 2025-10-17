@@ -55,7 +55,6 @@ const form = ref({
   housing_fund: 0,
   other_deductions: 0,
   tax: 0,
-  auto_tax: false,
   note: '',
 })
 
@@ -138,7 +137,6 @@ function openCreate() {
     housing_fund: 0,
     other_deductions: 0,
     tax: 0,
-    auto_tax: false,
     note: '',
   }
   dialogVisible.value = true
@@ -167,7 +165,6 @@ function openEdit(salary) {
     housing_fund: salary.housing_fund,
     other_deductions: salary.other_deductions,
     tax: salary.tax,
-    auto_tax: false,
     note: salary.note || '',
   }
   dialogVisible.value = true
@@ -560,18 +557,12 @@ onMounted(load)
         <div class="form-section">
           <h3 class="section-title">
             <Calculator class="section-icon" />
-            税费计算
+            税费
           </h3>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">个人所得税</label>
-              <input v-model.number="form.tax" type="number" class="form-control" step="0.01" min="0" :disabled="form.auto_tax" />
-            </div>
-            <div class="form-group">
-              <label class="form-label checkbox-label">
-                <input v-model="form.auto_tax" type="checkbox" class="form-checkbox" />
-                自动计算个税
-              </label>
+              <input v-model.number="form.tax" type="number" class="form-control" step="0.01" min="0" />
             </div>
           </div>
         </div>

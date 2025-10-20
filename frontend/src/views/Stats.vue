@@ -20,8 +20,14 @@ const monthlyChartEl = ref(null)
 const compositionChartEl = ref(null)
 const comparisonChartEl = ref(null)
 let monthlyChart, compositionChart, comparisonChart
+let deductionsPieChart, grossNetChart, contributionsChart
 
 const api = axios.create({ baseURL: '/api', headers: { Authorization: `Bearer ${user.token}` } })
+
+// Enhanced analytics state
+const deductionsData = ref({ summary: [], monthly: [] })
+const grossVsNet = ref([])
+const contributionsData = ref(null)
 
 // Computed properties for statistics
 const totalStats = computed(() => {
@@ -523,7 +529,7 @@ onMounted(async () => {
 .stats-container {
   padding: 24px;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: auto;
+  min-height: 100%;
 }
 
 .stats-header {

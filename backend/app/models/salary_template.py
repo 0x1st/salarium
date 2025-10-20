@@ -9,6 +9,9 @@ class SalaryTemplate(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100)  # Template name, e.g., "Standard Template", "Executive Template"
     description = fields.CharField(max_length=255, null=True)  # Template description
+
+    # Owner of this template (data isolation per user)
+    user = fields.ForeignKeyField("models.User", related_name="salary_templates")
     
     # Predefined categories stored as JSON
     allowances_template = fields.JSONField(null=True)  # {"交通补贴": 0, "餐补": 0, "通讯补贴": 0}

@@ -1,16 +1,30 @@
-# Node
-frontend/node_modules/
-frontend/dist/
-
 # Python
-backend/.venv/
-backend/venv/
-**/__pycache__/
-**/*.pyc
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+venv/
+.env
+.env.*
+.coverage
+.pytest_cache/
 
-# OS
-.DS_Store
-Thumbs.db
+# SQLite DB
+backend/*.db
+backend/**/salarium.db
 
 # Logs
 *.log
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

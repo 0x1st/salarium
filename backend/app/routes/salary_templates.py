@@ -12,18 +12,18 @@ router = APIRouter()
 @router.get("/", response_model=List[SalaryTemplateOut])
 async def list_templates(user=Depends(get_current_user)):
     """
-    Get all active salary templates
+    Get all active salary templates for the current user
     """
-    templates = await SalaryTemplate.filter(is_active=True).order_by("-created_at")
+    templates = await SalaryTemplate.filter(user_id=user.id, is_active=True).order_by("-created_at")
     return [await template_to_out(template) for template in templates]
 
 
 @router.get("/default", response_model=SalaryTemplateOut)
 async def get_default_template(user=Depends(get_current_user)):
     """
-    Get the default salary template
+    Get the default salary template for the current user
     """
-    template = await SalaryTemplate.filter(is_default=True, is_active=True).first()
+    template = await SalaryTemplate.filter(user_id=user.id, is_default=True, is_active=True).first()
     if not template:
         raise HTTPException(status_code=404, detail="Default template not found")
     return await template_to_out(template)
@@ -32,9 +32,9 @@ async def get_default_template(user=Depends(get_current_user)):
 @router.get("/{template_id}", response_model=SalaryTemplateOut)
 async def get_template(template_id: int, user=Depends(get_current_user)):
     """
-    Get a specific salary template by ID
+    Get a specific salary template by ID (owned by current user)
     """
-    template = await SalaryTemplate.filter(id=template_id, is_active=True).first()
+    template = await SalaryTemplate.filter(id=template_id, user_id=user.id, is_active=True).first()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     return await template_to_out(template)
@@ -43,13 +43,13 @@ async def get_template(template_id: int, user=Depends(get_current_user)):
 @router.post("/", response_model=SalaryTemplateOut)
 async def create_template(template_data: SalaryTemplateCreate, user=Depends(get_current_user)):
     """
-    Create a new salary template
+    Create a new salary template for the current user
     """
-    # If this is set as default, unset other defaults
+    # If this is set as default, unset other defaults for this user
     if template_data.is_default:
-        await SalaryTemplate.filter(is_default=True).update(is_default=False)
+        await SalaryTemplate.filter(user_id=user.id, is_default=True).update(is_default=False)
     
-    template = await SalaryTemplate.create(**template_data.dict())
+    template = await SalaryTemplate.create(user_id=user.id, **template_data.dict())
     return await template_to_out(template)
 
 
@@ -60,15 +60,15 @@ async def update_template(
     user=Depends(get_current_user)
 ):
     """
-    Update an existing salary template
+    Update an existing salary template (owned by current user)
     """
-    template = await SalaryTemplate.filter(id=template_id).first()
+    template = await SalaryTemplate.filter(id=template_id, user_id=user.id).first()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     
-    # If this is set as default, unset other defaults
+    # If this is set as default, unset other defaults for this user
     if template_data.is_default:
-        await SalaryTemplate.filter(is_default=True).update(is_default=False)
+        await SalaryTemplate.filter(user_id=user.id, is_default=True).exclude(id=template.id).update(is_default=False)
     
     update_data = template_data.dict(exclude_unset=True)
     await template.update_from_dict(update_data)
@@ -80,9 +80,9 @@ async def update_template(
 @router.delete("/{template_id}")
 async def delete_template(template_id: int, user=Depends(get_current_user)):
     """
-    Soft delete a salary template (set is_active to False)
+    Soft delete a salary template (set is_active to False) for current user
     """
-    template = await SalaryTemplate.filter(id=template_id).first()
+    template = await SalaryTemplate.filter(id=template_id, user_id=user.id).first()
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     

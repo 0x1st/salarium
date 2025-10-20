@@ -124,5 +124,14 @@ export const useStatsStore = defineStore('stats', {
       this.loading = {}
       this.errors = {}
     },
+    resetAll() {
+      this.personId = null
+      this.year = new Date().getFullYear()
+      this.range = ''
+      this.persons = []
+      this.loadingPersons = false
+      this.errorPersons = null
+      this.invalidateCache()
+    },
   },
 })

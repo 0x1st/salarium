@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, axisCurrencyFormatter, gradient } from '../../utils/charts'
+import { initChart, baseGrid, axisCurrencyFormatter, gradient, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   data: { type: Array, default: () => [] }, // expects GrossVsNetMonthly
@@ -8,6 +8,7 @@ const props = defineProps({
 
 const el = ref(null)
 let chart
+let cleanupResize
 
 const totals = computed(() => {
   const gross = props.data.reduce((s, p) => s + (p.gross_income || 0), 0)
@@ -23,9 +24,9 @@ function render() {
   const data = [gross, -ded, net]
 
   chart.setOption({
-    title: { text: '瀑布图：毛 -> 扣除 -> 净', left: 'center' },
+    title: { text: '瀑布图：应发 -> 扣除 -> 实际到手', left: 'center' },
     grid: baseGrid(),
-    xAxis: { type: 'category', data: ['毛收入', '扣除', '净收入'] },
+    xAxis: { type: 'category', data: ['应发工资', '扣除', '实际到手金额'] },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },
     series: [
       {
@@ -41,7 +42,7 @@ function render() {
         label: {
           show: true,
           position: 'top',
-          formatter: (p) => `¥${Math.abs(p.value).toLocaleString()}`,
+          formatter: (p) => currencyFormatter(Math.abs(p.value)),
         },
         barWidth: '40%',
       },
@@ -49,10 +50,10 @@ function render() {
   })
 }
 
-onMounted(render)
+onMounted(() => { render(); cleanupResize = responsiveResize(chart) })
 watch(() => props.data, render)
 
-onBeforeUnmount(() => { chart && chart.dispose && chart.dispose() })
+onBeforeUnmount(() => { cleanupResize && cleanupResize(); chart && chart.dispose && chart.dispose() })
 </script>
 
 <template>

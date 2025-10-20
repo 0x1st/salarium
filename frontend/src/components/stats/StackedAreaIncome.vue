@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, gradient } from '../../utils/charts'
+import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, gradient, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   data: { type: Array, default: () => [] }, // IncomeComposition[]
@@ -8,6 +8,7 @@ const props = defineProps({
 
 const el = ref(null)
 let chart
+let cleanupResize
 
 function byMonth() {
   const map = new Map()
@@ -32,7 +33,7 @@ function render() {
 
   chart.setOption({
     title: { text: '各收入项分月堆叠面积', left: 'center' },
-    tooltip: { trigger: 'axis', valueFormatter: (v) => `¥${Number(v).toLocaleString()}` },
+    tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
     legend: { top: 28 },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
@@ -45,10 +46,10 @@ function render() {
   })
 }
 
-onMounted(render)
+onMounted(() => { render(); cleanupResize = responsiveResize(chart) })
 watch(() => props.data, render)
 
-onBeforeUnmount(() => { chart && chart.dispose && chart.dispose() })
+onBeforeUnmount(() => { cleanupResize && cleanupResize(); chart && chart.dispose && chart.dispose() })
 </script>
 
 <template>

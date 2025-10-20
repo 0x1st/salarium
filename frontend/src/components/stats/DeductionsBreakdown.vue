@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter } from '../../utils/charts'
+import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   summary: { type: Array, default: () => [] }, // DeductionsBreakdownItem[]
@@ -10,13 +10,14 @@ const props = defineProps({
 const pieEl = ref(null)
 const stackEl = ref(null)
 let pieChart, stackChart
+let cleanupPieResize, cleanupStackResize
 
 function renderPie() {
   if (!pieEl.value) return
   if (!pieChart) pieChart = initChart(pieEl.value)
   pieChart.setOption({
     title: { text: '扣除项占比', left: 'center' },
-    tooltip: { trigger: 'item', formatter: (p) => `${p.name}: ¥${Number(p.value).toLocaleString()} (${p.percent}%)` },
+    tooltip: { trigger: 'item', formatter: (p) => `${p.name}: ${currencyFormatter(p.value)} (${p.percent}%)` },
     series: [
       { type: 'pie', radius: ['40%', '70%'], data: props.summary.map(s => ({ name: s.category, value: s.amount })) },
     ],
@@ -29,7 +30,7 @@ function renderStack() {
   const labels = props.monthly.map(m => `${m.month}月`)
   stackChart.setOption({
     title: { text: '扣除项月度趋势', left: 'center' },
-    tooltip: { trigger: 'axis', valueFormatter: (v) => `¥${Number(v).toLocaleString()}` },
+    tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
     legend: { top: 28 },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
@@ -46,11 +47,17 @@ function renderStack() {
   })
 }
 
-onMounted(() => { renderPie(); renderStack() })
+onMounted(() => { 
+  renderPie(); renderStack();
+  cleanupPieResize = responsiveResize(pieChart)
+  cleanupStackResize = responsiveResize(stackChart)
+})
 watch(() => props.summary, renderPie)
 watch(() => props.monthly, renderStack)
 
 onBeforeUnmount(() => {
+  cleanupPieResize && cleanupPieResize()
+  cleanupStackResize && cleanupStackResize()
   pieChart && pieChart.dispose && pieChart.dispose()
   stackChart && stackChart.dispose && stackChart.dispose()
 })

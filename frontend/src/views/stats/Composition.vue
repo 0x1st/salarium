@@ -22,7 +22,7 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
 </script>
 
 <template>
-  <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+  <div class="two-col">
     <el-card shadow="hover"><IncomeCompositionPie :data="comp" /></el-card>
     <el-card shadow="hover"><StackedAreaIncome :data="comp" /></el-card>
 
@@ -32,3 +32,10 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
     </div>
   </div>
 </template>
+
+<style scoped>
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width: 992px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+</style>

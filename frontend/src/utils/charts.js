@@ -1,8 +1,46 @@
 import * as echarts from 'echarts'
+import { formatCurrency } from './number'
+
+// Register a unified theme for all charts
+const theme = {
+  color: ['#409EFF', '#67C23A', '#E6A23C', '#8e44ad', '#1abc9c', '#F56C6C', '#909399'],
+  textStyle: {
+    fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
+    fontSize: 12,
+    color: '#334155',
+  },
+  grid: { left: '3%', right: '3%', bottom: '8%', top: '12%', containLabel: true },
+  tooltip: {
+    backgroundColor: 'rgba(17,24,39,0.9)',
+    borderWidth: 0,
+    textStyle: { color: '#fff', fontSize: 12 },
+    extraCssText: 'box-shadow:0 6px 18px rgba(0,0,0,0.2); border-radius:8px; padding:10px 12px;',
+  },
+  legend: {
+    top: 28,
+    textStyle: { color: '#475569' },
+  },
+  categoryAxis: {
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisTick: { alignWithLabel: true, lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#64748b' },
+    splitLine: { show: false },
+  },
+  valueAxis: {
+    axisLine: { show: false },
+    axisTick: { show: false },
+    axisLabel: { color: '#64748b' },
+    splitLine: { lineStyle: { color: '#e5e7eb', type: 'dashed' } },
+  },
+}
+
+if (!echarts.themes || !echarts.themes.salarium) {
+  echarts.registerTheme('salarium', theme)
+}
 
 export function initChart(el) {
   if (!el) return null
-  return echarts.init(el)
+  return echarts.init(el, 'salarium')
 }
 
 export function baseGrid() {
@@ -10,12 +48,11 @@ export function baseGrid() {
 }
 
 export function currencyFormatter(val) {
-  if (val == null || isNaN(val)) return '¥0'
-  return '¥' + Number(val).toLocaleString()
+  return formatCurrency(val, { decimals: 2 })
 }
 
 export function axisCurrencyFormatter(value) {
-  return `¥${value}`
+  return formatCurrency(value, { decimals: 2 })
 }
 
 export function monthsToLabels(points) {

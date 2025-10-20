@@ -300,7 +300,7 @@ function renderComparisonChart() {
     tooltip: {
       trigger: 'axis',
       formatter: function(params) {
-        return `${params[0].axisValue}<br/>净收入: ¥${params[0].value.toLocaleString()}`
+        return `${params[0].axisValue}<br/>实际到手金额: ¥${params[0].value.toLocaleString()}`
       }
     },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },

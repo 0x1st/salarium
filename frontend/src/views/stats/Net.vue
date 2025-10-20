@@ -4,6 +4,8 @@ import { useStatsStore } from '../../store/stats'
 import NetIncomeChart from '../../components/stats/NetIncomeChart.vue'
 import GrossVsNetBar from '../../components/stats/GrossVsNetBar.vue'
 import WaterfallChart from '../../components/stats/WaterfallChart.vue'
+import KPICards from '../../components/stats/KPICards.vue'
+import { formatCurrency } from '../../utils/number'
 
 const stats = useStatsStore()
 const net = ref([])
@@ -27,12 +29,20 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
 </script>
 
 <template>
-  <div class="grid" style="display:grid; grid-template-columns: 1fr; gap: 16px;">
+  <div class="net-grid">
+    <el-card shadow="hover">
+      <KPICards :items="[
+        { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#409EFF' },
+        { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#67C23A' },
+        { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#F56C6C' }
+      ]" />
+    </el-card>
+
     <el-card shadow="hover">
       <NetIncomeChart :data="net" />
     </el-card>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div class="two-col">
       <el-card shadow="hover"><GrossVsNetBar :data="gvn" /></el-card>
       <el-card shadow="hover"><WaterfallChart :data="gvn" /></el-card>
     </div>
@@ -43,3 +53,11 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
     </div>
   </div>
 </template>
+
+<style scoped>
+.net-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 992px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+</style>

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter } from '../../utils/charts'
+import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   points: { type: Array, default: () => [] },
@@ -8,6 +8,7 @@ const props = defineProps({
 
 const el = ref(null)
 let chart
+let cleanupResize
 
 function render() {
   if (!el.value) return
@@ -16,7 +17,7 @@ function render() {
 
   chart.setOption({
     title: { text: '养老/医疗/公积金累计曲线', left: 'center' },
-    tooltip: { trigger: 'axis', valueFormatter: (v) => `¥${Number(v).toLocaleString()}` },
+    tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
     legend: { top: 28 },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
@@ -29,10 +30,10 @@ function render() {
   })
 }
 
-onMounted(render)
+onMounted(() => { render(); cleanupResize = responsiveResize(chart) })
 watch(() => props.points, render)
 
-onBeforeUnmount(() => { chart && chart.dispose && chart.dispose() })
+onBeforeUnmount(() => { cleanupResize && cleanupResize(); chart && chart.dispose && chart.dispose() })
 </script>
 
 <template>

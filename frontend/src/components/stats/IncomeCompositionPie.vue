@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, gradient } from '../../utils/charts'
+import { initChart, baseGrid, gradient, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   data: { type: Array, default: () => [] }, // IncomeComposition[]
@@ -8,6 +8,7 @@ const props = defineProps({
 
 const el = ref(null)
 let chart
+let cleanupResize
 
 const summary = computed(() => {
   // Aggregate across list
@@ -40,7 +41,7 @@ function render() {
     title: { text: '收入构成环图', left: 'center' },
     tooltip: {
       trigger: 'item',
-      formatter: (p) => `${p.name}: ¥${Number(p.value).toLocaleString()} (${p.percent}%)`,
+      formatter: (p) => `${p.name}: ${currencyFormatter(p.value)} (${p.percent}%)`,
     },
     legend: { orient: 'vertical', left: 10, top: 'middle' },
     series: [
@@ -56,10 +57,10 @@ function render() {
   })
 }
 
-onMounted(render)
+onMounted(() => { render(); cleanupResize = responsiveResize(chart) })
 watch(() => props.data, render)
 
-onBeforeUnmount(() => { chart && chart.dispose && chart.dispose() })
+onBeforeUnmount(() => { cleanupResize && cleanupResize(); chart && chart.dispose && chart.dispose() })
 </script>
 
 <template>

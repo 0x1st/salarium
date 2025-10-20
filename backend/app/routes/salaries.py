@@ -30,7 +30,6 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         housing_fund=rec.housing_fund,
         other_deductions=rec.other_deductions,
         tax=rec.tax,
-        auto_tax=False,
     )
     return SalaryOut(
         id=rec.id,
@@ -106,7 +105,6 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         housing_fund=payload.housing_fund,
         other_deductions=payload.other_deductions,
         tax=payload.tax,
-        auto_tax=payload.auto_tax,
     )
     rec = await SalaryRecord.create(
         person_id=person_id,
@@ -174,6 +172,7 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
         auto_tax=payload.auto_tax or False,
     )
     rec.tax = calc["tax"]
+        setattr(rec, field, value)
     await rec.save()
     return to_out(rec)
 

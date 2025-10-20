@@ -23,7 +23,6 @@ class SalaryCreate(BaseModel):
     housing_fund: float = 0.0
     other_deductions: float = 0.0
     tax: float = 0.0
-    auto_tax: bool = False
     note: Optional[str] = None
 
 
@@ -46,7 +45,6 @@ class SalaryUpdate(BaseModel):
     housing_fund: Optional[float] = None
     other_deductions: Optional[float] = None
     tax: Optional[float] = None
-    auto_tax: Optional[bool] = None
     note: Optional[str] = None
 
 

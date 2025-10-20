@@ -495,51 +495,24 @@ onMounted(async () => {
 
     <!-- Empty State -->
     <el-card class="empty-state-card" shadow="hover" v-if="!loading && yearly.length === 0">
-      <div class="empty-state">
-        <div class="empty-illustration">
-          <div class="empty-icon-container">
-            <TrendingUp class="empty-icon-main" />
-            <div class="empty-icon-dots">
-              <span class="dot dot-1"></span>
-              <span class="dot dot-2"></span>
-              <span class="dot dot-3"></span>
-            </div>
-          </div>
-        </div>
-        <div class="empty-content">
-          <h3 class="empty-title">
-            {{ selectedPersonId ? '该用户暂无统计数据' : '开始您的数据分析之旅' }}
-          </h3>
-          <p class="empty-description">
-            {{ selectedPersonId 
-              ? '该用户在所选年份还没有工资记录，添加工资数据后即可查看详细的统计分析。' 
-              : '系统中还没有任何数据记录。添加用户和工资信息，即可享受强大的数据分析功能。' 
-            }}
-          </p>
-          <div class="empty-features">
-            <div class="feature-item">
-              <div class="feature-icon">📈</div>
-              <span>实时收入趋势分析</span>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon">💰</div>
-              <span>税前税后智能对比</span>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon">📊</div>
-              <span>年度统计报表生成</span>
-            </div>
-          </div>
-          <el-button 
-            type="primary" 
-            size="large" 
-            @click="$router.push('/persons')" 
-            class="empty-action"
-          >
-            <Plus class="button-icon" />
-            {{ selectedPersonId ? '添加工资记录' : '添加用户信息' }}
-          </el-button>
-        </div>
+      <div class="empty-container">
+        <div class="empty-icon">📊</div>
+        <h3 class="empty-title">暂无统计数据</h3>
+        <p class="empty-description">
+          {{ selectedPersonId 
+            ? '该用户在所选年份还没有工资记录，添加工资数据后即可查看详细的统计分析' 
+            : '还没有任何数据记录，点击下面的按钮开始添加' 
+          }}
+        </p>
+        <el-button 
+          type="primary" 
+          size="large" 
+          @click="$router.push('/persons')" 
+          class="empty-action"
+        >
+          <Plus class="button-icon" />
+          {{ selectedPersonId ? '添加工资记录' : '添加用户信息' }}
+        </el-button>
       </div>
     </el-card>
 
@@ -741,260 +714,45 @@ onMounted(async () => {
   }
 }
 
-/* Empty State Styles - Consistent with Persons.vue */
-.empty-state-wrapper {
-  margin-top: 20px;
-}
-
+/* Empty State Styles */
 .empty-state-card {
-  background: white;
-  border-radius: 20px;
-  padding: 48px 40px;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  max-width: 1000px;
-  width: 100%;
-  position: relative;
+  border-radius: 16px;
   overflow: hidden;
-  margin: 0 auto;
-  animation: pulse 4s infinite ease-in-out;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60px 20px;
+.empty-state-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.empty-container {
+  padding: 3rem;
   text-align: center;
-  
-  @media (min-width: 768px) {
-    flex-direction: row;
-    text-align: left;
-    padding: 60px 80px;
-    justify-content: center;
-    max-width: 1000px;
-    margin: 0 auto;
-  }
 }
 
-.empty-illustration {
-  margin-bottom: 30px;
-  position: relative;
-  
-  @media (min-width: 768px) {
-    margin-right: 60px;
-    margin-bottom: 0;
-  }
-}
-
-.empty-icon-container {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  animation: float 6s infinite ease-in-out;
-}
-
-.empty-icon-main {
-  width: 50px;
-  height: 50px;
-  color: #667eea;
-  opacity: 0.9;
-}
-
-.empty-icon-dots {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-
-.dot {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #764ba2;
-  opacity: 0.7;
-}
-
-.dot-1 {
-  top: 20%;
-  right: 10%;
-  animation: float 3s infinite ease-in-out;
-}
-
-.dot-2 {
-  bottom: 20%;
-  right: 20%;
-  width: 15px;
-  height: 15px;
-  background: #667eea;
-  animation: float 3.5s infinite ease-in-out;
-}
-
-.dot-3 {
-  bottom: 30%;
-  left: 15%;
-  width: 12px;
-  height: 12px;
-  background: #43e97b;
-  animation: float 4s infinite ease-in-out;
-}
-
-.empty-content {
-  flex: 1;
-  max-width: 500px;
-  margin: 0 auto;
-  
-  @media (min-width: 768px) {
-    margin: 0;
-  }
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
 }
 
 .empty-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 16px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
 }
 
 .empty-description {
-  font-size: 16px;
-  color: #7f8c8d;
-  margin: 0 0 30px 0;
-  line-height: 1.6;
-}
-
-.empty-features {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-  
-  @media (min-width: 768px) {
-    justify-content: flex-start;
-  }
-}
-
-.feature-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  
-  @media (min-width: 768px) {
-    flex-direction: row;
-  }
-}
-
-.feature-icon {
-  font-size: 20px;
-  opacity: 0.8;
-}
-
-.empty-action {
-  border-radius: 12px;
-  padding: 12px 24px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
-}
-
-.empty-action:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 20px rgba(102, 126, 234, 0.4);
+  color: #6b7280;
+  margin-bottom: 1.5rem;
 }
 
 .button-icon {
   margin-right: 8px;
   width: 16px;
   height: 16px;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-/* Mobile responsive for empty state */
-@media (max-width: 768px) {
-  .empty-state-card {
-    padding: 40px 28px;
-    margin: 0 16px;
-    border-radius: 20px;
-  }
-  
-  .empty-title {
-    font-size: 24px;
-  }
-  
-  .empty-description {
-    font-size: 15px;
-  }
-  
-  .empty-features {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 24px;
-  }
-  
-  .empty-actions {
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-  }
-  
-  .primary-action,
-  .secondary-action {
-    width: 100%;
-    max-width: 320px;
-    padding: 16px 32px;
-  }
-  
-  .chart-icon {
-    padding: 24px;
-  }
-  
-  .empty-chart {
-    width: 120px;
-    height: 96px;
-  }
-  
-  .floating-elements {
-    display: none;
-  }
 }
 </style>

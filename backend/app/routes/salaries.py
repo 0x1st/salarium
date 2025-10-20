@@ -172,7 +172,7 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
         auto_tax=payload.auto_tax or False,
     )
     rec.tax = calc["tax"]
-        setattr(rec, field, value)
+    setattr(rec, field, value)
     await rec.save()
     return to_out(rec)
 

@@ -64,7 +64,6 @@ def compute_payroll(
         + computer_allowance
         + other_income
         - total_deductions
-        - tax_final
     )
     
     return {

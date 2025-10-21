@@ -40,8 +40,8 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
       <el-card shadow="hover">
         <KPICards :items="[
           { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#409EFF' },
-          { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#67C23A' },
-          { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#F56C6C' }
+          { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#F56C6C' },
+          { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#67C23A' }
         ]" />
       </el-card>
 

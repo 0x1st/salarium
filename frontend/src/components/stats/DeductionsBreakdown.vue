@@ -31,7 +31,7 @@ function renderStack() {
   stackChart.setOption({
     title: { text: '扣除项月度趋势', left: 'center' },
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
-    legend: { top: 28 },
+    legend: { top: 8 },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },

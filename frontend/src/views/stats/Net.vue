@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useStatsStore } from '../../store/stats'
 import NetIncomeChart from '../../components/stats/NetIncomeChart.vue'
 import GrossVsNetBar from '../../components/stats/GrossVsNetBar.vue'
 import WaterfallChart from '../../components/stats/WaterfallChart.vue'
 import KPICards from '../../components/stats/KPICards.vue'
+import EmptyState from '../../components/EmptyState.vue'
 import { formatCurrency } from '../../utils/number'
 
 const stats = useStatsStore()
@@ -12,6 +13,8 @@ const net = ref([])
 const gvn = ref([])
 const loading = ref(false)
 const error = ref(null)
+
+const hasData = computed(() => (net.value?.length || 0) > 0 || (gvn.value?.length || 0) > 0)
 
 async function load() {
   loading.value = true
@@ -30,27 +33,27 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
 
 <template>
   <div class="net-grid">
-    <el-card shadow="hover">
-      <KPICards :items="[
-        { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#409EFF' },
-        { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#67C23A' },
-        { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#F56C6C' }
-      ]" />
-    </el-card>
+    <div v-if="loading" style="padding: 16px"><el-skeleton :rows="6" animated /></div>
+    <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
+    <EmptyState v-else-if="!hasData" />
+    <template v-else>
+      <el-card shadow="hover">
+        <KPICards :items="[
+          { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#409EFF' },
+          { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#67C23A' },
+          { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#F56C6C' }
+        ]" />
+      </el-card>
 
-    <el-card shadow="hover">
-      <NetIncomeChart :data="net" />
-    </el-card>
+      <el-card shadow="hover">
+        <NetIncomeChart :data="net" />
+      </el-card>
 
-    <div class="two-col">
-      <el-card shadow="hover"><GrossVsNetBar :data="gvn" /></el-card>
-      <el-card shadow="hover"><WaterfallChart :data="gvn" /></el-card>
-    </div>
-
-    <div v-if="!loading && error" class="empty">
-      <p>加载失败，请重试</p>
-      <el-button type="primary" @click="load">重试</el-button>
-    </div>
+      <div class="two-col">
+        <el-card shadow="hover"><GrossVsNetBar :data="gvn" /></el-card>
+        <el-card shadow="hover"><WaterfallChart :data="gvn" /></el-card>
+      </div>
+    </template>
   </div>
 </template>
 

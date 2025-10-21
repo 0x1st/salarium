@@ -153,16 +153,32 @@ class MonthlyTableRow(BaseModel):
     person_name: str
     year: int
     month: int
+    # Income fields
     base_salary: float
     performance_salary: float
     high_temp_allowance: float
     low_temp_allowance: float
     computer_allowance: float
+    meal_allowance: float
+    mid_autumn_benefit: float
+    dragon_boat_benefit: float
+    spring_festival_benefit: float
     other_income: float
-    benefits_total: float
+    # Deduction fields
+    pension_insurance: float
+    medical_insurance: float
+    unemployment_insurance: float
+    critical_illness_insurance: float
+    enterprise_annuity: float
+    housing_fund: float
+    other_deductions: float
+    # Totals
+    income_total: float
     deductions_total: float
-    tax: float
+    benefits_total: float
+    actual_take_home: float
     net_income: float
+    tax: float
     note: Optional[str]
 
 
@@ -170,8 +186,28 @@ class AnnualTableRow(BaseModel):
     person_id: int
     person_name: str
     year: int
-    total_income: float
-    total_deductions: float
-    total_net_income: float
+    # Income totals
+    base_salary_total: float
+    performance_salary_total: float
+    high_temp_allowance_total: float
+    low_temp_allowance_total: float
+    computer_allowance_total: float
+    meal_allowance_total: float
+    mid_autumn_benefit_total: float
+    dragon_boat_benefit_total: float
+    spring_festival_benefit_total: float
+    other_income_total: float
+    # Deduction totals
+    pension_insurance_total: float
+    medical_insurance_total: float
+    unemployment_insurance_total: float
+    critical_illness_insurance_total: float
+    enterprise_annuity_total: float
+    housing_fund_total: float
+    other_deductions_total: float
+    # Grand totals
+    income_total: float
+    deductions_total: float
     benefits_total: float
+    actual_take_home_total: float
     yoy_growth: Optional[float]

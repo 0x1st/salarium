@@ -661,21 +661,38 @@ async def monthly_table(
         benefits = _benefits_sum(r)
         deductions = _deductions_sum(r)
         net = _unified_net_income(r)
+        income_total = _gross_income_full(r)
         rows.append(MonthlyTableRow(
             person_id=r.person_id,
             person_name=persons.get(r.person_id, str(r.person_id)),
             year=r.year,
             month=r.month,
+            # incomes
             base_salary=float(_D(r.base_salary)),
             performance_salary=float(_D(r.performance_salary)),
             high_temp_allowance=float(_D(r.high_temp_allowance)),
             low_temp_allowance=float(_D(r.low_temp_allowance)),
             computer_allowance=float(_D(r.computer_allowance)),
+            meal_allowance=float(_D(r.meal_allowance)),
+            mid_autumn_benefit=float(_D(r.mid_autumn_benefit)),
+            dragon_boat_benefit=float(_D(r.dragon_boat_benefit)),
+            spring_festival_benefit=float(_D(r.spring_festival_benefit)),
             other_income=float(_D(r.other_income)),
-            benefits_total=float(benefits),
+            # deductions
+            pension_insurance=float(_D(r.pension_insurance)),
+            medical_insurance=float(_D(r.medical_insurance)),
+            unemployment_insurance=float(_D(r.unemployment_insurance)),
+            critical_illness_insurance=float(_D(r.critical_illness_insurance)),
+            enterprise_annuity=float(_D(r.enterprise_annuity)),
+            housing_fund=float(_D(r.housing_fund)),
+            other_deductions=float(_D(r.other_deductions)),
+            # totals
+            income_total=float(income_total),
             deductions_total=float(deductions),
-            tax=float(_D(r.tax)),
+            benefits_total=float(benefits),
+            actual_take_home=float(net),
             net_income=float(net),
+            tax=float(_D(r.tax)),
             note=r.note,
         ))
 
@@ -694,20 +711,64 @@ async def annual_table(
 
     recs = await SalaryRecord.filter(person_id__in=person_ids, year=year).all()
 
-    # Current year aggregates
+    # Current year aggregates across all fixed fields
     agg = {}
     for r in recs:
         pid = r.person_id
         cur = agg.get(pid, {
-            "income": Decimal("0"),
-            "deductions": Decimal("0"),
+            # income items
+            "base_salary": Decimal("0"),
+            "performance_salary": Decimal("0"),
+            "high_temp_allowance": Decimal("0"),
+            "low_temp_allowance": Decimal("0"),
+            "computer_allowance": Decimal("0"),
+            "meal_allowance": Decimal("0"),
+            "mid_autumn_benefit": Decimal("0"),
+            "dragon_boat_benefit": Decimal("0"),
+            "spring_festival_benefit": Decimal("0"),
+            "other_income": Decimal("0"),
+            # deduction items
+            "pension_insurance": Decimal("0"),
+            "medical_insurance": Decimal("0"),
+            "unemployment_insurance": Decimal("0"),
+            "critical_illness_insurance": Decimal("0"),
+            "enterprise_annuity": Decimal("0"),
+            "housing_fund": Decimal("0"),
+            "other_deductions": Decimal("0"),
+            # derived totals
+            "income_total": Decimal("0"),
+            "deductions_total": Decimal("0"),
+            "benefits_total": Decimal("0"),
+            "actual_take_home_total": Decimal("0"),
             "net": Decimal("0"),
-            "benefits": Decimal("0"),
         })
-        cur["income"] += _gross_income_full(r)
-        cur["deductions"] += _deductions_sum(r)
-        cur["net"] += _unified_net_income(r)
-        cur["benefits"] += _benefits_sum(r)
+        # accumulate incomes
+        cur["base_salary"] += _D(r.base_salary)
+        cur["performance_salary"] += _D(r.performance_salary)
+        cur["high_temp_allowance"] += _D(r.high_temp_allowance)
+        cur["low_temp_allowance"] += _D(r.low_temp_allowance)
+        cur["computer_allowance"] += _D(r.computer_allowance)
+        cur["meal_allowance"] += _D(r.meal_allowance)
+        cur["mid_autumn_benefit"] += _D(r.mid_autumn_benefit)
+        cur["dragon_boat_benefit"] += _D(r.dragon_boat_benefit)
+        cur["spring_festival_benefit"] += _D(r.spring_festival_benefit)
+        cur["other_income"] += _D(r.other_income)
+        # accumulate deductions
+        cur["pension_insurance"] += _D(r.pension_insurance)
+        cur["medical_insurance"] += _D(r.medical_insurance)
+        cur["unemployment_insurance"] += _D(r.unemployment_insurance)
+        cur["critical_illness_insurance"] += _D(r.critical_illness_insurance)
+        cur["enterprise_annuity"] += _D(r.enterprise_annuity)
+        cur["housing_fund"] += _D(r.housing_fund)
+        cur["other_deductions"] += _D(r.other_deductions)
+        # derived
+        cur["income_total"] += _gross_income_full(r)
+        cur["deductions_total"] += _deductions_sum(r)
+        b_total = _benefits_sum(r)
+        cur["benefits_total"] += b_total
+        n = _unified_net_income(r)
+        cur["actual_take_home_total"] += n
+        cur["net"] += n
         agg[pid] = cur
 
     # Previous year nets for YoY
@@ -724,13 +785,33 @@ async def annual_table(
             person_id=pid,
             person_name=name_map.get(pid, str(pid)),
             year=year,
-            total_income=float(cur["income"]),
-            total_deductions=float(cur["deductions"]),
-            total_net_income=float(cur["net"]),
-            benefits_total=float(cur["benefits"]),
+            # income totals
+            base_salary_total=float(cur["base_salary"]),
+            performance_salary_total=float(cur["performance_salary"]),
+            high_temp_allowance_total=float(cur["high_temp_allowance"]),
+            low_temp_allowance_total=float(cur["low_temp_allowance"]),
+            computer_allowance_total=float(cur["computer_allowance"]),
+            meal_allowance_total=float(cur["meal_allowance"]),
+            mid_autumn_benefit_total=float(cur["mid_autumn_benefit"]),
+            dragon_boat_benefit_total=float(cur["dragon_boat_benefit"]),
+            spring_festival_benefit_total=float(cur["spring_festival_benefit"]),
+            other_income_total=float(cur["other_income"]),
+            # deduction totals
+            pension_insurance_total=float(cur["pension_insurance"]),
+            medical_insurance_total=float(cur["medical_insurance"]),
+            unemployment_insurance_total=float(cur["unemployment_insurance"]),
+            critical_illness_insurance_total=float(cur["critical_illness_insurance"]),
+            enterprise_annuity_total=float(cur["enterprise_annuity"]),
+            housing_fund_total=float(cur["housing_fund"]),
+            other_deductions_total=float(cur["other_deductions"]),
+            # grand totals
+            income_total=float(cur["income_total"]),
+            deductions_total=float(cur["deductions_total"]),
+            benefits_total=float(cur["benefits_total"]),
+            actual_take_home_total=float(cur["actual_take_home_total"]),
             yoy_growth=yoy,
         ))
 
-    # Sort by total_net_income desc
-    rows.sort(key=lambda r: r.total_net_income, reverse=True)
+    # Sort by actual_take_home_total desc
+    rows.sort(key=lambda r: r.actual_take_home_total, reverse=True)
     return rows

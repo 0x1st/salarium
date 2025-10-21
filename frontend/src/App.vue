@@ -24,6 +24,7 @@ function handleLogout() {
 
 function toggleSidebar() {
   sidebarCollapsed.value = !sidebarCollapsed.value
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 0)
 }
 
 function toggleMobileMenu() {

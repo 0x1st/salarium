@@ -34,12 +34,7 @@ watch(() => stats.refreshToken, () => { load() })
       <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
       <EmptyState v-else-if="!hasData" />
       <el-card v-else shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">{{ data?.person_name }} 累计曲线</span>
-          </div>
-        </template>
-        <CumulativeContribChart :points="data?.points || []" />
+        <CumulativeContribChart :points="data?.points || []" :title="(data?.person_name || '') + ' 累计曲线'" />
       </el-card>
     </div>
   </div>

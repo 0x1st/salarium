@@ -3,7 +3,7 @@ import { useUserStore } from '../store/user'
 
 function client() {
   const user = useUserStore()
-  return axios.create({ baseURL: '/api', headers: { Authorization: `Bearer ${user.token}` } })
+  return axios.create({ baseURL: '/api', headers: { Authorization: `Bearer ${user.token}`, 'Cache-Control': 'no-store', Pragma: 'no-cache', Expires: '0' } })
 }
 
 function paramsFromFilter({ year, personId, range }) {

@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, gradient, currencyFormatter, responsiveResize } from '../../utils/charts'
+import { initChart, baseGrid, axisCurrencyFormatter, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   data: { type: Array, default: () => [] }, // IncomeComposition[]
+  title: { type: String, default: '各收入项分月堆叠面积' },
+  note: { type: String, default: '' },
 })
 
 const el = ref(null)
@@ -20,7 +22,7 @@ function byMonth() {
     const v = map.get(key)
     v.base += r.base_salary || 0
     v.perf += r.performance_salary || 0
-    v.allow += (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.computer_allowance || 0)
+    v.allow += (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.meal_allowance || 0) + (r.computer_allowance || 0)
   }
   return Array.from(map.values()).sort((a, b) => (a.year - b.year) || (a.month - b.month))
 }
@@ -29,14 +31,12 @@ function render() {
   if (!el.value) return
   if (!chart) chart = initChart(el.value)
   const rows = byMonth()
-  const labels = rows.map(r => `${r.month}月`)
 
   chart.setOption({
-    title: { text: '各收入项分月堆叠面积', left: 'center' },
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
     legend: { bottom: 8 },
     grid: baseGrid(),
-    xAxis: { type: 'category', data: labels },
+    xAxis: { type: 'category', data: rows.map(r => `${r.month}月`) },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },
     series: [
       { name: '基本工资', type: 'line', stack: 'total', areaStyle: {}, data: rows.map(r => r.base) },
@@ -53,5 +53,17 @@ onBeforeUnmount(() => { cleanupResize && cleanupResize(); chart && chart.dispose
 </script>
 
 <template>
-  <div class="chart" ref="el" style="height: 340px; width: 100%"></div>
+  <div>
+    <div class="chart" ref="el" style="height: 340px; width: 100%"></div>
+    <div class="chart-footer">
+      <div class="chart-title">{{ title }}</div>
+      <div v-if="note" class="chart-note">{{ note }}</div>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.chart-footer { display:flex; gap:8px; align-items:center; justify-content: center; padding: 8px 0 4px; color:#475569; flex-wrap: wrap }
+.chart-title { font-weight: 600 }
+.chart-note { font-size:12px; color:#94a3b8 }
+</style>

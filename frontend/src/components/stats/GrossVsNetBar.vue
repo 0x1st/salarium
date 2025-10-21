@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, gradient, palette, currencyFormatter, responsiveResize } from '../../utils/charts'
+import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, gradient, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
+  title: { type: String, default: '应发 vs 实际到手' },
+  note: { type: String, default: '' },
 })
 
 const el = ref(null)
@@ -19,7 +21,6 @@ function render() {
   const net = points.map(p => p.net_income)
 
   chart.setOption({
-    title: { text: '应发 vs 实际到手', left: 'center' },
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
     legend: { data: ['应发工资', '实际到手金额'], bottom: 8 },
     grid: baseGrid(),
@@ -53,5 +54,17 @@ onBeforeUnmount(() => { cleanupResize && cleanupResize(); chart && chart.dispose
 </script>
 
 <template>
-  <div class="chart" ref="el" style="height: 360px; width: 100%"></div>
+  <div>
+    <div class="chart" ref="el" style="height: 360px; width: 100%"></div>
+    <div class="chart-footer">
+      <div class="chart-title">{{ title }}</div>
+      <div v-if="note" class="chart-note">{{ note }}</div>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.chart-footer { display:flex; gap:8px; align-items:center; justify-content: center; padding: 8px 0 4px; color:#475569; flex-wrap: wrap }
+.chart-title { font-weight: 600 }
+.chart-note { font-size:12px; color:#94a3b8 }
+</style>

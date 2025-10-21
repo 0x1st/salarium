@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, currencyFormatter, responsiveResize } from '../../utils/charts'
+import { initChart, baseGrid, axisCurrencyFormatter, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   summary: { type: Array, default: () => [] }, // DeductionsBreakdownItem[]
@@ -16,7 +16,6 @@ function renderPie() {
   if (!pieEl.value) return
   if (!pieChart) pieChart = initChart(pieEl.value)
   pieChart.setOption({
-    title: { text: '扣除项占比', left: 'center' },
     tooltip: { trigger: 'item', formatter: (p) => `${p.name}: ${currencyFormatter(p.value)} (${p.percent}%)` },
     series: [
       { type: 'pie', radius: ['40%', '70%'], data: props.summary.map(s => ({ name: s.category, value: s.amount })) },
@@ -29,7 +28,6 @@ function renderStack() {
   if (!stackChart) stackChart = initChart(stackEl.value)
   const labels = props.monthly.map(m => `${m.month}月`)
   stackChart.setOption({
-    title: { text: '扣除项月度趋势', left: 'center' },
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
     legend: { bottom: 8 },
     grid: baseGrid(),
@@ -65,7 +63,18 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-    <div ref="pieEl" style="height:320px;width:100%"></div>
-    <div ref="stackEl" style="height:320px;width:100%"></div>
+    <div>
+      <div ref="pieEl" style="height:320px;width:100%"></div>
+      <div class="chart-footer"><div class="chart-title">扣除项占比</div></div>
+    </div>
+    <div>
+      <div ref="stackEl" style="height:320px;width:100%"></div>
+      <div class="chart-footer"><div class="chart-title">扣除项月度趋势</div></div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.chart-footer { display:flex; gap:8px; align-items:center; justify-content: center; padding: 8px 0 4px; color:#475569; flex-wrap: wrap }
+.chart-title { font-weight: 600 }
+</style>

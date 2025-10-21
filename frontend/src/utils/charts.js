@@ -9,7 +9,8 @@ const theme = {
     fontSize: 12,
     color: '#334155',
   },
-  grid: { left: '3%', right: '3%', bottom: '8%', top: '12%', containLabel: true },
+  // Unified layout to avoid overlapping titles/legends with plotting area
+  grid: { top: 56, right: 24, bottom: 48, left: 48, containLabel: true },
   tooltip: {
     backgroundColor: 'rgba(17,24,39,0.9)',
     borderWidth: 0,
@@ -17,13 +18,13 @@ const theme = {
     extraCssText: 'box-shadow:0 6px 18px rgba(0,0,0,0.2); border-radius:8px; padding:10px 12px;',
   },
   legend: {
-    top: 28,
+    top: 8,
     textStyle: { color: '#475569' },
   },
   categoryAxis: {
     axisLine: { lineStyle: { color: '#e2e8f0' } },
     axisTick: { alignWithLabel: true, lineStyle: { color: '#e2e8f0' } },
-    axisLabel: { color: '#64748b' },
+    axisLabel: { color: '#64748b', rotate: 0, interval: 'auto', margin: 8 },
     splitLine: { show: false },
   },
   valueAxis: {
@@ -44,7 +45,7 @@ export function initChart(el) {
 }
 
 export function baseGrid() {
-  return { left: '3%', right: '3%', bottom: '8%', top: '12%', containLabel: true }
+  return { top: 56, right: 24, bottom: 48, left: 48, containLabel: true }
 }
 
 export function currencyFormatter(val) {
@@ -63,7 +64,19 @@ export function responsiveResize(instance) {
   if (!instance) return () => {}
   const handler = () => instance.resize()
   window.addEventListener('resize', handler)
-  return () => window.removeEventListener('resize', handler)
+  // Observe container size changes as well
+  let ro
+  try {
+    const el = instance.getDom && instance.getDom()
+    if (typeof ResizeObserver !== 'undefined' && el) {
+      ro = new ResizeObserver(() => instance.resize())
+      ro.observe(el)
+    }
+  } catch (e) { /* no-op */ }
+  return () => {
+    window.removeEventListener('resize', handler)
+    if (ro) ro.disconnect()
+  }
 }
 
 export const palette = {

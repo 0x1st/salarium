@@ -24,17 +24,17 @@ function exportCSV() {
   const headers = [
     '姓名','年份','月份',
     // income
-    '基本工资','绩效工资','高温补贴','低温补贴','电脑补贴','餐补','中秋福利','端午福利','春节福利','其他收入','收入合计',
+    '基本工资','绩效工资','高温补贴','低温补贴','电脑补贴','餐补','中秋福利','端午福利','春节福利','其他收入','福利合计','收入合计',
     // deductions
-    '养老保险','医疗保险','失业保险','大病互助保险','企业年金','住房公积金','其他扣除','扣除合计',
+    '养老保险','医疗保险','失业保险','大病互助保险','企业年金','住房公积金','其他扣除','扣除合计','个税',
     // totals
-    '福利合计','个税','实际到手金额','备注'
+    '实际到手金额','备注'
   ]
   const rows = monthly.value.map(r => [
     r.person_name, r.year, r.month,
-    r.base_salary, r.performance_salary, r.high_temp_allowance, r.low_temp_allowance, r.computer_allowance, r.meal_allowance, r.mid_autumn_benefit, r.dragon_boat_benefit, r.spring_festival_benefit, r.other_income, r.income_total,
-    r.pension_insurance, r.medical_insurance, r.unemployment_insurance, r.critical_illness_insurance, r.enterprise_annuity, r.housing_fund, r.other_deductions, r.deductions_total,
-    r.benefits_total, r.tax, r.actual_take_home, r.note || ''
+    r.base_salary, r.performance_salary, r.high_temp_allowance, r.low_temp_allowance, r.computer_allowance, r.meal_allowance, r.mid_autumn_benefit, r.dragon_boat_benefit, r.spring_festival_benefit, r.other_income, r.benefits_total, r.income_total,
+    r.pension_insurance, r.medical_insurance, r.unemployment_insurance, r.critical_illness_insurance, r.enterprise_annuity, r.housing_fund, r.other_deductions, r.deductions_total, r.tax,
+    r.actual_take_home, r.note || ''
   ])
   const csv = [headers, ...rows].map(r => r.map(v => (typeof v === 'string' ? '"' + v.replace(/"/g,'""') + '"' : v)).join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -118,9 +118,6 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
           <el-table-column prop="other_income" label="其他收入" width="120" sortable align="right" show-overflow-tooltip>
             <template #default="{ row }">{{ formatCurrency(row.other_income) }}</template>
           </el-table-column>
-          <el-table-column prop="income_total" label="收入合计" width="140" sortable align="right" show-overflow-tooltip>
-            <template #default="{ row }">{{ formatCurrency(row.income_total) }}</template>
-          </el-table-column>
 
           <!-- deduction fields -->
           <el-table-column prop="pension_insurance" label="养老保险" width="120" sortable align="right" show-overflow-tooltip>
@@ -144,13 +141,16 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
           <el-table-column prop="other_deductions" label="其他扣除" width="120" sortable align="right" show-overflow-tooltip>
             <template #default="{ row }">-{{ formatCurrency(row.other_deductions) }}</template>
           </el-table-column>
-          <el-table-column prop="deductions_total" label="扣除合计" width="140" sortable align="right" show-overflow-tooltip>
-            <template #default="{ row }">-{{ formatCurrency(row.deductions_total) }}</template>
-          </el-table-column>
 
           <!-- totals -->
           <el-table-column prop="benefits_total" label="福利合计" width="120" sortable align="right" show-overflow-tooltip>
             <template #default="{ row }">{{ formatCurrency(row.benefits_total) }}</template>
+          </el-table-column>
+          <el-table-column prop="income_total" label="收入合计" width="140" sortable align="right" show-overflow-tooltip>
+            <template #default="{ row }">{{ formatCurrency(row.income_total) }}</template>
+          </el-table-column>
+          <el-table-column prop="deductions_total" label="扣除合计" width="140" sortable align="right" show-overflow-tooltip>
+            <template #default="{ row }">-{{ formatCurrency(row.deductions_total) }}</template>
           </el-table-column>
           <el-table-column prop="tax" label="个税" width="120" sortable align="right" show-overflow-tooltip>
             <template #default="{ row }">-{{ formatCurrency(row.tax) }}</template>
@@ -203,9 +203,6 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
           <el-table-column prop="other_income_total" label="其他收入" width="120" align="right" show-overflow-tooltip>
             <template #default="{ row }">{{ formatCurrency(row.other_income_total) }}</template>
           </el-table-column>
-          <el-table-column prop="income_total" label="收入合计" width="140" align="right" show-overflow-tooltip>
-            <template #default="{ row }">{{ formatCurrency(row.income_total) }}</template>
-          </el-table-column>
 
           <!-- deduction totals -->
           <el-table-column prop="pension_insurance_total" label="养老保险" width="120" align="right" show-overflow-tooltip>
@@ -229,13 +226,16 @@ watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateC
           <el-table-column prop="other_deductions_total" label="其他扣除" width="120" align="right" show-overflow-tooltip>
             <template #default="{ row }">-{{ formatCurrency(row.other_deductions_total) }}</template>
           </el-table-column>
-          <el-table-column prop="deductions_total" label="扣除合计" width="140" align="right" show-overflow-tooltip>
-            <template #default="{ row }">-{{ formatCurrency(row.deductions_total) }}</template>
-          </el-table-column>
 
           <!-- totals -->
           <el-table-column prop="benefits_total" label="福利合计" width="140" align="right" show-overflow-tooltip>
             <template #default="{ row }">{{ formatCurrency(row.benefits_total) }}</template>
+          </el-table-column>
+          <el-table-column prop="income_total" label="收入合计" width="140" align="right" show-overflow-tooltip>
+            <template #default="{ row }">{{ formatCurrency(row.income_total) }}</template>
+          </el-table-column>
+          <el-table-column prop="deductions_total" label="扣除合计" width="140" align="right" show-overflow-tooltip>
+            <template #default="{ row }">-{{ formatCurrency(row.deductions_total) }}</template>
           </el-table-column>
           <el-table-column prop="actual_take_home_total" label="实际到手金额" width="160" align="right" show-overflow-tooltip>
             <template #default="{ row }">{{ formatCurrency(row.actual_take_home_total) }}</template>

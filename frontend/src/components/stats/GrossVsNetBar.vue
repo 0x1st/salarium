@@ -21,7 +21,7 @@ function render() {
   chart.setOption({
     title: { text: '应发 vs 实际到手', left: 'center' },
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
-    legend: { data: ['应发工资', '实际到手金额'], top: 28 },
+    legend: { data: ['应发工资', '实际到手金额'], top: 8 },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },

@@ -47,7 +47,10 @@ function exportCSV() {
 }
 
 onMounted(load)
-watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateCache(); load() }, { deep: true })
+// Reload when filters change
+watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidate(); load() }, { deep: true })
+// Reload on external invalidation
+watch(() => stats.refreshToken, () => { load() })
 </script>
 
 <template>

@@ -186,10 +186,12 @@ async function submit() {
         list.value[index] = data
       }
       ElMessage.success('工资记录更新成功')
+      window.dispatchEvent(new CustomEvent('stats:invalidate'))
     } else {
       const { data } = await api.post(`/salaries/${personId.value}`, form.value)
       list.value.push(data)
       ElMessage.success('工资记录添加成功')
+      window.dispatchEvent(new CustomEvent('stats:invalidate'))
     }
     dialogVisible.value = false
   } catch (error) {
@@ -217,6 +219,7 @@ async function remove(id, yearMonth) {
     await api.delete(`/salaries/${id}`)
     list.value = list.value.filter(i => i.id !== id)
     ElMessage.success('删除成功')
+    window.dispatchEvent(new CustomEvent('stats:invalidate'))
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')

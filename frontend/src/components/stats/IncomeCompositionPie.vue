@@ -43,13 +43,13 @@ function render() {
       trigger: 'item',
       formatter: (p) => `${p.name}: ${currencyFormatter(p.value)} (${p.percent}%)`,
     },
-    legend: { orient: 'vertical', left: 10, top: 'middle' },
+    legend: { bottom: 8 },
     series: [
       {
         type: 'pie',
         name: '构成',
         radius: ['40%', '70%'],
-        center: ['60%', '50%'],
+        center: ['50%', '45%'],
         data: seriesData,
         label: { formatter: '{b}: {d}%' },
       },

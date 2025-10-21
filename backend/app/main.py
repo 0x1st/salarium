@@ -25,6 +25,18 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Add simple no-store cache headers for stats endpoints to ensure fresh data after salary mutations
+    @app.middleware("http")
+    async def add_cache_headers(request, call_next):
+        response = await call_next(request)
+        try:
+            path = request.url.path
+            if path.startswith("/api/stats"):
+                response.headers["Cache-Control"] = "no-store"
+        except Exception:
+            pass
+        return response
+
     app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
     app.include_router(persons_router, prefix="/api/persons", tags=["persons"])
     app.include_router(salaries_router, prefix="/api/salaries", tags=["salaries"])

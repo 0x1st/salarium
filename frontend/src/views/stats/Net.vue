@@ -28,7 +28,10 @@ async function load() {
 }
 
 onMounted(() => { load() })
-watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateCache(); load() }, { deep: true })
+// Reload when filters change
+watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidate(); load() }, { deep: true })
+// Reload when external invalidation occurs (e.g., salary CRUD elsewhere)
+watch(() => stats.refreshToken, () => { load() })
 </script>
 
 <template>

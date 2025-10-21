@@ -39,6 +39,9 @@ export const useStatsStore = defineStore('stats', {
     // ui state
     loading: {},
     errors: {},
+
+    // invalidation token for cross-view refresh
+    refreshToken: 0,
   }),
   getters: {
     filter(state) {
@@ -123,6 +126,15 @@ export const useStatsStore = defineStore('stats', {
       this.cache = {}
       this.loading = {}
       this.errors = {}
+      this.refreshToken++
+    },
+    // alias for clarity
+    invalidate() {
+      this.invalidateCache()
+    },
+    async refreshAll() {
+      // Bump token and let views reload themselves; keep network calls consolidated in views
+      this.invalidateCache()
     },
     resetAll() {
       this.personId = null

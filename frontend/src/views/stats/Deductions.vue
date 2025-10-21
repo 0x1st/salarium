@@ -3,13 +3,14 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useStatsStore } from '../../store/stats'
 import DeductionsBreakdown from '../../components/stats/DeductionsBreakdown.vue'
 import EmptyState from '../../components/EmptyState.vue'
+import { hasStatsData } from '../../utils/stats'
 
 const stats = useStatsStore()
 const info = ref({ summary: [], monthly: [] })
 const loading = ref(false)
 const error = ref(null)
 
-const hasData = computed(() => (info.value?.summary?.length || 0) > 0 || (info.value?.monthly?.length || 0) > 0)
+const hasData = computed(() => hasStatsData(info.value))
 
 async function load() {
   loading.value = true
@@ -20,7 +21,10 @@ async function load() {
 }
 
 onMounted(load)
-watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidateCache(); load() }, { deep: true })
+// Reload on filter changes
+watch(() => [stats.personId, stats.year, stats.range], () => { stats.invalidate(); load() }, { deep: true })
+// Reload when external modules invalidate stats (e.g., after salary CRUD)
+watch(() => stats.refreshToken, () => { load() })
 </script>
 
 <template>

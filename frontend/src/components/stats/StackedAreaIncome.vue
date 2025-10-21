@@ -34,7 +34,7 @@ function render() {
   chart.setOption({
     title: { text: '各收入项分月堆叠面积', left: 'center' },
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
-    legend: { top: 8 },
+    legend: { bottom: 8 },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },

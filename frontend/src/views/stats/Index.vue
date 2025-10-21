@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStatsStore } from '../../store/stats'
 import { useUserStore } from '../../store/user'
@@ -19,9 +19,17 @@ const user = useUserStore()
 
 const activeTab = ref('stats-net')
 
+let _removeInvalidateListener = null
 onMounted(async () => {
   await stats.ensurePersons()
   if (route.name) activeTab.value = route.name
+  const handler = () => stats.invalidate()
+  window.addEventListener('stats:invalidate', handler)
+  _removeInvalidateListener = () => window.removeEventListener('stats:invalidate', handler)
+})
+
+onBeforeUnmount(() => {
+  if (_removeInvalidateListener) _removeInvalidateListener()
 })
 
 watch(() => route.name, (n) => { if (n) activeTab.value = n })
@@ -46,7 +54,7 @@ function onTabClick(tab) {
         </el-select>
         <el-input-number v-model="stats.year" :min="2000" :max="2100" controls-position="right" class="filter-item" />
         <el-input v-model="stats.range" placeholder="自定义区间，如 2024-01..2024-12" class="filter-item wide" />
-        <el-button class="filter-item" type="primary" @click="stats.invalidateCache()">刷新数据</el-button>
+        <el-button class="filter-item" type="primary" @click="stats.invalidate()">刷新数据</el-button>
       </div>
     </div>
 

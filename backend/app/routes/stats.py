@@ -709,7 +709,7 @@ async def monthly_table(
             income_total=float(income_total),
             deductions_total=float(deductions),
             benefits_total=float(benefits),
-            actual_take_home=float(net),
+            actual_take_home=float(net + _D(r.other_income)),
             net_income=float(net),
             tax=float(_D(r.tax)),
             note=r.note,

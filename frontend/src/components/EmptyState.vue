@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   title: { type: String, default: '暂无统计信息记录' },
-  description: { type: String, default: '当前筛选条件下没有可显示的数据' },
+  description: { type: String, default: '' },
   icon: { type: String, default: '📊' },
 })
 </script>

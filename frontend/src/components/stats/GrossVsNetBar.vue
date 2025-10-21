@@ -23,7 +23,7 @@ function render() {
 
   chart.setOption({
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
-    legend: { data: ['应发工资', '实际到手金额'], top: 8 },
+    legend: { data: ['应发工资', '实际到手金额'], bottom: 8, left: 'center' },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },

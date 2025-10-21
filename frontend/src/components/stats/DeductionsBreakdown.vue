@@ -30,7 +30,7 @@ function renderStack() {
   const labels = props.monthly.map(m => `${m.month}月`)
   stackChart.setOption({
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
-    legend: { top: 8 },
+    legend: { bottom: 8, left: 'center' },
     grid: baseGrid(),
     xAxis: { type: 'category', data: labels },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },

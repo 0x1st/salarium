@@ -256,6 +256,11 @@ watch(() => stats.refreshToken, () => { load() })
 .card-header { display:flex; justify-content: space-between; align-items:center }
 .card-title { font-weight: 600 }
 
+/* Align Element Plus table spacing with Salaries page */
+:deep(.el-table th.el-table__cell) { padding: 12px 16px; background: #f9fafb; }
+:deep(.el-table td.el-table__cell) { padding: 16px; }
+:deep(.el-table .cell) { padding: 0; }
+
 /* Empty state reused style (aligned with Salaries/Persons) */
 .empty-container { padding: 3rem; text-align: center; }
 .empty-icon { font-size: 4rem; margin-bottom: 1rem; }

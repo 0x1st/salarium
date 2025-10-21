@@ -35,7 +35,7 @@ function render() {
 
   chart.setOption({
     tooltip: { trigger: 'axis', valueFormatter: (v) => currencyFormatter(v) },
-    legend: { top: 8 },
+    legend: { bottom: 8, left: 'center' },
     grid: baseGrid(),
     xAxis: { type: 'category', data: rows.map(r => `${r.month}月`) },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },

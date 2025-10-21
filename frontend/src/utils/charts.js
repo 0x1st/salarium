@@ -18,7 +18,8 @@ const theme = {
     extraCssText: 'box-shadow:0 6px 18px rgba(0,0,0,0.2); border-radius:8px; padding:10px 12px;',
   },
   legend: {
-    top: 8,
+    bottom: 8,
+    left: 'center',
     textStyle: { color: '#475569' },
   },
   categoryAxis: {

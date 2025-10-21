@@ -371,7 +371,7 @@ onMounted(load)
                 <th class="col-date">时间</th>
                 <th class="col-currency">基本工资</th>
                 <th class="col-currency">绩效工资</th>
-                <th class="col-currency">补贴福利</th>
+                <th class="col-currency">高温补贴</th>
                 <th class="col-currency">总收入</th>
                 <th class="col-currency">五险一金</th>
                 <th class="col-currency">其他扣除</th>

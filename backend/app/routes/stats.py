@@ -21,12 +21,22 @@ router = APIRouter()
 # Helpers for stats calculations aligned with the unified calculation spec
 _D = lambda v: v if isinstance(v, Decimal) else Decimal(str(v or 0))
 
-def _allowances_sum(r: SalaryRecord) -> Decimal:
+# Allowances used for net income (exclude meal allowance as per spec)
+# net = base + performance + high + low + computer - deductions
+# meal allowance is not counted toward actual take-home
+
+def _allowances_sum_net(r: SalaryRecord) -> Decimal:
     return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.computer_allowance)
 
+# Allowances for composition/gross (include meal allowance)
+
+def _allowances_sum_full(r: SalaryRecord) -> Decimal:
+    return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.meal_allowance) + _D(r.computer_allowance)
+
+# Benefits grouping (festival welfare only; excludes meal allowance)
 
 def _benefits_sum(r: SalaryRecord) -> Decimal:
-    return _D(r.meal_allowance) + _D(r.mid_autumn_benefit) + _D(r.dragon_boat_benefit) + _D(r.spring_festival_benefit)
+    return _D(r.mid_autumn_benefit) + _D(r.dragon_boat_benefit) + _D(r.spring_festival_benefit)
 
 
 def _deductions_sum(r: SalaryRecord) -> Decimal:
@@ -46,12 +56,12 @@ def _unified_net_income(r: SalaryRecord) -> Decimal:
     net = base + performance + high + low + computer - (all deductions)
     Note: excludes meal/benefits and excludes other_income and tax.
     """
-    return _D(r.base_salary) + _D(r.performance_salary) + _allowances_sum(r) - _deductions_sum(r)
+    return _D(r.base_salary) + _D(r.performance_salary) + _allowances_sum_net(r) - _deductions_sum(r)
 
 
 def _gross_income_full(r: SalaryRecord) -> Decimal:
     """Gross income for charts: sum of all income including non-cash and other income."""
-    return _D(r.base_salary) + _D(r.performance_salary) + _allowances_sum(r) + _benefits_sum(r) + _D(r.other_income)
+    return _D(r.base_salary) + _D(r.performance_salary) + _allowances_sum_full(r) + _benefits_sum(r) + _D(r.other_income)
 
 
 def _ym_num(y: int, m: int) -> int:
@@ -366,7 +376,10 @@ async def income_composition(
     month: Optional[int] = Query(default=None),
     range: Optional[str] = Query(default=None, description="时间范围，如 2024-01..2024-12 或 2024-01,2024-12"),
 ):
-    """Get income composition with percentages. Supports filtering by year/month or a custom range."""
+    """Get income composition with grouped categories per latest spec.
+    补贴 = 高温补贴 + 低温补贴 + 餐补 + 电脑补贴
+    福利 = 中秋福利 + 端午福利 + 春节福利
+    """
     q = SalaryRecord.filter(person__user_id=user.id)
     if person_id:
         q = q.filter(person_id=person_id)
@@ -388,18 +401,23 @@ async def income_composition(
     result: List[IncomeComposition] = []
     
     for r in recs:
-        allowances = r.high_temp_allowance + r.low_temp_allowance + r.computer_allowance
-        non_cash_benefits = r.meal_allowance + r.mid_autumn_benefit + r.dragon_boat_benefit + r.spring_festival_benefit
-        total_income = (r.base_salary + r.performance_salary + allowances + 
-                       non_cash_benefits + r.other_income)
+        allowances = float(_allowances_sum_full(r))
+        benefits = float(_benefits_sum(r))
+        total_income = float(
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _D(allowances)
+            + _D(benefits)
+            + _D(r.other_income)
+        )
         
         # Calculate percentages (avoid division by zero)
         if total_income > 0:
-            base_salary_percent = (r.base_salary / total_income) * 100
-            performance_percent = (r.performance_salary / total_income) * 100
-            allowances_percent = (allowances / total_income) * 100
-            benefits_percent = (non_cash_benefits / total_income) * 100
-            other_percent = (r.other_income / total_income) * 100
+            base_salary_percent = float(_D(r.base_salary) / _D(total_income) * 100)
+            performance_percent = float(_D(r.performance_salary) / _D(total_income) * 100)
+            allowances_percent = float(_D(allowances) / _D(total_income) * 100)
+            benefits_percent = float(_D(benefits) / _D(total_income) * 100)
+            other_percent = float(_D(r.other_income) / _D(total_income) * 100)
         else:
             base_salary_percent = 0.0
             performance_percent = 0.0
@@ -411,13 +429,14 @@ async def income_composition(
             person_id=r.person_id,
             year=r.year,
             month=r.month,
-            base_salary=r.base_salary,
-            performance_salary=r.performance_salary,
-            high_temp_allowance=r.high_temp_allowance,
-            low_temp_allowance=r.low_temp_allowance,
-            computer_allowance=r.computer_allowance,
-            other_income=r.other_income,
-            non_cash_benefits=non_cash_benefits,
+            base_salary=float(_D(r.base_salary)),
+            performance_salary=float(_D(r.performance_salary)),
+            high_temp_allowance=float(_D(r.high_temp_allowance)),
+            low_temp_allowance=float(_D(r.low_temp_allowance)),
+            computer_allowance=float(_D(r.computer_allowance)),
+            meal_allowance=float(_D(r.meal_allowance)),
+            other_income=float(_D(r.other_income)),
+            non_cash_benefits=float(_D(benefits)),
             total_income=total_income,
             base_salary_percent=base_salary_percent,
             performance_percent=performance_percent,

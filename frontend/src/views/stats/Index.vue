@@ -23,7 +23,7 @@ let _removeInvalidateListener = null
 onMounted(async () => {
   await stats.ensurePersons()
   if (route.name) activeTab.value = route.name
-  const handler = () => stats.invalidate()
+  const handler = () => stats.refreshAll()
   window.addEventListener('stats:invalidate', handler)
   _removeInvalidateListener = () => window.removeEventListener('stats:invalidate', handler)
 })
@@ -32,11 +32,14 @@ onBeforeUnmount(() => {
   if (_removeInvalidateListener) _removeInvalidateListener()
 })
 
-watch(() => route.name, (n) => { if (n) activeTab.value = n })
+watch(() => route.name, (n) => { if (n) { activeTab.value = n; setTimeout(() => window.dispatchEvent(new Event('resize')), 0) } })
 
 function onTabClick(tab) {
   const t = tabs.find(t => t.name === tab.paneName)
-  if (t) router.push(t.path)
+  if (t) {
+    router.push(t.path)
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 0)
+  }
 }
 </script>
 
@@ -54,7 +57,7 @@ function onTabClick(tab) {
         </el-select>
         <el-input-number v-model="stats.year" :min="2000" :max="2100" controls-position="right" class="filter-item" />
         <el-input v-model="stats.range" placeholder="自定义区间，如 2024-01..2024-12" class="filter-item wide" />
-        <el-button class="filter-item" type="primary" @click="stats.invalidate()">刷新数据</el-button>
+        <el-button class="filter-item" type="primary" @click="stats.refreshAll()">刷新数据</el-button>
       </div>
     </div>
 

@@ -35,10 +35,13 @@ export const useStatsStore = defineStore('stats', {
 
     // caches
     cache: {},
+    inflight: {},
 
     // ui state
     loading: {},
     errors: {},
+    isRefreshing: false,
+    _refreshTimer: null,
 
     // invalidation token for cross-view refresh
     refreshToken: 0,
@@ -75,18 +78,24 @@ export const useStatsStore = defineStore('stats', {
     async _useCache(name, fetcher) {
       const key = cacheKey(name, this.filter)
       if (this.cache[key]) return this.cache[key]
+      if (this.inflight[key]) return this.inflight[key]
       this.loading[name] = true
       this.errors[name] = null
-      try {
-        const data = await fetcher()
-        this.cache[key] = data
-        return data
-      } catch (e) {
-        this.errors[name] = e
-        throw e
-      } finally {
-        this.loading[name] = false
-      }
+      const p = (async () => {
+        try {
+          const data = await fetcher()
+          this.cache[key] = data
+          return data
+        } catch (e) {
+          this.errors[name] = e
+          throw e
+        } finally {
+          this.loading[name] = false
+          delete this.inflight[key]
+        }
+      })()
+      this.inflight[key] = p
+      return p
     },
 
     // Data loaders
@@ -124,6 +133,7 @@ export const useStatsStore = defineStore('stats', {
     // helpers
     invalidateCache() {
       this.cache = {}
+      this.inflight = {}
       this.loading = {}
       this.errors = {}
       this.refreshToken++
@@ -133,8 +143,26 @@ export const useStatsStore = defineStore('stats', {
       this.invalidateCache()
     },
     async refreshAll() {
-      // Bump token and let views reload themselves; keep network calls consolidated in views
-      this.invalidateCache()
+      // Debounce refresh to consolidate multiple triggers
+      if (this._refreshTimer) clearTimeout(this._refreshTimer)
+      this._refreshTimer = setTimeout(async () => {
+        this.invalidateCache()
+        this.isRefreshing = true
+        try {
+          const tasks = [
+            this.loadMonthlyNetIncome(),
+            this.loadGrossVsNetMonthly(),
+            this.loadIncomeComposition(),
+            this.loadDeductionsBreakdown(),
+            this.loadMonthlyTable(),
+            this.loadAnnualTable(),
+          ]
+          if (this.personId) tasks.push(this.loadContributionsCumulative())
+          await Promise.allSettled(tasks)
+        } finally {
+          this.isRefreshing = false
+        }
+      }, 100)
     },
     resetAll() {
       this.personId = null

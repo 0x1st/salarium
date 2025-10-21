@@ -78,6 +78,7 @@ class IncomeComposition(BaseModel):
     high_temp_allowance: float
     low_temp_allowance: float
     computer_allowance: float
+    meal_allowance: float
     other_income: float
     non_cash_benefits: float
     total_income: float

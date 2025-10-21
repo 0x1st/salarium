@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, gradient, currencyFormatter, responsiveResize } from '../../utils/charts'
+import { initChart, currencyFormatter, responsiveResize } from '../../utils/charts'
 
 const props = defineProps({
   data: { type: Array, default: () => [] }, // IncomeComposition[]
+  title: { type: String, default: '收入构成环图' },
+  note: { type: String, default: '' },
 })
 
 const el = ref(null)
@@ -16,8 +18,9 @@ const summary = computed(() => {
   for (const r of props.data) {
     agg.base += r.base_salary || 0
     agg.perf += r.performance_salary || 0
-    const allow = (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.computer_allowance || 0)
+    const allow = (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.meal_allowance || 0) + (r.computer_allowance || 0)
     agg.allow += allow
+    // non_cash_benefits from API already excludes meal_allowance per latest spec
     agg.benefits += r.non_cash_benefits || 0
     agg.other += r.other_income || 0
   }
@@ -38,7 +41,6 @@ function render() {
   ]
 
   chart.setOption({
-    title: { text: '收入构成环图', left: 'center' },
     tooltip: {
       trigger: 'item',
       formatter: (p) => `${p.name}: ${currencyFormatter(p.value)} (${p.percent}%)`,
@@ -64,5 +66,17 @@ onBeforeUnmount(() => { cleanupResize && cleanupResize(); chart && chart.dispose
 </script>
 
 <template>
-  <div class="chart" ref="el" style="height: 360px; width: 100%"></div>
+  <div>
+    <div class="chart" ref="el" style="height: 360px; width: 100%"></div>
+    <div class="chart-footer">
+      <div class="chart-title">{{ title }}</div>
+      <div v-if="note" class="chart-note">{{ note }}</div>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.chart-footer { display:flex; gap:8px; align-items:center; justify-content: center; padding: 8px 0 4px; color:#475569; flex-wrap: wrap }
+.chart-title { font-weight: 600 }
+.chart-note { font-size:12px; color:#94a3b8 }
+</style>

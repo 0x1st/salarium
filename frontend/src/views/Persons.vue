@@ -2,13 +2,17 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useUserStore } from '../store/user'
+import { useStatsStore } from '../store/stats'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Users, DollarSign, Trash2, Edit, User, TrendingUp, Calendar, Award } from 'lucide-vue-next'
 
 
 const user = useUserStore()
+const statsStore = useStatsStore()
 const list = ref([])
 const dialogVisible = ref(false)
+const isEditing = ref(false)
+const editingId = ref(null)
 const form = ref({ 
   name: '', 
   note: '',
@@ -22,6 +26,9 @@ const api = axios.create({
   baseURL: '/api',
   headers: { Authorization: `Bearer ${user.token}` },
 })
+
+// Dialog title
+const dialogTitle = computed(() => (isEditing.value ? '编辑人员' : '添加人员'))
 
 // Computed properties for statistics
 const currentMonth = computed(() => {
@@ -51,6 +58,8 @@ async function load() {
 
 // Open create person dialog
 function openCreate() {
+  isEditing.value = false
+  editingId.value = null
   form.value = { 
     name: '', 
     note: '',
@@ -61,20 +70,60 @@ function openCreate() {
   dialogVisible.value = true
 }
 
-// Submit new person
+// Open edit dialog
+function openEdit(person) {
+  isEditing.value = true
+  editingId.value = person.id
+  form.value = {
+    name: person.name || '',
+    note: person.note || '',
+    pension_history: Number(person.pension_history || 0),
+    medical_history: Number(person.medical_history || 0),
+    housing_fund_history: Number(person.housing_fund_history || 0),
+  }
+  dialogVisible.value = true
+}
+
+// Submit create/update person
 async function submit() {
-  if (!form.value.name.trim()) {
+  const name = (form.value.name || '').trim()
+  if (!name) {
     ElMessage.warning('请输入姓名')
     return
   }
-  
+  if (name.length > 64) {
+    ElMessage.warning('姓名长度不能超过64个字符')
+    return
+  }
+  if (form.value.note && form.value.note.length > 255) {
+    ElMessage.warning('备注长度不能超过255个字符')
+    return
+  }
+
   try {
-    const { data } = await api.post('/persons/', form.value)
-    list.value.push(data)
-    dialogVisible.value = false
-    ElMessage.success('添加人员成功')
+    if (isEditing.value) {
+      const { data } = await api.put(`/persons/${editingId.value}`, form.value)
+      const idx = list.value.findIndex(i => i.id === editingId.value)
+      if (idx !== -1) list.value[idx] = data
+      dialogVisible.value = false
+      isEditing.value = false
+      editingId.value = null
+      await load()
+      ElMessage.success('更新人员成功')
+    } else {
+      const { data } = await api.post('/persons/', form.value)
+      list.value.push(data)
+      dialogVisible.value = false
+      await load()
+      ElMessage.success('添加人员成功')
+    }
+    statsStore.invalidate()
   } catch (error) {
-    ElMessage.error('添加人员失败')
+    const detail = error?.response?.data?.detail
+    let msg = isEditing.value ? '更新人员失败' : '添加人员失败'
+    if (typeof detail === 'string') msg = detail
+    else if (Array.isArray(detail) && detail.length) msg = detail[0]?.msg || msg
+    ElMessage.error(msg)
   }
 }
 
@@ -94,6 +143,7 @@ async function remove(id, name) {
     await api.delete(`/persons/${id}`)
     list.value = list.value.filter(i => i.id !== id)
     ElMessage.success('删除人员成功')
+    statsStore.invalidate()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除人员失败')
@@ -189,6 +239,14 @@ onMounted(load)
               工资管理
             </el-button>
             <el-button 
+              type="default" 
+              size="small" 
+              @click="openEdit(person)"
+              :icon="Edit"
+            >
+              编辑
+            </el-button>
+            <el-button 
               type="danger" 
               size="small" 
               @click="remove(person.id, person.name)"
@@ -216,10 +274,10 @@ onMounted(load)
       </div>
     </el-card>
 
-    <!-- Add Person Dialog -->
+    <!-- Add/Edit Person Dialog -->
     <el-dialog 
       v-model="dialogVisible" 
-      title="添加人员" 
+      :title="dialogTitle" 
       width="500px"
       class="person-dialog"
     >
@@ -228,7 +286,7 @@ onMounted(load)
           <el-input 
             v-model="form.name" 
             placeholder="请输入姓名"
-            maxlength="50"
+            maxlength="64"
             show-word-limit
           />
         </el-form-item>
@@ -238,7 +296,7 @@ onMounted(load)
             type="textarea" 
             placeholder="请输入备注"
             :rows="3"
-            maxlength="200"
+            maxlength="255"
             show-word-limit
           />
         </el-form-item>
@@ -498,35 +556,19 @@ onMounted(load)
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
 }
 
-.person-avatar::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.person-avatar:hover {
+  transform: rotate(0deg);
 }
 
-.person-card:hover .person-avatar {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+.person-avatar:focus {
+  outline: none;
 }
 
-.person-card:hover .person-avatar::after {
-  opacity: 0.2;
-}
-
-.avatar-icon {
-  font-size: 28px;
-  color: white;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+.person-avatar .avatar-icon {
+  width: 32px;
+  height: 32px;
 }
 
 .person-info {

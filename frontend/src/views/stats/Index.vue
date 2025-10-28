@@ -145,9 +145,11 @@ function onTabClick(tab) {
   --stats-toolbar-gap: 8px;
   --stats-filter-max-width: 240px;
   --stats-filter-min-width: 160px;
-  --stats-title-size: 24px;
-  --stats-subtitle-size: 14px;
+  --stats-title-size: 28px;
+  --stats-subtitle-size: 16px;
   padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: auto;
 }
 
 .page-header {
@@ -166,12 +168,18 @@ function onTabClick(tab) {
 .title {
   margin: 0;
   font-size: var(--stats-title-size);
+  font-weight: 700;
+  color: #2c3e50;
   line-height: 1.2;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .sub {
   margin: 0;
-  color: #6b7280;
+  color: #7f8c8d;
   font-size: var(--stats-subtitle-size);
 }
 

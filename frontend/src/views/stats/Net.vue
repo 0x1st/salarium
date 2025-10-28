@@ -61,8 +61,30 @@ watch(() => stats.refreshToken, () => { load() })
 </template>
 
 <style scoped>
-.net-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.net-grid { 
+  display: grid; 
+  grid-template-columns: 1fr; 
+  gap: 20px; 
+}
+
+.net-grid :deep(.el-card) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.net-grid :deep(.el-card:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.two-col { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 20px; 
+}
+
 @media (max-width: 992px) {
   .two-col { grid-template-columns: 1fr; }
 }

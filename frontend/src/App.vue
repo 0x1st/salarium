@@ -181,6 +181,13 @@ function closeMobileMenu() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+.desktop-sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  padding: 1.5rem 0.5rem;
 }
 
 .logo {
@@ -209,11 +216,20 @@ function closeMobileMenu() {
   cursor: pointer;
   color: #64748b;
   transition: all 0.2s;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .collapse-btn:hover {
   background-color: #f1f5f9;
   color: #3b82f6;
+}
+
+.collapse-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .sidebar-nav {
@@ -511,6 +527,9 @@ function closeMobileMenu() {
   flex: 1;
   margin-left: 280px;
   transition: margin-left 0.3s ease;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
 }
 
 .main-content.sidebar-collapsed {
@@ -521,6 +540,7 @@ function closeMobileMenu() {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
 }
 
 /* 响应式设计 */

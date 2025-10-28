@@ -214,7 +214,7 @@ async function onSubmit() {
           :disabled="loading"
         >
           <span v-if="loading" class="loading-spinner"></span>
-          <span v-else>{{ isRegisterMode ? '注册' : '登录' }}</span>
+          <span class="btn-text">{{ loading ? (isRegisterMode ? '注册中...' : '登录中...') : (isRegisterMode ? '注册' : '登录') }}</span>
         </button>
 
         <!-- Mode Toggle -->
@@ -522,6 +522,7 @@ async function onSubmit() {
 .submit-btn {
   position: relative;
   width: 100%;
+  min-width: 120px;
   padding: 1rem 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -533,6 +534,10 @@ async function onSubmit() {
   transition: all 0.3s ease;
   overflow: hidden;
   margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -545,8 +550,23 @@ async function onSubmit() {
 }
 
 .submit-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
+}
+
+.btn-text {
+  position: relative;
+  z-index: 2;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 .btn-content {
@@ -601,7 +621,8 @@ async function onSubmit() {
   color: #718096;
 }
 
-.toggle-btn {
+.toggle-btn,
+.toggle-link {
   color: #667eea;
   font-weight: 600;
   margin-left: 0.25rem;
@@ -613,12 +634,14 @@ async function onSubmit() {
   text-decoration-color: transparent;
 }
 
-.toggle-btn:hover:not(:disabled) {
+.toggle-btn:hover:not(:disabled),
+.toggle-link:hover:not(:disabled) {
   color: #764ba2;
   text-decoration-color: #764ba2;
 }
 
-.toggle-btn:disabled {
+.toggle-btn:disabled,
+.toggle-link:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

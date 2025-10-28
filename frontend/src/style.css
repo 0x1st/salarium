@@ -551,3 +551,105 @@ input:disabled, textarea:disabled, select:disabled {
   border-radius: 12px;
   overflow: hidden;
 }
+
+/* Element Plus focus state overrides - subtle and accessible */
+/* Remove harsh blue outline on focus, use subtle border change instead */
+.el-select .el-input__wrapper {
+  transition: all 0.2s ease;
+}
+
+.el-select .el-input__wrapper:hover {
+  border-color: var(--border-hover);
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+/* Keyboard navigation - maintain accessibility with subtle indicator */
+.el-select .el-input__wrapper:focus-visible {
+  border-color: var(--primary-color);
+  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline-offset: 1px;
+}
+
+/* Input number focus state */
+.el-input-number .el-input__wrapper {
+  transition: all 0.2s ease;
+}
+
+.el-input-number .el-input__wrapper:hover {
+  border-color: var(--border-hover);
+}
+
+.el-input-number.is-focus .el-input__wrapper {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+.el-input-number .el-input__wrapper:focus-visible {
+  border-color: var(--primary-color);
+  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline-offset: 1px;
+}
+
+/* Date picker focus state */
+.el-date-editor .el-input__wrapper {
+  transition: all 0.2s ease;
+}
+
+.el-date-editor .el-input__wrapper:hover {
+  border-color: var(--border-hover);
+}
+
+.el-date-editor.is-focus .el-input__wrapper {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+.el-date-editor .el-input__wrapper:focus-visible {
+  border-color: var(--primary-color);
+  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline-offset: 1px;
+}
+
+/* General input wrapper overrides */
+.el-input__wrapper {
+  transition: all 0.2s ease;
+}
+
+.el-input__wrapper:hover {
+  border-color: var(--border-hover);
+}
+
+.el-input.is-focus .el-input__wrapper {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+/* Remove harsh outline on click, keep for keyboard navigation only */
+.el-input__wrapper:focus {
+  outline: none;
+}
+
+.el-input__wrapper:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline-offset: 1px;
+}
+
+/* Ensure unified size and spacing in filter sections */
+.stats-header .el-select,
+.stats-header .el-input-number {
+  font-size: 14px;
+}
+
+.stats-header .el-input__wrapper {
+  min-height: 32px;
+}
+
+.stats-header .el-input__inner {
+  font-size: 14px;
+  height: 32px;
+  line-height: 32px;
+}

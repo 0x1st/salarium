@@ -48,11 +48,11 @@ function closeMobileMenu() {
     <aside class="sidebar desktop-sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-header">
         <div class="logo">
-          <Home class="logo-icon" />
           <span v-if="!sidebarCollapsed" class="logo-text">Salarium</span>
         </div>
         <button class="collapse-btn" @click="toggleSidebar">
-          <Menu />
+          <Home v-if="sidebarCollapsed" />
+          <Menu v-else />
         </button>
       </div>
       
@@ -190,6 +190,10 @@ function closeMobileMenu() {
   padding: 1.5rem 0.5rem;
 }
 
+.desktop-sidebar.collapsed .logo {
+  display: none;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -227,9 +231,14 @@ function closeMobileMenu() {
 }
 
 .collapse-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: block;
+}
+
+.desktop-sidebar.collapsed .collapse-btn svg {
+  width: 28px;
+  height: 28px;
 }
 
 .sidebar-nav {

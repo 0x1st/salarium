@@ -762,4 +762,26 @@ onMounted(async () => {
   width: 16px;
   height: 16px;
 }
+/* Remove focus outline from filter controls */
+.header-controls :deep(.el-select:focus),
+.header-controls :deep(.el-select:focus-visible),
+.header-controls :deep(.el-select.is-focus),
+.header-controls :deep(.el-select.is-active),
+.header-controls :deep(.el-input-number:focus),
+.header-controls :deep(.el-input-number:focus-visible),
+.header-controls :deep(.el-input-number.is-focus),
+.header-controls :deep(.el-input-number.is-active) {
+  outline: none !important;
+}
+
+.header-controls :deep(.el-select.is-focus .el-input__wrapper),
+.header-controls :deep(.el-select.is-active .el-input__wrapper),
+.header-controls :deep(.el-select:focus .el-input__wrapper),
+.header-controls :deep(.el-select:focus-visible .el-input__wrapper),
+.header-controls :deep(.el-input-number.is-focus .el-input__wrapper),
+.header-controls :deep(.el-input-number.is-active .el-input__wrapper),
+.header-controls :deep(.el-input-number:focus .el-input__wrapper),
+.header-controls :deep(.el-input-number:focus-visible .el-input__wrapper) {
+  box-shadow: none !important;
+}
 </style>

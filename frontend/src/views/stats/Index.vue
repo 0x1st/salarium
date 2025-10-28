@@ -227,6 +227,37 @@ function onTabClick(tab) {
   font-size: 16px;
 }
 
+/* Remove focus outline from filter controls */
+.toolbar-filters :deep(.el-select:focus),
+.toolbar-filters :deep(.el-select:focus-visible),
+.toolbar-filters :deep(.el-select.is-focus),
+.toolbar-filters :deep(.el-select.is-active),
+.toolbar-filters :deep(.el-input-number:focus),
+.toolbar-filters :deep(.el-input-number:focus-visible),
+.toolbar-filters :deep(.el-input-number.is-focus),
+.toolbar-filters :deep(.el-input-number.is-active),
+.toolbar-filters :deep(.el-date-picker:focus),
+.toolbar-filters :deep(.el-date-picker:focus-visible),
+.toolbar-filters :deep(.el-date-picker.is-focus),
+.toolbar-filters :deep(.el-date-picker.is-active) {
+  outline: none !important;
+}
+
+.toolbar-filters :deep(.el-select.is-focus .el-input__wrapper),
+.toolbar-filters :deep(.el-select.is-active .el-input__wrapper),
+.toolbar-filters :deep(.el-select:focus .el-input__wrapper),
+.toolbar-filters :deep(.el-select:focus-visible .el-input__wrapper),
+.toolbar-filters :deep(.el-input-number.is-focus .el-input__wrapper),
+.toolbar-filters :deep(.el-input-number.is-active .el-input__wrapper),
+.toolbar-filters :deep(.el-input-number:focus .el-input__wrapper),
+.toolbar-filters :deep(.el-input-number:focus-visible .el-input__wrapper),
+.toolbar-filters :deep(.el-date-picker.is-focus .el-input__wrapper),
+.toolbar-filters :deep(.el-date-picker.is-active .el-input__wrapper),
+.toolbar-filters :deep(.el-date-picker:focus .el-input__wrapper),
+.toolbar-filters :deep(.el-date-picker:focus-visible .el-input__wrapper) {
+  box-shadow: none !important;
+}
+
 @media (max-width: 960px) {
   .stats-page {
     --stats-filter-max-width: 220px;

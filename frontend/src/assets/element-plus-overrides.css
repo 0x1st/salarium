@@ -96,3 +96,19 @@
 .empty-icon { font-size: 4rem; margin-bottom: 1rem; }
 .empty-title { font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem; }
 .empty-description { color: #6b7280; margin-bottom: 1.5rem; }
+
+/* Remove focus border and box-shadow from Element Plus input components */
+.el-input__wrapper.is-focus,
+.el-select .el-input__wrapper.is-focus,
+.el-input-number .el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  border-color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+.el-input__wrapper:focus,
+.el-select .el-input__wrapper:focus,
+.el-input-number .el-input__wrapper:focus {
+  border-color: #e2e8f0 !important;
+  box-shadow: none !important;
+}

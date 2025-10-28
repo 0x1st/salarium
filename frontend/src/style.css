@@ -69,6 +69,11 @@ body {
   min-height: 100vh;
 }
 
+/* 统一div元素的字体大小 */
+div {
+  font-size: 14px;
+}
+
 /* 链接样式 */
 a {
   color: var(--primary-color);
@@ -215,8 +220,8 @@ input, textarea, select {
 }
 
 input:focus, textarea:focus, select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--border-color);
+  box-shadow: none;
 }
 
 input:disabled, textarea:disabled, select:disabled {

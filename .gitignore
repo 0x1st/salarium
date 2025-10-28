@@ -14,6 +14,8 @@ venv/
 # SQLite DB
 backend/*.db
 backend/**/salarium.db
+backend/salarium.db-wal
+backend/salarium.db-shm
 
 # Logs
 *.log

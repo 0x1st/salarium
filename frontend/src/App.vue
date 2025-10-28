@@ -48,11 +48,11 @@ function closeMobileMenu() {
     <aside class="sidebar desktop-sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-header">
         <div class="logo">
+          <Home class="logo-icon" />
           <span v-if="!sidebarCollapsed" class="logo-text">Salarium</span>
         </div>
         <button class="collapse-btn" @click="toggleSidebar">
-          <Home v-if="sidebarCollapsed" />
-          <Menu v-else />
+          <Menu />
         </button>
       </div>
       

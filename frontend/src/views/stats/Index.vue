@@ -4,6 +4,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import { useStatsStore } from '../../store/stats'
 import { useUserStore } from '../../store/user'
+import PageContainer from '../../components/PageContainer.vue'
+import PageHeader from '../../components/PageHeader.vue'
 
 const tabs = [
   { name: 'stats-net', label: '实际到手金额', path: '/stats/net' },
@@ -55,14 +57,9 @@ function onTabClick(tab) {
 </script>
 
 <template>
-  <div class="stats-page">
-    <header class="page-header">
-      <div class="page-header__meta">
-        <h2 class="title">统计分析</h2>
-        <p class="sub">数据统计分析</p>
-      </div>
-
-      <div class="page-header__toolbar">
+  <PageContainer>
+    <PageHeader title="统计分析" subtitle="数据统计分析">
+      <template #controls>
         <el-form class="toolbar-filters" :inline="true" size="small">
           <el-form-item class="toolbar-field">
             <el-select
@@ -110,9 +107,7 @@ function onTabClick(tab) {
               />
             </el-select>
           </el-form-item>
-        </el-form>
 
-        <div class="toolbar-actions">
           <el-button
             size="small"
             type="primary"
@@ -127,75 +122,34 @@ function onTabClick(tab) {
             </el-icon>
             <span class="btn-text">刷新</span>
           </el-button>
-        </div>
-      </div>
-    </header>
+        </el-form>
+      </template>
+    </PageHeader>
 
-    <el-tabs v-model="activeTab" @tab-click="onTabClick">
+    <el-tabs v-model="activeTab" @tab-click="onTabClick" class="stats-tabs">
       <el-tab-pane v-for="t in tabs" :key="t.name" :label="t.label" :name="t.name" />
     </el-tabs>
 
-    <router-view />
-  </div>
+    <div class="stats-content">
+      <router-view />
+    </div>
+  </PageContainer>
 </template>
 
 <style scoped>
-.stats-page {
-  --stats-spacing: 16px;
-  --stats-toolbar-gap: 8px;
-  --stats-filter-max-width: 240px;
-  --stats-filter-min-width: 160px;
-  --stats-title-size: 28px;
-  --stats-subtitle-size: 16px;
-  padding: 24px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: auto;
+.stats-tabs {
+  margin-bottom: 16px;
 }
 
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--stats-spacing);
-  margin-bottom: var(--stats-spacing);
-}
-
-.page-header__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.title {
-  margin: 0;
-  font-size: var(--stats-title-size);
-  font-weight: 700;
-  color: #2c3e50;
-  line-height: 1.2;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.sub {
-  margin: 0;
-  color: #7f8c8d;
-  font-size: var(--stats-subtitle-size);
-}
-
-.page-header__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--stats-toolbar-gap);
+.stats-content {
+  min-height: 400px;
 }
 
 .toolbar-filters {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--stats-toolbar-gap);
+  gap: 8px;
   margin: 0;
 }
 
@@ -205,8 +159,8 @@ function onTabClick(tab) {
 
 .toolbar-field :deep(.el-select),
 .toolbar-field :deep(.el-input-number) {
-  min-width: var(--stats-filter-min-width);
-  max-width: var(--stats-filter-max-width);
+  min-width: 160px;
+  max-width: 240px;
   width: 100%;
 }
 
@@ -216,13 +170,6 @@ function onTabClick(tab) {
 
 .toolbar-field :deep(.el-input-number .el-input__inner) {
   text-align: left;
-}
-
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--stats-toolbar-gap);
-  margin-left: auto;
 }
 
 .toolbar-refresh {
@@ -266,23 +213,7 @@ function onTabClick(tab) {
   box-shadow: none !important;
 }
 
-@media (max-width: 960px) {
-  .stats-page {
-    --stats-filter-max-width: 220px;
-  }
-}
-
 @media (max-width: 768px) {
-  .page-header__toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .toolbar-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
   .toolbar-field :deep(.el-select),
   .toolbar-field :deep(.el-input-number) {
     max-width: 100%;

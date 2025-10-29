@@ -7,6 +7,8 @@ import 'element-plus/dist/index.css'
 import { createPinia } from 'pinia'
 // Element Plus visual alignment overrides (align tables with Salaries page)
 import './assets/element-plus-overrides.css'
+// Shared styles for consistent UI
+import './styles/shared.css'
 import { setupAxiosInterceptors } from './utils/axios'
 import { useUserStore } from './store/user'
 

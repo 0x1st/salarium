@@ -1,0 +1,103 @@
+/* Shared styles for consistent UI across the application */
+
+/* Card styles */
+.shared-card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.shared-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.shared-card-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.shared-card-body {
+  padding: 20px;
+}
+
+/* Typography */
+.shared-page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shared-page-subtitle {
+  font-size: 16px;
+  color: #7f8c8d;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Layout */
+.shared-container {
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: calc(100vh - 180px);
+}
+
+/* Ensure smooth font rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent layout shift */
+.prevent-shift {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Smooth transitions */
+.smooth-transition {
+  transition: all 0.25s ease;
+}
+
+/* Skeleton loading styles */
+.skeleton-wrapper {
+  min-height: 400px;
+  padding: 20px;
+}
+
+/* CLS prevention helpers */
+.min-height-400 {
+  min-height: 400px;
+}
+
+.min-height-500 {
+  min-height: 500px;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .shared-page-title {
+    font-size: 24px;
+  }
+  
+  .shared-page-subtitle {
+    font-size: 14px;
+  }
+  
+  .shared-container {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shared-container {
+    padding: 12px;
+  }
+}

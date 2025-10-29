@@ -64,7 +64,8 @@ watch(() => stats.refreshToken, () => { load() })
 .net-grid { 
   display: grid; 
   grid-template-columns: 1fr; 
-  gap: 20px; 
+  gap: 24px; 
+  min-height: 400px;
 }
 
 .net-grid :deep(.el-card) {
@@ -79,10 +80,19 @@ watch(() => stats.refreshToken, () => { load() })
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
+.net-grid :deep(.el-card__header) {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.net-grid :deep(.el-card__body) {
+  padding: 20px;
+}
+
 .two-col { 
   display: grid; 
   grid-template-columns: 1fr 1fr; 
-  gap: 20px; 
+  gap: 24px; 
 }
 
 @media (max-width: 992px) {

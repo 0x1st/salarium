@@ -5,6 +5,9 @@ import { useUserStore } from '../store/user'
 import { useStatsStore } from '../store/stats'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Users, DollarSign, Trash2, Edit, User, TrendingUp, Calendar, Award } from 'lucide-vue-next'
+import PageContainer from '../components/PageContainer.vue'
+import PageHeader from '../components/PageHeader.vue'
+import StatsCards from '../components/StatsCards.vue'
 
 
 const user = useUserStore()
@@ -37,6 +40,14 @@ const completeProfileRate = computed(() => {
   const rate = Math.round((completeProfiles / list.value.length) * 100)
   return `${rate}%`
 })
+
+// Stats cards configuration
+const statsCardsData = computed(() => [
+  { icon: '📅', value: new Date().getFullYear().toString(), label: '当前年份', gradient: 'gradient-orange' },
+  { icon: '📅', value: currentMonth.value, label: '当前月份', gradient: 'gradient-orange' },
+  { icon: '👥', value: list.value.length.toString(), label: '总用户', gradient: 'gradient-blue' },
+  { icon: '✅', value: list.value.length > 0 ? '100%' : '0%', label: '活跃率', gradient: 'gradient-green' }
+])
 
 // Load persons data
 async function load() {
@@ -150,54 +161,19 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="persons-container">
+  <PageContainer>
     <!-- Header Section -->
-    <div class="persons-header">
-      <div class="header-left">
-        <h2 class="page-title">信息管理</h2>
-        <p class="page-subtitle">管理用户信息</p>
-      </div>
-      <div class="header-controls">
+    <PageHeader title="信息管理" subtitle="管理用户信息">
+      <template #controls>
         <el-button type="primary" @click="openCreate" class="add-button">
           <Plus class="button-icon" />
           添加用户
         </el-button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Statistics Cards -->
-    <div class="stats-cards" v-loading="loading">
-      <div class="stat-card gradient-orange">
-        <div class="stat-icon">📅</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ new Date().getFullYear() }}</div>
-          <div class="stat-label">当前年份</div>
-        </div>
-      </div>
-
-      <div class="stat-card gradient-orange">
-        <div class="stat-icon">📅</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ currentMonth }}</div>
-          <div class="stat-label">当前月份</div>
-        </div>
-      </div>
-
-      <div class="stat-card gradient-blue">
-        <div class="stat-icon">👥</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ list.length }}</div>
-          <div class="stat-label">总用户</div>
-        </div>
-      </div>
-      <div class="stat-card gradient-green">
-        <div class="stat-icon">✅</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ list.length > 0 ? '100%' : '0%' }}</div>
-          <div class="stat-label">活跃率</div>
-        </div>
-      </div>
-    </div>
+    <StatsCards :cards="statsCardsData" :loading="loading" />
 
     <!-- Persons List Section -->
     <el-card class="persons-list-card" shadow="hover" v-if="list.length > 0">
@@ -338,50 +314,10 @@ onMounted(load)
         </div>
       </template>
     </el-dialog>
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>
-.persons-container {
-  padding: 24px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: auto;
-}
-
-.persons-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 24px;
-  padding: 0 4px;
-}
-
-.header-left {
-  flex: 1;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 8px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.page-subtitle {
-  font-size: 16px;
-  color: #7f8c8d;
-  margin: 0;
-}
-
-.header-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
 .add-button {
   border-radius: 8px;
@@ -399,79 +335,6 @@ onMounted(load)
   width: 16px;
   height: 16px;
   margin-right: 8px;
-}
-
-.stats-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--gradient);
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.gradient-blue {
-  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.gradient-green {
-  --gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.gradient-orange {
-  --gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.gradient-purple {
-  --gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.stat-icon {
-  font-size: 32px;
-  margin-right: 16px;
-  opacity: 0.8;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #7f8c8d;
-  font-weight: 500;
 }
 
 .persons-list-card {
@@ -712,25 +575,6 @@ onMounted(load)
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .persons-container {
-    padding: 16px;
-  }
-  
-  .persons-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .stats-cards {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-  }
-  
-  .stat-card {
-    padding: 20px;
-  }
-  
   .persons-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -739,34 +583,9 @@ onMounted(load)
   .person-card {
     padding: 16px;
   }
-  
-  .page-title {
-    font-size: 24px;
-  }
-  
-  .page-subtitle {
-    font-size: 14px;
-  }
 }
 
 @media (max-width: 480px) {
-  .persons-container {
-    padding: 12px;
-  }
-  
-  .stat-card {
-    padding: 16px;
-  }
-  
-  .stat-icon {
-    font-size: 28px;
-    margin-right: 12px;
-  }
-  
-  .stat-value {
-    font-size: 20px;
-  }
-  
   .person-card {
     flex-direction: column;
     text-align: center;

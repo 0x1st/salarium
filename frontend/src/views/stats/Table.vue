@@ -492,12 +492,20 @@ watch(() => stats.refreshToken, () => { load() })
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  margin-bottom: 24px;
 }
 
 :deep(.el-card:hover) {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.el-card__header) {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.el-card__body) {
+  padding: 20px;
 }
 
 .actions-bar {

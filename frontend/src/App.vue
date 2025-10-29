@@ -137,7 +137,11 @@ function closeMobileMenu() {
     <!-- 主内容区域 -->
     <main class="main-content" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <div class="content-wrapper">
-        <router-view />
+        <router-view v-slot="{ Component, route }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </transition>
+        </router-view>
       </div>
     </main>
   </div>
@@ -546,10 +550,32 @@ function closeMobileMenu() {
 }
 
 .content-wrapper {
-  padding: 2rem;
-  max-width: 1200px;
+  padding: 0;
+  max-width: 1400px;
   margin: 0 auto;
   position: relative;
+}
+
+/* Page transition animations */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-enter-to,
+.page-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* 响应式设计 */
@@ -576,13 +602,7 @@ function closeMobileMenu() {
   }
   
   .content-wrapper {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .content-wrapper {
-    padding: 0.5rem;
+    padding: 0;
   }
 }
 </style>

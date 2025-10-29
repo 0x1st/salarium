@@ -6,7 +6,7 @@ import ChartCard from './ChartCard.vue'
 const props = defineProps({
   data: { type: Array, default: () => [] },
   title: { type: String, default: '应发 vs 实际到手' },
-  note: { type: String, default: '' },
+  note: { type: String, default: '应发不包含餐补与三节福利' },
 })
 
 const el = ref(null)

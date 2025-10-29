@@ -39,6 +39,19 @@ def _benefits_sum(r: SalaryRecord) -> Decimal:
     return _D(r.mid_autumn_benefit) + _D(r.dragon_boat_benefit) + _D(r.spring_festival_benefit)
 
 
+def _gross_income_for_net_charts(r: SalaryRecord) -> Decimal:
+    """Gross income for waterfall and gross-vs-net charts:
+    Excludes meal allowance and festival benefits per unified spec.
+    应发 = 基本工资 + 绩效工资 + 高温补贴 + 低温补贴 + 电脑补贴 + 其他（排除：餐补、三节福利）
+    """
+    return (
+        _D(r.base_salary)
+        + _D(r.performance_salary)
+        + _allowances_sum_net(r)  # excludes meal allowance
+        + _D(r.other_income)
+    )
+
+
 def _deductions_sum(r: SalaryRecord) -> Decimal:
     return (
         _D(r.pension_insurance)
@@ -485,7 +498,10 @@ async def gross_vs_net_monthly(
     person_id: Optional[int] = Query(default=None),
     range: Optional[str] = Query(default=None, description="时间范围，如 2024-01..2024-12"),
 ):
-    """Monthly gross vs net income (unified net)."""
+    """Monthly gross vs net income (unified net).
+    应发 = 基本工资 + 绩效工资 + 高温补贴 + 低温补贴 + 电脑补贴 + 其他（排除：餐补、三节福利）
+    实际到手 = 应发 - 扣除
+    """
     q = SalaryRecord.filter(person__user_id=user.id)
     if person_id:
         q = q.filter(person_id=person_id)
@@ -500,8 +516,9 @@ async def gross_vs_net_monthly(
     sums = {}
     for r in recs:
         key = (r.year, r.month)
-        gross = _gross_income_full(r)
-        net = _unified_net_income(r)
+        gross = _gross_income_for_net_charts(r)
+        deductions = _deductions_sum(r)
+        net = gross - deductions  # For waterfall: net = gross - deductions
         prev_g, prev_n = sums.get(key, (Decimal("0"), Decimal("0")))
         sums[key] = (prev_g + gross, prev_n + net)
 

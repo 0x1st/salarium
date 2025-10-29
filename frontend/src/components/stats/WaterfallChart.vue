@@ -6,7 +6,7 @@ import ChartCard from './ChartCard.vue'
 const props = defineProps({
   data: { type: Array, default: () => [] }, // expects GrossVsNetMonthly
   title: { type: String, default: '应发 -> 扣除 -> 实际到手' },
-  note: { type: String, default: '' },
+  note: { type: String, default: '应发不包含餐补与三节福利' },
 })
 
 const el = ref(null)
@@ -28,6 +28,15 @@ function render() {
 
   chart.setOption({
     grid: baseGrid(),
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: (params) => {
+        const p = params[0]
+        const labels = ['应发工资（不含餐补与福利）', '扣除', '实际到手金额']
+        return `${labels[p.dataIndex]}<br/>${currencyFormatter(Math.abs(p.value))}`
+      }
+    },
     xAxis: { type: 'category', data: ['应发工资', '扣除', '实际到手金额'] },
     yAxis: { type: 'value', axisLabel: { formatter: axisCurrencyFormatter } },
     series: [

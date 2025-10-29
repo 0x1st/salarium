@@ -16,6 +16,11 @@ backend/*.db
 backend/**/salarium.db
 backend/salarium.db-wal
 backend/salarium.db-shm
+data/*.db
+data/*.db-wal
+data/*.db-shm
+*.db-wal
+*.db-shm
 
 # Logs
 *.log

@@ -27,37 +27,71 @@ README.zh.md      # Chinese documentation
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Option 1: Docker Single-Container Deployment (Recommended for Production)
+
+#### Prerequisites
+- Docker and Docker Compose
+
+#### Steps
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd salarium
+
+# 2. Create environment file (optional)
+cp .env.example .env
+# Edit .env to configure JWT_SECRET, etc.
+
+# 3. Build and start the container
+docker compose up -d --build
+
+# 4. Access the application
+# Frontend: http://localhost:8080
+# API Docs: http://localhost:8080/docs
+# API: http://localhost:8080/api
+```
+
+**Features**:
+- ✅ Single-container deployment with FastAPI serving both frontend and API
+- ✅ Automatic health checks
+- ✅ SQLite data persisted to `./data/` directory
+- ✅ SPA routing fallback support
+
+For detailed deployment documentation, see [DEPLOY.md](DEPLOY.md).
+
+### Option 2: Local Development
+
+#### Prerequisites
 - Python 3.12 (recommended)
 - Node.js >= 18
 
-### Backend Setup
+#### Backend Setup
 Recommended (uv):
-```
+```bash
 cd backend
 uv sync
-uv run uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Alternative (virtualenv):
-```
+```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-On first run, the app initializes Tortoise ORM and creates `backend/salary.db`.
+On first run, the app initializes Tortoise ORM and creates the SQLite database.
 
-### Frontend Setup
-```
+#### Frontend Setup
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Open the dev server URL (typically `http://localhost:5173`) and point your API calls to `http://127.0.0.1:8000`.
+Open the dev server URL (typically `http://localhost:5173`). The frontend will proxy API requests to the backend.
 
 ## 🖼 Screenshots
 - Dashboard (placeholder): `docs/images/dashboard.png`

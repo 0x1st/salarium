@@ -27,37 +27,71 @@ README.zh.md      # 中文文档
 
 ## 🚀 快速开始
 
-### 前置条件
+### 方式一：Docker 单容器部署（推荐生产）
+
+#### 前置条件
+- Docker 和 Docker Compose
+
+#### 启动步骤
+```bash
+# 1. 克隆仓库
+git clone <repository-url>
+cd salarium
+
+# 2. 创建环境文件（可选）
+cp .env.example .env
+# 编辑 .env 文件配置 JWT_SECRET 等
+
+# 3. 构建并启动容器
+docker compose up -d --build
+
+# 4. 访问应用
+# 前端：http://localhost:8080
+# API 文档：http://localhost:8080/docs
+# API：http://localhost:8080/api
+```
+
+**特性**：
+- ✅ 单容器部署，FastAPI 同时托管前端静态资源和 API
+- ✅ 自动健康检查
+- ✅ SQLite 数据持久化到 `./data/` 目录
+- ✅ 支持 SPA 路由回退
+
+详细部署文档请参考 [DEPLOY.md](DEPLOY.md)。
+
+### 方式二：本地开发
+
+#### 前置条件
 - Python 3.12（推荐）
 - Node.js >= 18
 
-### 后端启动
+#### 后端启动
 推荐（uv）：
-```
+```bash
 cd backend
 uv sync
-uv run uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 备选（virtualenv）：
-```
+```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-首次运行会初始化 Tortoise ORM 并创建 `backend/salary.db`。
+首次运行会初始化 Tortoise ORM 并创建 SQLite 数据库。
 
-### 前端启动
-```
+#### 前端启动
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-打开开发服务器（通常为 `http://localhost:5173`），将 API 指向 `http://127.0.0.1:8000`。
+打开开发服务器（通常为 `http://localhost:5173`），前端会通过代理访问后端 API。
 
 ## 🖼 截图
 - 仪表盘（占位）：`docs/images/dashboard.png`

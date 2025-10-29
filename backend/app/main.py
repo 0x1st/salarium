@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from tortoise.contrib.fastapi import register_tortoise
 
 from .routes.auth import router as auth_router
@@ -56,6 +57,10 @@ def create_app() -> FastAPI:
         generate_schemas=True,
         add_exception_handlers=True,
     )
+
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+    if os.path.exists(static_dir):
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
     return app
 

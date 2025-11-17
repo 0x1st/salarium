@@ -19,7 +19,7 @@ const summary = computed(() => {
   for (const r of props.data) {
     agg.base += r.base_salary || 0
     agg.perf += r.performance_salary || 0
-    const allow = (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.meal_allowance || 0) + (r.computer_allowance || 0)
+    const allow = (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.meal_allowance || 0) + (r.computer_allowance || 0) + (r.communication_allowance || 0)
     agg.allow += allow
     // non_cash_benefits from API already excludes meal_allowance per latest spec
     agg.benefits += r.non_cash_benefits || 0

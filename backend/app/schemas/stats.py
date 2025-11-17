@@ -78,6 +78,7 @@ class IncomeComposition(BaseModel):
     high_temp_allowance: float
     low_temp_allowance: float
     computer_allowance: float
+    communication_allowance: float
     meal_allowance: float
     other_income: float
     non_cash_benefits: float
@@ -118,6 +119,7 @@ class DeductionsMonthly(BaseModel):
     enterprise_annuity: float
     housing_fund: float
     other_deductions: float
+    labor_union_fee: float
     total: float
 
 
@@ -160,6 +162,7 @@ class MonthlyTableRow(BaseModel):
     high_temp_allowance: float
     low_temp_allowance: float
     computer_allowance: float
+    communication_allowance: float
     meal_allowance: float
     mid_autumn_benefit: float
     dragon_boat_benefit: float
@@ -173,10 +176,12 @@ class MonthlyTableRow(BaseModel):
     enterprise_annuity: float
     housing_fund: float
     other_deductions: float
+    labor_union_fee: float
     # Totals
     income_total: float
     deductions_total: float
     benefits_total: float
+    allowances_total: float
     actual_take_home: float
     net_income: float
     tax: float
@@ -193,6 +198,7 @@ class AnnualTableRow(BaseModel):
     high_temp_allowance_total: float
     low_temp_allowance_total: float
     computer_allowance_total: float
+    communication_allowance_total: float
     meal_allowance_total: float
     mid_autumn_benefit_total: float
     dragon_boat_benefit_total: float
@@ -206,6 +212,7 @@ class AnnualTableRow(BaseModel):
     enterprise_annuity_total: float
     housing_fund_total: float
     other_deductions_total: float
+    labor_union_fee_total: float
     # Grand totals
     income_total: float
     deductions_total: float
@@ -223,6 +230,7 @@ class AnnualMonthlyRow(BaseModel):
     high_temp_allowance: float
     low_temp_allowance: float
     computer_allowance: float
+    communication_allowance: float
     meal_allowance: float
     mid_autumn_benefit: float
     dragon_boat_benefit: float
@@ -236,8 +244,10 @@ class AnnualMonthlyRow(BaseModel):
     enterprise_annuity: float
     housing_fund: float
     other_deductions: float
+    labor_union_fee: float
     # Totals
     income_total: float
     deductions_total: float
     benefits_total: float
+    allowances_total: float
     actual_take_home: float

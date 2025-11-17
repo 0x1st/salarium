@@ -17,6 +17,7 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         high_temp_allowance=rec.high_temp_allowance,
         low_temp_allowance=rec.low_temp_allowance,
         computer_allowance=rec.computer_allowance,
+        communication_allowance=rec.communication_allowance,
         meal_allowance=rec.meal_allowance,
         mid_autumn_benefit=rec.mid_autumn_benefit,
         dragon_boat_benefit=rec.dragon_boat_benefit,
@@ -29,6 +30,7 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         enterprise_annuity=rec.enterprise_annuity,
         housing_fund=rec.housing_fund,
         other_deductions=rec.other_deductions,
+        labor_union_fee=rec.labor_union_fee,
         tax=rec.tax,
     )
     return SalaryOut(
@@ -40,6 +42,7 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         high_temp_allowance=rec.high_temp_allowance,
         low_temp_allowance=rec.low_temp_allowance,
         computer_allowance=rec.computer_allowance,
+        communication_allowance=rec.communication_allowance,
         meal_allowance=rec.meal_allowance,
         mid_autumn_benefit=rec.mid_autumn_benefit,
         dragon_boat_benefit=rec.dragon_boat_benefit,
@@ -52,6 +55,7 @@ def to_out(rec: SalaryRecord) -> SalaryOut:
         enterprise_annuity=rec.enterprise_annuity,
         housing_fund=rec.housing_fund,
         other_deductions=rec.other_deductions,
+        labor_union_fee=rec.labor_union_fee,
         tax=data["tax"],
         total_income=data["total_income"],
         total_deductions=data["total_deductions"],
@@ -92,6 +96,7 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         high_temp_allowance=payload.high_temp_allowance,
         low_temp_allowance=payload.low_temp_allowance,
         computer_allowance=payload.computer_allowance,
+        communication_allowance=payload.communication_allowance,
         meal_allowance=payload.meal_allowance,
         mid_autumn_benefit=payload.mid_autumn_benefit,
         dragon_boat_benefit=payload.dragon_boat_benefit,
@@ -104,6 +109,7 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         enterprise_annuity=payload.enterprise_annuity,
         housing_fund=payload.housing_fund,
         other_deductions=payload.other_deductions,
+        labor_union_fee=payload.labor_union_fee,
         tax=payload.tax,
     )
     rec = await SalaryRecord.create(
@@ -115,6 +121,7 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         high_temp_allowance=payload.high_temp_allowance,
         low_temp_allowance=payload.low_temp_allowance,
         computer_allowance=payload.computer_allowance,
+        communication_allowance=payload.communication_allowance,
         meal_allowance=payload.meal_allowance,
         mid_autumn_benefit=payload.mid_autumn_benefit,
         dragon_boat_benefit=payload.dragon_boat_benefit,
@@ -127,6 +134,7 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
         enterprise_annuity=payload.enterprise_annuity,
         housing_fund=payload.housing_fund,
         other_deductions=payload.other_deductions,
+        labor_union_fee=payload.labor_union_fee,
         tax=calc["tax"],
         note=payload.note,
     )
@@ -155,6 +163,7 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
         high_temp_allowance=rec.high_temp_allowance,
         low_temp_allowance=rec.low_temp_allowance,
         computer_allowance=rec.computer_allowance,
+        communication_allowance=rec.communication_allowance,
         meal_allowance=rec.meal_allowance,
         mid_autumn_benefit=rec.mid_autumn_benefit,
         dragon_boat_benefit=rec.dragon_boat_benefit,
@@ -167,6 +176,7 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
         enterprise_annuity=rec.enterprise_annuity,
         housing_fund=rec.housing_fund,
         other_deductions=rec.other_deductions,
+        labor_union_fee=rec.labor_union_fee,
         tax=rec.tax,
     )
     rec.tax = calc["tax"]

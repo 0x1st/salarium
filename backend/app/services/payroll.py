@@ -8,6 +8,7 @@ def compute_payroll(
     high_temp_allowance,
     low_temp_allowance,
     computer_allowance,
+    communication_allowance,
     meal_allowance,
     mid_autumn_benefit,
     dragon_boat_benefit,
@@ -20,6 +21,7 @@ def compute_payroll(
     enterprise_annuity,
     housing_fund,
     other_deductions,
+    labor_union_fee,
     tax,
 ):
     D = lambda v: v if isinstance(v, Decimal) else Decimal(str(v or 0))
@@ -30,6 +32,7 @@ def compute_payroll(
     high_temp_allowance = D(high_temp_allowance)
     low_temp_allowance = D(low_temp_allowance)
     computer_allowance = D(computer_allowance)
+    communication_allowance = D(communication_allowance)
     meal_allowance = D(meal_allowance)
     mid_autumn_benefit = D(mid_autumn_benefit)
     dragon_boat_benefit = D(dragon_boat_benefit)
@@ -43,6 +46,7 @@ def compute_payroll(
     enterprise_annuity = D(enterprise_annuity)
     housing_fund = D(housing_fund)
     other_deductions = D(other_deductions)
+    labor_union_fee = D(labor_union_fee)
     tax = D(tax)
 
     # Non-cash benefits (not included in actual take-home)
@@ -60,6 +64,7 @@ def compute_payroll(
         + high_temp_allowance
         + low_temp_allowance
         + computer_allowance
+        + communication_allowance
         + meal_allowance
         + mid_autumn_benefit
         + dragon_boat_benefit
@@ -75,6 +80,7 @@ def compute_payroll(
         + enterprise_annuity
         + housing_fund
         + other_deductions
+        + labor_union_fee
     ).quantize(q, rounding=ROUND_HALF_UP)
 
     gross_income = total_income
@@ -88,6 +94,7 @@ def compute_payroll(
         + high_temp_allowance
         + low_temp_allowance
         + computer_allowance
+        + communication_allowance
         + other_income
         - total_deductions
     ).quantize(q, rounding=ROUND_HALF_UP)

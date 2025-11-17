@@ -14,6 +14,7 @@ class SalaryRecord(Model):
     high_temp_allowance = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
     low_temp_allowance = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
     computer_allowance = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
+    communication_allowance = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
     meal_allowance = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
     mid_autumn_benefit = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
     dragon_boat_benefit = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
@@ -28,6 +29,7 @@ class SalaryRecord(Model):
     enterprise_annuity = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
     housing_fund = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
     other_deductions = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
+    labor_union_fee = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     tax = fields.DecimalField(max_digits=15, decimal_places=2, default=0)
 

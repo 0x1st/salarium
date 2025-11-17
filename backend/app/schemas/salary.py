@@ -10,6 +10,7 @@ class SalaryCreate(BaseModel):
     high_temp_allowance: float = 0.0
     low_temp_allowance: float = 0.0
     computer_allowance: float = 0.0
+    communication_allowance: float = 0.0
     meal_allowance: float = 0.0
     mid_autumn_benefit: float = 0.0
     dragon_boat_benefit: float = 0.0
@@ -22,6 +23,7 @@ class SalaryCreate(BaseModel):
     enterprise_annuity: float = 0.0
     housing_fund: float = 0.0
     other_deductions: float = 0.0
+    labor_union_fee: float = 0.0
     tax: float = 0.0
     note: Optional[str] = None
 
@@ -32,6 +34,7 @@ class SalaryUpdate(BaseModel):
     high_temp_allowance: Optional[float] = None
     low_temp_allowance: Optional[float] = None
     computer_allowance: Optional[float] = None
+    communication_allowance: Optional[float] = None
     meal_allowance: Optional[float] = None
     mid_autumn_benefit: Optional[float] = None
     dragon_boat_benefit: Optional[float] = None
@@ -44,6 +47,7 @@ class SalaryUpdate(BaseModel):
     enterprise_annuity: Optional[float] = None
     housing_fund: Optional[float] = None
     other_deductions: Optional[float] = None
+    labor_union_fee: Optional[float] = None
     tax: Optional[float] = None
     note: Optional[str] = None
 
@@ -57,6 +61,7 @@ class SalaryOut(BaseModel):
     high_temp_allowance: float
     low_temp_allowance: float
     computer_allowance: float
+    communication_allowance: float
     meal_allowance: float
     mid_autumn_benefit: float
     dragon_boat_benefit: float
@@ -69,6 +74,7 @@ class SalaryOut(BaseModel):
     enterprise_annuity: float
     housing_fund: float
     other_deductions: float
+    labor_union_fee: float
     tax: float
     total_income: float
     total_deductions: float

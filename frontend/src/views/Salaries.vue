@@ -65,7 +65,7 @@ const stats = computed(() => {
   
   const total = filteredList.value.reduce((sum, item) => sum + (item.net_income || 0), 0)
   const average = total / filteredList.value.length
-  const latest = filteredList.value.length > 0 ? filteredList.value[filteredList.value.length - 1].net_income || 0 : 0
+  const latest = filteredList.value.length > 0 ? (filteredList.value[0].net_income || 0) : 0
   
   return { total, average, latest }
 })
@@ -125,6 +125,7 @@ function openCreate() {
     high_temp_allowance: 0,
     low_temp_allowance: 0,
     computer_allowance: 0,
+    communication_allowance: 0,
     meal_allowance: 0,
     mid_autumn_benefit: 0,
     dragon_boat_benefit: 0,
@@ -137,6 +138,7 @@ function openCreate() {
     enterprise_annuity: 0,
     housing_fund: 0,
     other_deductions: 0,
+    labor_union_fee: 0,
     tax: 0,
     note: '',
   }
@@ -153,6 +155,8 @@ function openEdit(salary) {
     performance_salary: salary.performance_salary,
     high_temp_allowance: salary.high_temp_allowance,
     low_temp_allowance: salary.low_temp_allowance,
+    computer_allowance: salary.computer_allowance,
+    communication_allowance: salary.communication_allowance,
     meal_allowance: salary.meal_allowance,
     mid_autumn_benefit: salary.mid_autumn_benefit,
     dragon_boat_benefit: salary.dragon_boat_benefit,
@@ -165,6 +169,7 @@ function openEdit(salary) {
     enterprise_annuity: salary.enterprise_annuity,
     housing_fund: salary.housing_fund,
     other_deductions: salary.other_deductions,
+    labor_union_fee: salary.labor_union_fee,
     tax: salary.tax,
     note: salary.note || '',
   }
@@ -367,22 +372,24 @@ onMounted(load)
         </div>
         
         <div v-else class="table-wrapper">
-          <table class="salary-table">
-            <thead>
-              <tr>
-                <th class="col-date">时间</th>
-                <th class="col-currency">基本工资</th>
-                <th class="col-currency">绩效工资</th>
-                <th class="col-currency">高温补贴</th>
-                <th class="col-currency">总收入</th>
-                <th class="col-currency">五险一金</th>
-                <th class="col-currency">其他扣除</th>
-                <th class="col-currency">个税</th>
-                <th class="col-currency">实发工资</th>
-                <th class="col-currency highlight">实际到手</th>
-                <th class="col-actions">操作</th>
-              </tr>
-            </thead>
+  <table class="salary-table">
+    <thead>
+      <tr>
+        <th class="col-date" scope="col">时间</th>
+        <th class="col-currency" scope="col">基本工资</th>
+        <th class="col-currency" scope="col">绩效工资</th>
+        <th class="col-currency" scope="col">福利补贴</th>
+        <th class="col-currency" scope="col">通信补贴</th>
+        <th class="col-currency" scope="col">总收入</th>
+        <th class="col-currency" scope="col">五险一金</th>
+        <th class="col-currency" scope="col">其他扣除</th>
+        <th class="col-currency" scope="col">工会</th>
+        <th class="col-currency" scope="col">个税</th>
+        <th class="col-currency" scope="col">实发工资</th>
+        <th class="col-currency highlight" scope="col">实际到手</th>
+        <th class="col-actions" scope="col">操作</th>
+      </tr>
+    </thead>
             <tbody>
               <tr v-for="salary in filteredList" :key="salary.id" class="table-row">
                 <td class="col-date">
@@ -403,6 +410,7 @@ onMounted(load)
                   salary.spring_festival_benefit + 
                   salary.other_income
                 ) }}</td>
+                <td class="col-currency">{{ formatCurrency(salary.communication_allowance) }}</td>
                 <td class="col-currency">{{ formatCurrency(salary.total_income) }}</td>
                 <td class="col-currency text-danger">-{{ formatCurrency(
                   salary.pension_insurance + 
@@ -413,6 +421,7 @@ onMounted(load)
                   salary.housing_fund
                 ) }}</td>
                 <td class="col-currency text-danger">-{{ formatCurrency(salary.other_deductions) }}</td>
+                <td class="col-currency text-danger">-{{ formatCurrency(salary.labor_union_fee) }}</td>
                 <td class="col-currency text-danger">-{{ formatCurrency(salary.tax) }}</td>
                 <td class="col-currency net-income">{{ formatCurrency(salary.net_income) }}</td>
                 <td class="col-currency actual-take-home highlight">{{ formatCurrency(salary.actual_take_home) }}</td>
@@ -490,16 +499,22 @@ onMounted(load)
               <input v-model.number="form.low_temp_allowance" type="number" class="form-control" step="0.01" min="0" />
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">电脑补贴</label>
-              <input v-model.number="form.computer_allowance" type="number" class="form-control" step="0.01" min="0" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">餐补</label>
-              <input v-model.number="form.meal_allowance" type="number" class="form-control" step="0.01" min="0" />
-            </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">电脑补贴</label>
+            <input v-model.number="form.computer_allowance" type="number" class="form-control" step="0.01" min="0" />
           </div>
+          <div class="form-group">
+            <label class="form-label">餐补</label>
+            <input v-model.number="form.meal_allowance" type="number" class="form-control" step="0.01" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">通信补贴</label>
+            <input v-model.number="form.communication_allowance" type="number" class="form-control" step="0.01" min="0" />
+          </div>
+        </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">中秋福利</label>
@@ -557,12 +572,16 @@ onMounted(load)
               <input v-model.number="form.housing_fund" type="number" class="form-control" step="0.01" min="0" />
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">其他扣除</label>
-              <input v-model.number="form.other_deductions" type="number" class="form-control" step="0.01" min="0" />
-            </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">其他扣除</label>
+            <input v-model.number="form.other_deductions" type="number" class="form-control" step="0.01" min="0" />
           </div>
+          <div class="form-group">
+            <label class="form-label">工会</label>
+            <input v-model.number="form.labor_union_fee" type="number" class="form-control" step="0.01" min="0" />
+          </div>
+        </div>
         </div>
 
         <div class="form-section">
@@ -858,6 +877,7 @@ onMounted(load)
 .salary-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .salary-table th {
@@ -876,8 +896,22 @@ onMounted(load)
   font-size: 0.875rem;
 }
 
+.salary-table td.col-currency,
+.salary-table th.col-currency {
+  padding-right: 1rem;
+}
+
 .col-currency {
   text-align: right;
+  width: 140px;
+}
+
+.salary-table th.col-currency {
+  text-align: right;
+}
+
+.col-date {
+  width: 120px;
 }
 
 .col-actions {

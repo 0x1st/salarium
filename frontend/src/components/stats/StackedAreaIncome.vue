@@ -18,12 +18,14 @@ function byMonth() {
   for (const r of props.data) {
     const key = `${r.year}-${r.month}`
     if (!map.has(key)) {
-      map.set(key, { year: r.year, month: r.month, base: 0, perf: 0, allow: 0 })
+      map.set(key, { year: r.year, month: r.month, base: 0, perf: 0, allow: 0, benefits: 0, other: 0 })
     }
     const v = map.get(key)
     v.base += r.base_salary || 0
     v.perf += r.performance_salary || 0
-    v.allow += (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.meal_allowance || 0) + (r.computer_allowance || 0)
+    v.allow += (r.high_temp_allowance || 0) + (r.low_temp_allowance || 0) + (r.meal_allowance || 0) + (r.computer_allowance || 0) + (r.communication_allowance || 0)
+    v.benefits += r.non_cash_benefits || 0
+    v.other += r.other_income || 0
   }
   return Array.from(map.values()).sort((a, b) => (a.year - b.year) || (a.month - b.month))
 }
@@ -43,6 +45,8 @@ function render() {
       { name: '基本工资', type: 'line', stack: 'total', areaStyle: {}, data: rows.map(r => r.base) },
       { name: '绩效工资', type: 'line', stack: 'total', areaStyle: {}, data: rows.map(r => r.perf) },
       { name: '补贴', type: 'line', stack: 'total', areaStyle: {}, data: rows.map(r => r.allow) },
+      { name: '福利', type: 'line', stack: 'total', areaStyle: {}, data: rows.map(r => r.benefits) },
+      { name: '其他收入', type: 'line', stack: 'total', areaStyle: {}, data: rows.map(r => r.other) },
     ],
   })
 }

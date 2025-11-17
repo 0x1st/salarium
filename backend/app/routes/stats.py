@@ -26,12 +26,12 @@ _D = lambda v: v if isinstance(v, Decimal) else Decimal(str(v or 0))
 # meal allowance is not counted toward actual take-home
 
 def _allowances_sum_net(r: SalaryRecord) -> Decimal:
-    return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.computer_allowance)
+    return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.computer_allowance) + _D(r.communication_allowance)
 
 # Allowances for composition/gross (include meal allowance)
 
 def _allowances_sum_full(r: SalaryRecord) -> Decimal:
-    return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.meal_allowance) + _D(r.computer_allowance)
+    return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.meal_allowance) + _D(r.computer_allowance) + _D(r.communication_allowance)
 
 # Benefits grouping (festival welfare only; excludes meal allowance)
 
@@ -61,6 +61,7 @@ def _deductions_sum(r: SalaryRecord) -> Decimal:
         + _D(r.enterprise_annuity)
         + _D(r.housing_fund)
         + _D(r.other_deductions)
+        + _D(r.labor_union_fee)
     )
 
 
@@ -447,6 +448,7 @@ async def income_composition(
             high_temp_allowance=float(_D(r.high_temp_allowance)),
             low_temp_allowance=float(_D(r.low_temp_allowance)),
             computer_allowance=float(_D(r.computer_allowance)),
+            communication_allowance=float(_D(r.communication_allowance)),
             meal_allowance=float(_D(r.meal_allowance)),
             other_income=float(_D(r.other_income)),
             non_cash_benefits=float(_D(benefits)),
@@ -562,6 +564,7 @@ async def deductions_breakdown(
         ("企业年金", "enterprise_annuity"),
         ("住房公积金", "housing_fund"),
         ("其他扣除", "other_deductions"),
+        ("工会", "labor_union_fee"),
     ]
 
     totals = {key: Decimal("0") for _, key in categories}
@@ -599,6 +602,7 @@ async def deductions_breakdown(
             enterprise_annuity=float(data["enterprise_annuity"]),
             housing_fund=float(data["housing_fund"]),
             other_deductions=float(data["other_deductions"]),
+            labor_union_fee=float(data["labor_union_fee"]),
             total=float(total),
         ))
 
@@ -722,6 +726,7 @@ async def monthly_table(
             high_temp_allowance=float(_D(r.high_temp_allowance)),
             low_temp_allowance=float(_D(r.low_temp_allowance)),
             computer_allowance=float(_D(r.computer_allowance)),
+            communication_allowance=float(_D(r.communication_allowance)),
             meal_allowance=float(_D(r.meal_allowance)),
             mid_autumn_benefit=float(_D(r.mid_autumn_benefit)),
             dragon_boat_benefit=float(_D(r.dragon_boat_benefit)),
@@ -735,10 +740,12 @@ async def monthly_table(
             enterprise_annuity=float(_D(r.enterprise_annuity)),
             housing_fund=float(_D(r.housing_fund)),
             other_deductions=float(_D(r.other_deductions)),
+            labor_union_fee=float(_D(r.labor_union_fee)),
             # totals
             income_total=float(income_total),
             deductions_total=float(deductions),
             benefits_total=float(benefits),
+            allowances_total=float(_allowances_sum_full(r)),
             actual_take_home=float(net),
             net_income=float(net),
             tax=float(_D(r.tax)),
@@ -771,6 +778,7 @@ async def annual_table(
             "high_temp_allowance": Decimal("0"),
             "low_temp_allowance": Decimal("0"),
             "computer_allowance": Decimal("0"),
+            "communication_allowance": Decimal("0"),
             "meal_allowance": Decimal("0"),
             "mid_autumn_benefit": Decimal("0"),
             "dragon_boat_benefit": Decimal("0"),
@@ -784,6 +792,7 @@ async def annual_table(
             "enterprise_annuity": Decimal("0"),
             "housing_fund": Decimal("0"),
             "other_deductions": Decimal("0"),
+            "labor_union_fee": Decimal("0"),
             # derived totals
             "income_total": Decimal("0"),
             "deductions_total": Decimal("0"),
@@ -797,6 +806,7 @@ async def annual_table(
         cur["high_temp_allowance"] += _D(r.high_temp_allowance)
         cur["low_temp_allowance"] += _D(r.low_temp_allowance)
         cur["computer_allowance"] += _D(r.computer_allowance)
+        cur["communication_allowance"] += _D(r.communication_allowance)
         cur["meal_allowance"] += _D(r.meal_allowance)
         cur["mid_autumn_benefit"] += _D(r.mid_autumn_benefit)
         cur["dragon_boat_benefit"] += _D(r.dragon_boat_benefit)
@@ -810,6 +820,7 @@ async def annual_table(
         cur["enterprise_annuity"] += _D(r.enterprise_annuity)
         cur["housing_fund"] += _D(r.housing_fund)
         cur["other_deductions"] += _D(r.other_deductions)
+        cur["labor_union_fee"] += _D(r.labor_union_fee)
         # derived
         cur["income_total"] += _gross_income_full(r)
         cur["deductions_total"] += _deductions_sum(r)
@@ -840,6 +851,7 @@ async def annual_table(
             high_temp_allowance_total=float(cur["high_temp_allowance"]),
             low_temp_allowance_total=float(cur["low_temp_allowance"]),
             computer_allowance_total=float(cur["computer_allowance"]),
+            communication_allowance_total=float(cur["communication_allowance"]),
             meal_allowance_total=float(cur["meal_allowance"]),
             mid_autumn_benefit_total=float(cur["mid_autumn_benefit"]),
             dragon_boat_benefit_total=float(cur["dragon_boat_benefit"]),
@@ -853,6 +865,7 @@ async def annual_table(
             enterprise_annuity_total=float(cur["enterprise_annuity"]),
             housing_fund_total=float(cur["housing_fund"]),
             other_deductions_total=float(cur["other_deductions"]),
+            labor_union_fee_total=float(cur["labor_union_fee"]),
             # grand totals
             income_total=float(cur["income_total"]),
             deductions_total=float(cur["deductions_total"]),
@@ -896,6 +909,7 @@ async def annual_monthly_table(
             "high_temp_allowance": Decimal("0"),
             "low_temp_allowance": Decimal("0"),
             "computer_allowance": Decimal("0"),
+            "communication_allowance": Decimal("0"),
             "meal_allowance": Decimal("0"),
             "mid_autumn_benefit": Decimal("0"),
             "dragon_boat_benefit": Decimal("0"),
@@ -908,6 +922,7 @@ async def annual_monthly_table(
             "enterprise_annuity": Decimal("0"),
             "housing_fund": Decimal("0"),
             "other_deductions": Decimal("0"),
+            "labor_union_fee": Decimal("0"),
             "income_total": Decimal("0"),
             "deductions_total": Decimal("0"),
             "benefits_total": Decimal("0"),
@@ -924,6 +939,7 @@ async def annual_monthly_table(
         agg["high_temp_allowance"] += _D(r.high_temp_allowance)
         agg["low_temp_allowance"] += _D(r.low_temp_allowance)
         agg["computer_allowance"] += _D(r.computer_allowance)
+        agg["communication_allowance"] += _D(r.communication_allowance)
         agg["meal_allowance"] += _D(r.meal_allowance)
         agg["mid_autumn_benefit"] += _D(r.mid_autumn_benefit)
         agg["dragon_boat_benefit"] += _D(r.dragon_boat_benefit)
@@ -938,11 +954,14 @@ async def annual_monthly_table(
         agg["enterprise_annuity"] += _D(r.enterprise_annuity)
         agg["housing_fund"] += _D(r.housing_fund)
         agg["other_deductions"] += _D(r.other_deductions)
+        agg["labor_union_fee"] += _D(r.labor_union_fee)
         
         # Calculate totals
         agg["income_total"] += _gross_income_full(r)
         agg["deductions_total"] += _deductions_sum(r)
+        a_full = _allowances_sum_full(r)
         agg["benefits_total"] += _benefits_sum(r)
+        agg["allowances_total"] = agg.get("allowances_total", Decimal("0")) + a_full
         agg["actual_take_home"] += _unified_net_income(r)
     
     def is_empty(agg):
@@ -964,6 +983,7 @@ async def annual_monthly_table(
             high_temp_allowance=float(agg["high_temp_allowance"]),
             low_temp_allowance=float(agg["low_temp_allowance"]),
             computer_allowance=float(agg["computer_allowance"]),
+            communication_allowance=float(agg["communication_allowance"]),
             meal_allowance=float(agg["meal_allowance"]),
             mid_autumn_benefit=float(agg["mid_autumn_benefit"]),
             dragon_boat_benefit=float(agg["dragon_boat_benefit"]),
@@ -976,9 +996,11 @@ async def annual_monthly_table(
             enterprise_annuity=float(agg["enterprise_annuity"]),
             housing_fund=float(agg["housing_fund"]),
             other_deductions=float(agg["other_deductions"]),
+            labor_union_fee=float(agg["labor_union_fee"]),
             income_total=float(agg["income_total"]),
             deductions_total=float(agg["deductions_total"]),
             benefits_total=float(agg["benefits_total"]),
+            allowances_total=float(agg.get("allowances_total", Decimal("0"))),
             actual_take_home=float(agg["actual_take_home"]),
         ))
     

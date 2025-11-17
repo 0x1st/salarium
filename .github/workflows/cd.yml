@@ -3,6 +3,7 @@ name: CD
 on:
   push:
     branches: [ master ]
+    tags: [ '*' ]
   workflow_dispatch:
 
 jobs:
@@ -11,6 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
+      - name: Derive Docker tags (latest + git tag only)
+        id: meta
+        run: |
+          # Default repo
+          REPO="${{ secrets.DOCKERHUB_USERNAME }}/salarium"
+          # Base tags
+          TAGS=("${REPO}:latest")
+          # If it's a tag push, use that as version only
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION_TAG="${GITHUB_REF_NAME}"
+            SAFE_VERSION=$(echo "$VERSION_TAG" | tr -c 'a-zA-Z0-9_.-' '-')
+            TAGS+=("${REPO}:${SAFE_VERSION}")
+          fi
+          printf "%s\n" "tags=$(IFS=,; echo "${TAGS[*]}")" >> "$GITHUB_OUTPUT"
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -21,6 +36,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/salarium:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/salarium:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}

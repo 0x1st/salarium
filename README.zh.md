@@ -27,28 +27,25 @@ README.zh.md      # 中文文档
 
 ## 🚀 快速开始
 
-### 方式一：Docker 单容器部署（推荐生产）
+### 方式一：DockerHub 拉取运行（推荐）
 
 #### 前置条件
 - Docker 和 Docker Compose
 
 #### 启动步骤
 ```bash
-# 1. 克隆仓库
-git clone <repository-url>
-cd salarium
+# 直接拉取镜像并运行（容器内部端口 8000，需要映射到主机）
+docker pull styin8/salarium:latest
+docker run -d \
+  --name salarium \
+  -p 8000:8000 \
+  -v $(pwd)/data:/app/data \
+  styin8/salarium:latest
 
-# 2. 创建环境文件（可选）
-cp .env.example .env
-# 编辑 .env 文件配置 JWT_SECRET 等
-
-# 3. 构建并启动容器
-docker compose up -d --build
-
-# 4. 访问应用
-# 前端：http://localhost:8080
-# API 文档：http://localhost:8080/docs
-# API：http://localhost:8080/api
+# 访问应用
+# 前端：http://localhost:8000
+# API 文档：http://localhost:8000/docs
+# API：http://localhost:8000/api
 ```
 
 **特性**：
@@ -58,6 +55,12 @@ docker compose up -d --build
 - ✅ 支持 SPA 路由回退
 
 详细部署文档请参考 [DEPLOY.md](DEPLOY.md)。
+
+### 方式二：Docker 单容器（本地构建）
+```bash
+docker compose up -d --build
+# 前端/API 入口：http://localhost:8000
+```
 
 ### 方式二：本地开发
 

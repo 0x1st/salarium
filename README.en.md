@@ -27,28 +27,25 @@ README.zh.md      # Chinese documentation
 
 ## 🚀 Getting Started
 
-### Option 1: Docker Single-Container Deployment (Recommended for Production)
+### Option 1: Run from Docker Hub (Recommended)
 
 #### Prerequisites
 - Docker and Docker Compose
 
 #### Steps
 ```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd salarium
+# Pull and run directly (container internal port 8000; map to host)
+docker pull styin8/salarium:latest
+docker run -d \
+  --name salarium \
+  -p 8000:8000 \
+  -v $(pwd)/data:/app/data \
+  styin8/salarium:latest
 
-# 2. Create environment file (optional)
-cp .env.example .env
-# Edit .env to configure JWT_SECRET, etc.
-
-# 3. Build and start the container
-docker compose up -d --build
-
-# 4. Access the application
-# Frontend: http://localhost:8080
-# API Docs: http://localhost:8080/docs
-# API: http://localhost:8080/api
+# Access the application
+# Frontend: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+# API: http://localhost:8000/api
 ```
 
 **Features**:
@@ -58,6 +55,12 @@ docker compose up -d --build
 - ✅ SPA routing fallback support
 
 For detailed deployment documentation, see [DEPLOY.md](DEPLOY.md).
+
+### Option 2: Local Docker build
+```bash
+docker compose up -d --build
+# Frontend/API entry: http://localhost:8000
+```
 
 ### Option 2: Local Development
 

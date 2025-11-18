@@ -58,12 +58,21 @@ def create_app() -> FastAPI:
     if os.path.exists(static_dir):
         @app.get("/{full_path:path}")
         def spa_fallback(full_path: str):
-            """Serve index.html for non-API routes to support SPA refresh in production."""
+            """Return static asset if exists; otherwise index.html for SPA routes."""
+            # Do not interfere with API paths
             if full_path.startswith("api"):
                 raise HTTPException(status_code=404, detail="Not Found")
+
+            # Serve real static asset to avoid MIME mismatches in production
+            asset_path = os.path.join(static_dir, full_path)
+            if os.path.isfile(asset_path):
+                return FileResponse(asset_path)
+
+            # Fallback to SPA entry for client-side routing
             index_path = os.path.join(static_dir, "index.html")
             if os.path.exists(index_path):
                 return FileResponse(index_path)
+
             raise HTTPException(status_code=404, detail="Not Found")
 
         app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")

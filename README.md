@@ -1,3 +1,12 @@
+<p align="center">
+  <a href="https://termius.com" target="_blank">
+    <img src="./termius-logo.svg" alt="Termius" width="200">
+  </a>
+  <br>
+  <b><a href="https://termius.com" target="_blank">Termius</a> provides a secure, reliable, and collaborative SSH client.</b>
+</p>
+
+
 # Salarium — Home Payroll Suite 🧾💼
 
 Modern, lightweight payroll management for families or private use. Built with FastAPI (backend) and Vue 3 + Vite (frontend), delivered as a single Docker image for effortless deployment. 🚀

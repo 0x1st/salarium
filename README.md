@@ -26,5 +26,4 @@ Multilingual documentation:
 [Vue 3 + Vite] → Axios → [FastAPI] → Tortoise ORM → [SQLite]
 ```
 
-## License ⚖️
-Private use only. Do not redistribute without permission.
+

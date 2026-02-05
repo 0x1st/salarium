@@ -36,4 +36,7 @@ frontend/.vite/
 Thumbs.db
 .idea/
 .vscode/
-.trae
+.trae/
+.claude/
+.trellis/
+AGENTS.md

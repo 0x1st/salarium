@@ -9,6 +9,7 @@ import SalaryStatsCards from '../components/salary/SalaryStatsCards.vue'
 import SalaryFilter from '../components/salary/SalaryFilter.vue'
 import SalaryTable from '../components/salary/SalaryTable.vue'
 import SalaryFormDialog from '../components/salary/SalaryFormDialog.vue'
+import PageContainer from '../components/PageContainer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -173,7 +174,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="page-container">
+  <PageContainer>
     <!-- Header -->
     <header class="page-header">
       <div class="header-left">
@@ -226,16 +227,10 @@ onMounted(load)
       @submit="handleSubmit"
       @manage-fields="goToFieldSettings"
     />
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>
-.page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
 .page-header {
   display: flex;
   justify-content: space-between;

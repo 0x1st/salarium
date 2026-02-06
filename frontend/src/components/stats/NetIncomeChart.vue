@@ -33,8 +33,8 @@ function render() {
         smooth: true,
         data: values,
         symbol: 'circle',
-        areaStyle: { color: gradient('#67C23A', '#A3E09E') },
-        lineStyle: { color: palette.green, width: 2 },
+        areaStyle: { color: gradient(palette.success, '#A3D4BE') },
+        lineStyle: { color: palette.success, width: 2 },
       },
     ],
   })

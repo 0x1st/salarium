@@ -44,23 +44,24 @@ const props = defineProps({
   align-items: center;
   justify-content: center;
   padding: 12px 0 4px;
-  color: #2c3e50;
+  color: #2d2a26;
   flex-wrap: nowrap;
 }
 
 .chart-title {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
-  color: #2c3e50;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  color: #2d2a26;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
 }
 
-.chart-note { 
-  font-size: 13px; 
-  color: #7f8c8d; 
-  white-space: nowrap; 
+.chart-note {
+  font-size: 13px;
+  color: #6b6560;
+  white-space: nowrap;
 }
 </style>

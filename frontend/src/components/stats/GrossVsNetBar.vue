@@ -33,7 +33,7 @@ function render() {
         type: 'bar',
         stack: 'income',
         data: gross,
-        itemStyle: { color: gradient('#409EFF', '#66b1ff') },
+        itemStyle: { color: gradient(palette.primary, '#E8C4B8') },
         barWidth: '40%',
       },
       {
@@ -41,7 +41,7 @@ function render() {
         type: 'bar',
         stack: 'income',
         data: net,
-        itemStyle: { color: gradient('#67C23A', '#A3E09E') },
+        itemStyle: { color: gradient(palette.success, '#A3D4BE') },
         barWidth: '40%',
       },
     ],

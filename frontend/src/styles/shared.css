@@ -1,21 +1,21 @@
-/* Shared styles for consistent UI across the application */
+/* Shared styles for consistent UI across the application - Claude/Anthropic Terra Cotta */
 
 /* Card styles */
 .shared-card {
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  border: 1px solid #e5e0dc;
+  transition: all 0.2s ease;
 }
 
 .shared-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #d5d0cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .shared-card-header {
   padding: 18px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e5e0dc;
 }
 
 .shared-card-body {
@@ -24,20 +24,17 @@
 
 /* Typography */
 .shared-page-title {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   font-size: 28px;
-  font-weight: 700;
-  color: #2c3e50;
+  font-weight: 500;
+  color: #da7756;
   margin: 0 0 8px 0;
   line-height: 1.2;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .shared-page-subtitle {
   font-size: 16px;
-  color: #7f8c8d;
+  color: #6b6560;
   margin: 0;
   line-height: 1.5;
 }
@@ -45,7 +42,7 @@
 /* Layout */
 .shared-container {
   padding: 24px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #fdfcfb;
   min-height: calc(100vh - 180px);
 }
 

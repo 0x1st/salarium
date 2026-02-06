@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, axisCurrencyFormatter, currencyFormatter, responsiveResize } from '../../utils/charts'
+import { initChart, baseGrid, axisCurrencyFormatter, currencyFormatter, responsiveResize, palette } from '../../utils/charts'
 import ChartCard from './ChartCard.vue'
 
 const props = defineProps({
@@ -45,9 +45,9 @@ function render() {
         data,
         itemStyle: {
           color: (params) => {
-            if (params.dataIndex === 1) return '#F56C6C'
-            if (params.dataIndex === 2) return '#67C23A'
-            return '#409EFF'
+            if (params.dataIndex === 1) return palette.danger
+            if (params.dataIndex === 2) return palette.success
+            return palette.primary
           },
         },
         label: {

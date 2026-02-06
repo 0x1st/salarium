@@ -547,7 +547,7 @@ watch(() => stats.refreshToken, () => { load() })
 
 :deep(.el-card__header) {
   padding: 18px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e5e0dc;
 }
 
 :deep(.el-card__body) {

@@ -42,9 +42,9 @@ watch(() => stats.refreshToken, () => { load() })
     <template v-else>
       <el-card shadow="hover">
         <KPICards :items="[
-          { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#409EFF' },
-          { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#F56C6C' },
-          { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#67C23A' }
+          { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#da7756' },
+          { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#c45c5c' },
+          { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#5a8a6e' }
         ]" />
       </el-card>
 
@@ -69,20 +69,21 @@ watch(() => stats.refreshToken, () => { load() })
 }
 
 .net-grid :deep(.el-card) {
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  border: 1px solid #e5e0dc;
+  box-shadow: none;
+  transition: all 0.2s ease;
 }
 
 .net-grid :deep(.el-card:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #d5d0cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .net-grid :deep(.el-card__header) {
   padding: 18px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e5e0dc;
 }
 
 .net-grid :deep(.el-card__body) {

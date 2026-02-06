@@ -27,7 +27,7 @@ export default {
       return colors[index % colors.length];
     },
     getIcon(index) {
-      const icons = ['💰', '📉', '💵', '📊'];
+      const icons = ['💰', '📈', '💵', '📊'];
       return icons[index % icons.length];
     }
   }

@@ -48,20 +48,21 @@ watch(() => stats.refreshToken, () => { load() })
 }
 
 .two-col :deep(.el-card) {
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  border: 1px solid #e5e0dc;
+  box-shadow: none;
+  transition: all 0.2s ease;
 }
 
 .two-col :deep(.el-card:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #d5d0cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .two-col :deep(.el-card__header) {
   padding: 18px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e5e0dc;
 }
 
 .two-col :deep(.el-card__body) {

@@ -589,7 +589,7 @@ watch(() => stats.refreshToken, () => { load() })
 
 .tab-btn.active {
   background: white;
-  color: #3b82f6;
+  color: #d97706;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

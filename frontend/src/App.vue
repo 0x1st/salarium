@@ -156,7 +156,7 @@ function closeMobileMenu() {
 
 .login-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
 }
 
 /* 桌面端侧边栏 */
@@ -207,7 +207,7 @@ function closeMobileMenu() {
 .logo-icon {
   width: 32px;
   height: 32px;
-  color: #3b82f6;
+  color: #d97706;
 }
 
 .logo-text {
@@ -230,8 +230,8 @@ function closeMobileMenu() {
 }
 
 .collapse-btn:hover {
-  background-color: #f1f5f9;
-  color: #3b82f6;
+  background-color: #fef3c7;
+  color: #d97706;
 }
 
 .collapse-btn svg {
@@ -264,13 +264,13 @@ function closeMobileMenu() {
 }
 
 .nav-item:hover {
-  background-color: #f1f5f9;
-  color: #3b82f6;
+  background-color: #fef3c7;
+  color: #d97706;
 }
 
 .nav-item.router-link-active {
-  background-color: #dbeafe;
-  color: #3b82f6;
+  background-color: #fef3c7;
+  color: #d97706;
 }
 
 .nav-icon {
@@ -297,22 +297,22 @@ function closeMobileMenu() {
 }
 
 .user-profile:hover {
-  background: linear-gradient(135deg, #f1f5f9 0%, #ddd6fe 100%);
-  border-color: #3b82f6;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #d97706;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.15);
 }
 
 .user-avatar {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
 }
 
 .avatar-icon {
@@ -420,9 +420,9 @@ function closeMobileMenu() {
 }
 
 .logout-btn:hover, .login-btn:hover {
-  background-color: #f1f5f9;
-  border-color: #3b82f6;
-  color: #3b82f6;
+  background-color: #fef3c7;
+  border-color: #d97706;
+  color: #d97706;
 }
 
 .logout-icon, .login-icon {
@@ -502,8 +502,8 @@ function closeMobileMenu() {
 }
 
 .mobile-login-btn:hover {
-  background-color: #f1f5f9;
-  color: #3b82f6;
+  background-color: #fef3c7;
+  color: #d97706;
 }
 
 .mobile-sidebar {

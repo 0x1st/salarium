@@ -24,10 +24,10 @@ export default {
   methods: {
     getGradient(index, color) {
       const gradients = [
-        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+        'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
+        'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+        'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+        'linear-gradient(135deg, #b45309 0%, #d97706 100%)'
       ];
       return gradients[index % gradients.length];
     },

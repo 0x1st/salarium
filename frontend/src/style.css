@@ -10,9 +10,9 @@
   font-weight: 400;
   
   /* 颜色主题 */
-  --primary-color: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-light: #dbeafe;
+  --primary-color: #d97706;
+  --primary-hover: #b45309;
+  --primary-light: #fef3c7;
   --secondary-color: #64748b;
   --success-color: #10b981;
   --warning-color: #f59e0b;
@@ -149,7 +149,7 @@ button:hover {
 }
 
 button:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
 }
 
 button:disabled {
@@ -575,7 +575,7 @@ input:disabled, textarea:disabled, select:disabled {
 /* Keyboard navigation - maintain accessibility with subtle indicator */
 .el-select .el-input__wrapper:focus-visible {
   border-color: var(--primary-color);
-  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline: 2px solid rgba(217, 119, 6, 0.2);
   outline-offset: 1px;
 }
 
@@ -595,7 +595,7 @@ input:disabled, textarea:disabled, select:disabled {
 
 .el-input-number .el-input__wrapper:focus-visible {
   border-color: var(--primary-color);
-  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline: 2px solid rgba(217, 119, 6, 0.2);
   outline-offset: 1px;
 }
 
@@ -615,7 +615,7 @@ input:disabled, textarea:disabled, select:disabled {
 
 .el-date-editor .el-input__wrapper:focus-visible {
   border-color: var(--primary-color);
-  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline: 2px solid rgba(217, 119, 6, 0.2);
   outline-offset: 1px;
 }
 
@@ -639,7 +639,7 @@ input:disabled, textarea:disabled, select:disabled {
 }
 
 .el-input__wrapper:focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.2);
+  outline: 2px solid rgba(217, 119, 6, 0.2);
   outline-offset: 1px;
 }
 

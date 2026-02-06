@@ -16,7 +16,7 @@ defineProps({
 <style scoped>
 .page-container {
   padding: 24px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 

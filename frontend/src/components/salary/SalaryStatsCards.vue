@@ -93,7 +93,7 @@ function formatCurrency(amount) {
 }
 
 .stat-icon-warning {
-  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
   color: white;
 }
 

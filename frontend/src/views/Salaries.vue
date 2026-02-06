@@ -114,11 +114,11 @@ async function handleSubmit(formData) {
       }
       ElMessage.success('工资记录更新成功')
     } else {
-      const { data } = await api.post(`/salaries/${personId.value}`, formData)
-      list.value.push(data)
+      await api.post(`/salaries/${personId.value}`, formData)
       ElMessage.success('工资记录添加成功')
     }
-    window.dispatchEvent(new CustomEvent('stats:invalidate'))
+    // Reload data to get computed fields like actual_take_home
+    await load()
     dialogVisible.value = false
   } catch (error) {
     if (error.response) {
@@ -142,9 +142,8 @@ async function handleDelete(salary) {
     )
 
     await api.delete(`/salaries/${salary.id}`)
-    list.value = list.value.filter(i => i.id !== salary.id)
     ElMessage.success('删除成功')
-    window.dispatchEvent(new CustomEvent('stats:invalidate'))
+    await load()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')

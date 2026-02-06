@@ -1,7 +1,9 @@
 <script setup>
+import { ref, computed } from 'vue'
 import { Calendar, Edit, Trash2 } from 'lucide-vue-next'
+import { formatCurrency as formatCurrencyUtil } from '../../utils/number'
 
-defineProps({
+const props = defineProps({
   salaries: {
     type: Array,
     required: true
@@ -15,20 +17,28 @@ defineProps({
 const emit = defineEmits(['edit', 'delete'])
 
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('zh-CN', {
-    style: 'currency',
-    currency: 'CNY'
-  }).format(amount || 0)
+  return formatCurrencyUtil(amount, { decimals: 2 })
 }
 
 function computeCustomIncome(salary) {
   if (!salary.custom_fields) return 0
   return Object.values(salary.custom_fields).reduce((sum, val) => sum + (val > 0 ? val : 0), 0)
 }
+
+// Table styles matching stats table
+const headerCellStyle = { background: '#faf5f3', padding: '12px 16px', color: '#2d2a26', fontWeight: 600, fontSize: '13px' }
+const cellStyle = { padding: '14px 16px', fontSize: '14px' }
+
+const tableData = computed(() => {
+  return props.salaries.map(s => ({
+    ...s,
+    customIncome: computeCustomIncome(s)
+  }))
+})
 </script>
 
 <template>
-  <div class="table-container">
+  <div class="salary-table-container">
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
       <p>加载中...</p>
@@ -44,63 +54,87 @@ function computeCustomIncome(salary) {
       <p>点击上方按钮添加第一条记录</p>
     </div>
 
-    <div v-else class="table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>时间</th>
-            <th class="text-right">基本工资</th>
-            <th class="text-right">绩效工资</th>
-            <th class="text-right">自定义收入</th>
-            <th class="text-right">总收入</th>
-            <th class="text-right">五险一金</th>
-            <th class="text-right">个税</th>
-            <th class="text-right highlight">实际到手</th>
-            <th class="text-center">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="salary in salaries" :key="salary.id">
-            <td>
-              <div class="date-cell">
-                <Calendar :size="14" class="date-icon" />
-                <span>{{ salary.year }}/{{ salary.month.toString().padStart(2, '0') }}</span>
-              </div>
-            </td>
-            <td class="text-right">{{ formatCurrency(salary.base_salary) }}</td>
-            <td class="text-right">{{ formatCurrency(salary.performance_salary) }}</td>
-            <td class="text-right text-muted">{{ formatCurrency(computeCustomIncome(salary)) }}</td>
-            <td class="text-right">{{ formatCurrency(salary.total_income) }}</td>
-            <td class="text-right text-danger">-{{ formatCurrency(salary.total_deductions) }}</td>
-            <td class="text-right text-danger">-{{ formatCurrency(salary.tax) }}</td>
-            <td class="text-right highlight font-semibold text-success">{{ formatCurrency(salary.actual_take_home) }}</td>
-            <td class="text-center">
-              <div class="action-buttons">
-                <button
-                  class="action-btn action-btn-edit"
-                  @click="emit('edit', salary)"
-                  title="编辑"
-                >
-                  <Edit :size="14" />
-                </button>
-                <button
-                  class="action-btn action-btn-delete"
-                  @click="emit('delete', salary)"
-                  title="删除"
-                >
-                  <Trash2 :size="14" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else class="table-scroll-x">
+      <el-table
+        :data="tableData"
+        border
+        stripe
+        :header-cell-style="headerCellStyle"
+        :cell-style="cellStyle"
+        :default-sort="{ prop: 'year', order: 'descending' }"
+      >
+        <el-table-column label="时间" width="140" min-width="140" fixed sortable="sort">
+          <template #default="{ row }">
+            <div class="date-cell">
+              <Calendar :size="14" class="date-icon" />
+              <span>{{ row.year }}/{{ String(row.month).padStart(2, '0') }}</span>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="base_salary" label="基本工资" width="150" min-width="130" sortable="custom" align="right">
+          <template #default="{ row }">{{ formatCurrency(row.base_salary) }}</template>
+        </el-table-column>
+
+        <el-table-column prop="performance_salary" label="绩效工资" width="150" min-width="130" sortable="custom" align="right">
+          <template #default="{ row }">{{ formatCurrency(row.performance_salary) }}</template>
+        </el-table-column>
+
+        <el-table-column prop="customIncome" label="自定义收入" width="150" min-width="130" sortable align="right">
+          <template #default="{ row }">
+            <span class="text-muted">{{ formatCurrency(row.customIncome) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="total_income" label="总收入" width="150" min-width="130" sortable="custom" align="right" class-name="highlight-col">
+          <template #default="{ row }">{{ formatCurrency(row.total_income) }}</template>
+        </el-table-column>
+
+        <el-table-column prop="total_deductions" label="五险一金" width="150" min-width="130" sortable="custom" align="right">
+          <template #default="{ row }">
+            <span class="text-danger">-{{ formatCurrency(row.total_deductions) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="tax" label="个税" width="130" min-width="120" sortable="custom" align="right">
+          <template #default="{ row }">
+            <span class="text-danger">-{{ formatCurrency(row.tax) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="actual_take_home" label="实际到手" width="160" min-width="140" sortable="custom" align="right" class-name="highlight-strong">
+          <template #default="{ row }">
+            <span class="text-success font-semibold">{{ formatCurrency(row.actual_take_home) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="110" min-width="110" fixed align="center">
+          <template #default="{ row }">
+            <div class="action-buttons">
+              <button
+                class="action-btn action-btn-edit"
+                @click="emit('edit', row)"
+                title="编辑"
+              >
+                <Edit :size="14" />
+              </button>
+              <button
+                class="action-btn action-btn-delete"
+                @click="emit('delete', row)"
+                title="删除"
+              >
+                <Trash2 :size="14" />
+              </button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
   </div>
 </template>
 
 <style scoped>
-.table-container {
+.salary-table-container {
   background: white;
   border: 1px solid #e5e0dc;
   border-radius: 12px;
@@ -145,70 +179,40 @@ function computeCustomIncome(salary) {
   font-size: 0.875rem;
 }
 
-.table-wrapper {
+.table-scroll-x {
   overflow-x: auto;
-}
-
-.data-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 0;
 }
 
-.data-table th {
-  padding: 1rem 1.25rem;
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #6b6560;
-  background: #faf5f3;
-  border-bottom: 1px solid #e5e0dc;
-  white-space: nowrap;
+:deep(.el-table) {
+  border-radius: 8px;
+  min-width: max-content;
 }
 
-.data-table td {
-  padding: 1rem 1.25rem;
-  font-size: 0.875rem;
-  color: #2d2a26;
-  border-bottom: 1px solid #f5f3f1;
-  white-space: nowrap;
-}
-
-.data-table tbody tr {
-  transition: background 0.15s ease;
-}
-
-.data-table tbody tr:hover {
+:deep(.el-table th) {
   background: #faf5f3;
 }
 
-.text-right {
-  text-align: right;
+:deep(.el-table .cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.text-center {
-  text-align: center;
+:deep(.el-table .highlight-col) .cell {
+  background: rgba(218, 119, 86, 0.08);
+  font-weight: 600;
 }
 
-.text-muted {
-  color: #9a9590;
-}
-
-.text-danger {
-  color: #c45c5c;
-}
-
-.text-success {
+:deep(.el-table .highlight-strong) .cell {
+  background: rgba(90, 138, 110, 0.1);
+  font-weight: 700;
   color: #5a8a6e;
 }
 
-.font-semibold {
-  font-weight: 500;
-}
-
-.highlight {
-  background: rgba(218, 119, 86, 0.04);
+:deep(.el-table__body tr:hover > td) {
+  background: #faf5f3 !important;
 }
 
 .date-cell {
@@ -254,5 +258,21 @@ function computeCustomIncome(salary) {
 
 .action-btn-delete:hover {
   background: #f0dcd4;
+}
+
+.text-muted {
+  color: #9a9590;
+}
+
+.text-danger {
+  color: #c45c5c;
+}
+
+.text-success {
+  color: #5a8a6e;
+}
+
+.font-semibold {
+  font-weight: 600;
 }
 </style>

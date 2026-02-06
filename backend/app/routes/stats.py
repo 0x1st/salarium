@@ -21,6 +21,14 @@ router = APIRouter()
 # Helpers for stats calculations aligned with the unified calculation spec
 _D = lambda v: v if isinstance(v, Decimal) else Decimal(str(v or 0))
 
+# Safe field accessor - handles both direct fields and missing custom fields
+def _F(record, field_name, default=0):
+    """Safely get a field value from record, returns default if attribute doesn't exist."""
+    try:
+        return getattr(record, field_name, default)
+    except AttributeError:
+        return default
+
 
 async def get_custom_fields_for_payroll(record_id: int) -> list:
     """Load custom field info for payroll calculation."""
@@ -61,17 +69,17 @@ async def get_custom_fields_by_category(record_id: int) -> dict:
 # meal allowance is not counted toward actual take-home
 
 def _allowances_sum_net(r: SalaryRecord) -> Decimal:
-    return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.computer_allowance) + _D(r.communication_allowance) + _D(r.comprehensive_allowance)
+    return _D(_F(r, "high_temp_allowance")) + _D(_F(r, "low_temp_allowance")) + _D(_F(r, "computer_allowance")) + _D(_F(r, "communication_allowance")) + _D(_F(r, "comprehensive_allowance"))
 
 # Allowances for composition/gross (include meal allowance)
 
 def _allowances_sum_full(r: SalaryRecord) -> Decimal:
-    return _D(r.high_temp_allowance) + _D(r.low_temp_allowance) + _D(r.meal_allowance) + _D(r.computer_allowance) + _D(r.communication_allowance) + _D(r.comprehensive_allowance)
+    return _D(_F(r, "high_temp_allowance")) + _D(_F(r, "low_temp_allowance")) + _D(_F(r, "meal_allowance")) + _D(_F(r, "computer_allowance")) + _D(_F(r, "communication_allowance")) + _D(_F(r, "comprehensive_allowance"))
 
 # Benefits grouping (festival welfare only; excludes meal allowance)
 
 def _benefits_sum(r: SalaryRecord) -> Decimal:
-    return _D(r.mid_autumn_benefit) + _D(r.dragon_boat_benefit) + _D(r.spring_festival_benefit)
+    return _D(_F(r, "mid_autumn_benefit")) + _D(_F(r, "dragon_boat_benefit")) + _D(_F(r, "spring_festival_benefit"))
 
 
 def _gross_income_for_net_charts(r: SalaryRecord) -> Decimal:
@@ -83,7 +91,7 @@ def _gross_income_for_net_charts(r: SalaryRecord) -> Decimal:
         _D(r.base_salary)
         + _D(r.performance_salary)
         + _allowances_sum_net(r)  # excludes meal allowance
-        + _D(r.other_income)
+        + _D(_F(r, "other_income"))
     )
 
 
@@ -95,9 +103,9 @@ def _deductions_sum(r: SalaryRecord) -> Decimal:
         + _D(r.critical_illness_insurance)
         + _D(r.enterprise_annuity)
         + _D(r.housing_fund)
-        + _D(r.other_deductions)
-        + _D(r.labor_union_fee)
-        + _D(r.performance_deduction)
+        + _D(_F(r, "other_deductions"))
+        + _D(_F(r, "labor_union_fee"))
+        + _D(_F(r, "performance_deduction"))
     )
 
 
@@ -111,7 +119,7 @@ def _unified_net_income(r: SalaryRecord) -> Decimal:
 
 def _gross_income_full(r: SalaryRecord) -> Decimal:
     """Gross income for charts: sum of all income including non-cash and other income."""
-    return _D(r.base_salary) + _D(r.performance_salary) + _allowances_sum_full(r) + _benefits_sum(r) + _D(r.other_income)
+    return _D(r.base_salary) + _D(r.performance_salary) + _allowances_sum_full(r) + _benefits_sum(r) + _D(_F(r, "other_income"))
 
 
 def _ym_num(y: int, m: int) -> int:
@@ -184,28 +192,28 @@ async def monthly_stats(
         calc = compute_payroll(
             base_salary=r.base_salary,
             performance_salary=r.performance_salary,
-            high_temp_allowance=r.high_temp_allowance,
-            low_temp_allowance=r.low_temp_allowance,
-            computer_allowance=r.computer_allowance,
-            meal_allowance=r.meal_allowance,
-            mid_autumn_benefit=r.mid_autumn_benefit,
-            dragon_boat_benefit=r.dragon_boat_benefit,
-            spring_festival_benefit=r.spring_festival_benefit,
-            other_income=r.other_income,
-            comprehensive_allowance=r.comprehensive_allowance,
+            high_temp_allowance=_F(r, "high_temp_allowance"),
+            low_temp_allowance=_F(r, "low_temp_allowance"),
+            computer_allowance=_F(r, "computer_allowance"),
+            meal_allowance=_F(r, "meal_allowance"),
+            mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
+            dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
+            spring_festival_benefit=_F(r, "spring_festival_benefit"),
+            other_income=_F(r, "other_income"),
+            comprehensive_allowance=_F(r, "comprehensive_allowance"),
             pension_insurance=r.pension_insurance,
             medical_insurance=r.medical_insurance,
             unemployment_insurance=r.unemployment_insurance,
             critical_illness_insurance=r.critical_illness_insurance,
             enterprise_annuity=r.enterprise_annuity,
             housing_fund=r.housing_fund,
-            other_deductions=r.other_deductions,
-            labor_union_fee=r.labor_union_fee,
-            performance_deduction=r.performance_deduction,
+            other_deductions=_F(r, "other_deductions"),
+            labor_union_fee=_F(r, "labor_union_fee"),
+            performance_deduction=_F(r, "performance_deduction"),
             tax=r.tax,
             custom_fields=custom_fields_payroll,
         )
-        allowances_total = r.high_temp_allowance + r.low_temp_allowance + r.computer_allowance + r.communication_allowance + r.comprehensive_allowance
+        allowances_total = _F(r, "high_temp_allowance") + _F(r, "low_temp_allowance") + _F(r, "computer_allowance") + _F(r, "communication_allowance") + _F(r, "comprehensive_allowance")
         insurance_total = (r.pension_insurance + r.medical_insurance + r.unemployment_insurance +
                           r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund)
         result.append(
@@ -243,29 +251,29 @@ async def yearly_stats(user= Depends(get_current_user), person_id: Optional[int]
         calc = compute_payroll(
             base_salary=r.base_salary,
             performance_salary=r.performance_salary,
-            high_temp_allowance=r.high_temp_allowance,
-            low_temp_allowance=r.low_temp_allowance,
-            computer_allowance=r.computer_allowance,
-            meal_allowance=r.meal_allowance,
-            mid_autumn_benefit=r.mid_autumn_benefit,
-            dragon_boat_benefit=r.dragon_boat_benefit,
-            spring_festival_benefit=r.spring_festival_benefit,
-            other_income=r.other_income,
-            comprehensive_allowance=r.comprehensive_allowance,
+            high_temp_allowance=_F(r, "high_temp_allowance"),
+            low_temp_allowance=_F(r, "low_temp_allowance"),
+            computer_allowance=_F(r, "computer_allowance"),
+            meal_allowance=_F(r, "meal_allowance"),
+            mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
+            dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
+            spring_festival_benefit=_F(r, "spring_festival_benefit"),
+            other_income=_F(r, "other_income"),
+            comprehensive_allowance=_F(r, "comprehensive_allowance"),
             pension_insurance=r.pension_insurance,
             medical_insurance=r.medical_insurance,
             unemployment_insurance=r.unemployment_insurance,
             critical_illness_insurance=r.critical_illness_insurance,
             enterprise_annuity=r.enterprise_annuity,
             housing_fund=r.housing_fund,
-            other_deductions=r.other_deductions,
-            labor_union_fee=r.labor_union_fee,
-            performance_deduction=r.performance_deduction,
+            other_deductions=_F(r, "other_deductions"),
+            labor_union_fee=_F(r, "labor_union_fee"),
+            performance_deduction=_F(r, "performance_deduction"),
             tax=r.tax,
             custom_fields=custom_fields_payroll,
         )
-        allowances_total = r.high_temp_allowance + r.low_temp_allowance + r.computer_allowance + r.communication_allowance + r.comprehensive_allowance
-        bonuses_total = r.mid_autumn_benefit + r.dragon_boat_benefit + r.spring_festival_benefit + r.other_income
+        allowances_total = _F(r, "high_temp_allowance") + _F(r, "low_temp_allowance") + _F(r, "computer_allowance") + _F(r, "communication_allowance") + _F(r, "comprehensive_allowance")
+        bonuses_total = _F(r, "mid_autumn_benefit") + _F(r, "dragon_boat_benefit") + _F(r, "spring_festival_benefit") + _F(r, "other_income")
         insurance_total = r.pension_insurance + r.medical_insurance + r.unemployment_insurance + r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund
 
         s = stats_map.get(r.person_id, {
@@ -324,24 +332,24 @@ async def family_summary(user= Depends(get_current_user), year: int = Query(...)
         calc = compute_payroll(
             base_salary=r.base_salary,
             performance_salary=r.performance_salary,
-            high_temp_allowance=r.high_temp_allowance,
-            low_temp_allowance=r.low_temp_allowance,
-            computer_allowance=r.computer_allowance,
-            meal_allowance=r.meal_allowance,
-            mid_autumn_benefit=r.mid_autumn_benefit,
-            dragon_boat_benefit=r.dragon_boat_benefit,
-            spring_festival_benefit=r.spring_festival_benefit,
-            other_income=r.other_income,
-            comprehensive_allowance=r.comprehensive_allowance,
+            high_temp_allowance=_F(r, "high_temp_allowance"),
+            low_temp_allowance=_F(r, "low_temp_allowance"),
+            computer_allowance=_F(r, "computer_allowance"),
+            meal_allowance=_F(r, "meal_allowance"),
+            mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
+            dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
+            spring_festival_benefit=_F(r, "spring_festival_benefit"),
+            other_income=_F(r, "other_income"),
+            comprehensive_allowance=_F(r, "comprehensive_allowance"),
             pension_insurance=r.pension_insurance,
             medical_insurance=r.medical_insurance,
             unemployment_insurance=r.unemployment_insurance,
             critical_illness_insurance=r.critical_illness_insurance,
             enterprise_annuity=r.enterprise_annuity,
             housing_fund=r.housing_fund,
-            other_deductions=r.other_deductions,
-            labor_union_fee=r.labor_union_fee,
-            performance_deduction=r.performance_deduction,
+            other_deductions=_F(r, "other_deductions"),
+            labor_union_fee=_F(r, "labor_union_fee"),
+            performance_deduction=_F(r, "performance_deduction"),
             tax=r.tax,
             custom_fields=custom_fields_payroll,
         )
@@ -417,16 +425,16 @@ async def benefit_stats(
     result: List[BenefitStats] = []
     
     for r in recs:
-        total_benefits = (r.meal_allowance + r.mid_autumn_benefit + 
-                         r.dragon_boat_benefit + r.spring_festival_benefit)
+        total_benefits = (_F(r, "meal_allowance") + _F(r, "mid_autumn_benefit") + 
+                         _F(r, "dragon_boat_benefit") + _F(r, "spring_festival_benefit"))
         result.append(BenefitStats(
             year=r.year,
             month=r.month,
             person_id=r.person_id,
-            meal_allowance=r.meal_allowance,
-            mid_autumn_benefit=r.mid_autumn_benefit,
-            dragon_boat_benefit=r.dragon_boat_benefit,
-            spring_festival_benefit=r.spring_festival_benefit,
+            meal_allowance=_F(r, "meal_allowance"),
+            mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
+            dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
+            spring_festival_benefit=_F(r, "spring_festival_benefit"),
             total_benefits=total_benefits,
         ))
     
@@ -473,7 +481,7 @@ async def income_composition(
             + _D(r.performance_salary)
             + _D(allowances)
             + _D(benefits)
-            + _D(r.other_income)
+            + _D(_F(r, "other_income"))
         )
         
         # Calculate percentages (avoid division by zero)
@@ -482,7 +490,7 @@ async def income_composition(
             performance_percent = float(_D(r.performance_salary) / _D(total_income) * 100)
             allowances_percent = float(_D(allowances) / _D(total_income) * 100)
             benefits_percent = float(_D(benefits) / _D(total_income) * 100)
-            other_percent = float(_D(r.other_income) / _D(total_income) * 100)
+            other_percent = float(_D(_F(r, "other_income")) / _D(total_income) * 100)
         else:
             base_salary_percent = 0.0
             performance_percent = 0.0
@@ -496,13 +504,13 @@ async def income_composition(
             month=r.month,
             base_salary=float(_D(r.base_salary)),
             performance_salary=float(_D(r.performance_salary)),
-            high_temp_allowance=float(_D(r.high_temp_allowance)),
-            low_temp_allowance=float(_D(r.low_temp_allowance)),
-            computer_allowance=float(_D(r.computer_allowance)),
-            communication_allowance=float(_D(r.communication_allowance)),
-            comprehensive_allowance=float(_D(r.comprehensive_allowance)),
-            meal_allowance=float(_D(r.meal_allowance)),
-            other_income=float(_D(r.other_income)),
+            high_temp_allowance=float(_D(_F(r, "high_temp_allowance"))),
+            low_temp_allowance=float(_D(_F(r, "low_temp_allowance"))),
+            computer_allowance=float(_D(_F(r, "computer_allowance"))),
+            communication_allowance=float(_D(_F(r, "communication_allowance"))),
+            comprehensive_allowance=float(_D(_F(r, "comprehensive_allowance"))),
+            meal_allowance=float(_D(_F(r, "meal_allowance"))),
+            other_income=float(_D(_F(r, "other_income"))),
             non_cash_benefits=float(_D(benefits)),
             total_income=total_income,
             base_salary_percent=base_salary_percent,
@@ -623,7 +631,7 @@ async def deductions_breakdown(
     totals = {key: Decimal("0") for _, key in categories}
     for r in recs:
         for _, key in categories:
-            totals[key] += _D(getattr(r, key))
+            totals[key] += _D(_F(r, key))
 
     grand_total = sum(totals.values()) if totals else Decimal("0")
     summary: List[DeductionsBreakdownItem] = []
@@ -639,7 +647,7 @@ async def deductions_breakdown(
         if k not in monthly_map:
             monthly_map[k] = {key: Decimal("0") for _, key in categories}
         for _, key in categories:
-            monthly_map[k][key] += _D(getattr(r, key))
+            monthly_map[k][key] += _D(_F(r, key))
 
     monthly: List[DeductionsMonthly] = []
     for (y, m) in sorted(monthly_map.keys()):
@@ -777,16 +785,16 @@ async def monthly_table(
             # incomes
             base_salary=float(_D(r.base_salary)),
             performance_salary=float(_D(r.performance_salary)),
-            high_temp_allowance=float(_D(r.high_temp_allowance)),
-            low_temp_allowance=float(_D(r.low_temp_allowance)),
-            computer_allowance=float(_D(r.computer_allowance)),
-            communication_allowance=float(_D(r.communication_allowance)),
-            comprehensive_allowance=float(_D(r.comprehensive_allowance)),
-            meal_allowance=float(_D(r.meal_allowance)),
-            mid_autumn_benefit=float(_D(r.mid_autumn_benefit)),
-            dragon_boat_benefit=float(_D(r.dragon_boat_benefit)),
-            spring_festival_benefit=float(_D(r.spring_festival_benefit)),
-            other_income=float(_D(r.other_income)),
+            high_temp_allowance=float(_D(_F(r, "high_temp_allowance"))),
+            low_temp_allowance=float(_D(_F(r, "low_temp_allowance"))),
+            computer_allowance=float(_D(_F(r, "computer_allowance"))),
+            communication_allowance=float(_D(_F(r, "communication_allowance"))),
+            comprehensive_allowance=float(_D(_F(r, "comprehensive_allowance"))),
+            meal_allowance=float(_D(_F(r, "meal_allowance"))),
+            mid_autumn_benefit=float(_D(_F(r, "mid_autumn_benefit"))),
+            dragon_boat_benefit=float(_D(_F(r, "dragon_boat_benefit"))),
+            spring_festival_benefit=float(_D(_F(r, "spring_festival_benefit"))),
+            other_income=float(_D(_F(r, "other_income"))),
             # deductions
             pension_insurance=float(_D(r.pension_insurance)),
             medical_insurance=float(_D(r.medical_insurance)),
@@ -794,14 +802,14 @@ async def monthly_table(
             critical_illness_insurance=float(_D(r.critical_illness_insurance)),
             enterprise_annuity=float(_D(r.enterprise_annuity)),
             housing_fund=float(_D(r.housing_fund)),
-            other_deductions=float(_D(r.other_deductions)),
-            labor_union_fee=float(_D(r.labor_union_fee)),
-            performance_deduction=float(_D(r.performance_deduction)),
+            other_deductions=float(_D(_F(r, "other_deductions"))),
+            labor_union_fee=float(_D(_F(r, "labor_union_fee"))),
+            performance_deduction=float(_D(_F(r, "performance_deduction"))),
             # totals
             income_total=float(income_total),
             deductions_total=float(deductions),
             benefits_total=float(benefits),
-            allowances_total=float(_D(r.meal_allowance) + _D(r.other_income)),
+            allowances_total=float(_D(_F(r, "meal_allowance")) + _D(_F(r, "other_income"))),
             actual_take_home=float(net),
             net_income=float(net),
             tax=float(_D(r.tax)),
@@ -859,15 +867,15 @@ async def annual_table(
         # accumulate incomes
         cur["base_salary"] += _D(r.base_salary)
         cur["performance_salary"] += _D(r.performance_salary)
-        cur["high_temp_allowance"] += _D(r.high_temp_allowance)
-        cur["low_temp_allowance"] += _D(r.low_temp_allowance)
-        cur["computer_allowance"] += _D(r.computer_allowance)
-        cur["communication_allowance"] += _D(r.communication_allowance)
-        cur["meal_allowance"] += _D(r.meal_allowance)
-        cur["mid_autumn_benefit"] += _D(r.mid_autumn_benefit)
-        cur["dragon_boat_benefit"] += _D(r.dragon_boat_benefit)
-        cur["spring_festival_benefit"] += _D(r.spring_festival_benefit)
-        cur["other_income"] += _D(r.other_income)
+        cur["high_temp_allowance"] += _D(_F(r, "high_temp_allowance"))
+        cur["low_temp_allowance"] += _D(_F(r, "low_temp_allowance"))
+        cur["computer_allowance"] += _D(_F(r, "computer_allowance"))
+        cur["communication_allowance"] += _D(_F(r, "communication_allowance"))
+        cur["meal_allowance"] += _D(_F(r, "meal_allowance"))
+        cur["mid_autumn_benefit"] += _D(_F(r, "mid_autumn_benefit"))
+        cur["dragon_boat_benefit"] += _D(_F(r, "dragon_boat_benefit"))
+        cur["spring_festival_benefit"] += _D(_F(r, "spring_festival_benefit"))
+        cur["other_income"] += _D(_F(r, "other_income"))
         # accumulate deductions
         cur["pension_insurance"] += _D(r.pension_insurance)
         cur["medical_insurance"] += _D(r.medical_insurance)
@@ -875,8 +883,8 @@ async def annual_table(
         cur["critical_illness_insurance"] += _D(r.critical_illness_insurance)
         cur["enterprise_annuity"] += _D(r.enterprise_annuity)
         cur["housing_fund"] += _D(r.housing_fund)
-        cur["other_deductions"] += _D(r.other_deductions)
-        cur["labor_union_fee"] += _D(r.labor_union_fee)
+        cur["other_deductions"] += _D(_F(r, "other_deductions"))
+        cur["labor_union_fee"] += _D(_F(r, "labor_union_fee"))
         # derived
         cur["income_total"] += _gross_income_full(r)
         cur["deductions_total"] += _deductions_sum(r)
@@ -995,16 +1003,16 @@ async def annual_monthly_table(
         # Accumulate income fields
         agg["base_salary"] += _D(r.base_salary)
         agg["performance_salary"] += _D(r.performance_salary)
-        agg["high_temp_allowance"] += _D(r.high_temp_allowance)
-        agg["low_temp_allowance"] += _D(r.low_temp_allowance)
-        agg["computer_allowance"] += _D(r.computer_allowance)
-        agg["communication_allowance"] += _D(r.communication_allowance)
-        agg["comprehensive_allowance"] += _D(r.comprehensive_allowance)
-        agg["meal_allowance"] += _D(r.meal_allowance)
-        agg["mid_autumn_benefit"] += _D(r.mid_autumn_benefit)
-        agg["dragon_boat_benefit"] += _D(r.dragon_boat_benefit)
-        agg["spring_festival_benefit"] += _D(r.spring_festival_benefit)
-        agg["other_income"] += _D(r.other_income)
+        agg["high_temp_allowance"] += _D(_F(r, "high_temp_allowance"))
+        agg["low_temp_allowance"] += _D(_F(r, "low_temp_allowance"))
+        agg["computer_allowance"] += _D(_F(r, "computer_allowance"))
+        agg["communication_allowance"] += _D(_F(r, "communication_allowance"))
+        agg["comprehensive_allowance"] += _D(_F(r, "comprehensive_allowance"))
+        agg["meal_allowance"] += _D(_F(r, "meal_allowance"))
+        agg["mid_autumn_benefit"] += _D(_F(r, "mid_autumn_benefit"))
+        agg["dragon_boat_benefit"] += _D(_F(r, "dragon_boat_benefit"))
+        agg["spring_festival_benefit"] += _D(_F(r, "spring_festival_benefit"))
+        agg["other_income"] += _D(_F(r, "other_income"))
         
         # Accumulate deduction fields
         agg["pension_insurance"] += _D(r.pension_insurance)
@@ -1013,15 +1021,15 @@ async def annual_monthly_table(
         agg["critical_illness_insurance"] += _D(r.critical_illness_insurance)
         agg["enterprise_annuity"] += _D(r.enterprise_annuity)
         agg["housing_fund"] += _D(r.housing_fund)
-        agg["other_deductions"] += _D(r.other_deductions)
-        agg["labor_union_fee"] += _D(r.labor_union_fee)
-        agg["performance_deduction"] += _D(r.performance_deduction)
+        agg["other_deductions"] += _D(_F(r, "other_deductions"))
+        agg["labor_union_fee"] += _D(_F(r, "labor_union_fee"))
+        agg["performance_deduction"] += _D(_F(r, "performance_deduction"))
         
         # Calculate totals
         agg["income_total"] += _gross_income_full(r)
         agg["deductions_total"] += _deductions_sum(r)
         agg["benefits_total"] += _benefits_sum(r)
-        agg["allowances_total"] = agg.get("allowances_total", Decimal("0")) + (_D(r.meal_allowance) + _D(r.other_income))
+        agg["allowances_total"] = agg.get("allowances_total", Decimal("0")) + (_D(_F(r, "meal_allowance")) + _D(_F(r, "other_income")))
         agg["actual_take_home"] += _unified_net_income(r)
     
     def is_empty(agg):

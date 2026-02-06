@@ -13,6 +13,21 @@ def compute_payroll(
     housing_fund,
     tax,
     custom_fields=None,  # List of dicts: [{field_type, is_non_cash, amount}, ...]
+    # Accept legacy allowance fields for compatibility (deprecated, use custom_fields)
+    high_temp_allowance=None,
+    low_temp_allowance=None,
+    meal_allowance=None,
+    computer_allowance=None,
+    communication_allowance=None,
+    comprehensive_allowance=None,
+    mid_autumn_benefit=None,
+    dragon_boat_benefit=None,
+    spring_festival_benefit=None,
+    other_income=None,
+    other_deductions=None,
+    labor_union_fee=None,
+    performance_deduction=None,
+    **kwargs,  # Accept any other fields gracefully
 ):
     D = lambda v: v if isinstance(v, Decimal) else Decimal(str(v or 0))
     q = Decimal("0.01")

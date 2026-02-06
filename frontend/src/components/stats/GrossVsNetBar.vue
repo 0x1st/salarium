@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, gradient, currencyFormatter, responsiveResize } from '../../utils/charts'
+import { initChart, baseGrid, monthsToLabels, axisCurrencyFormatter, gradient, currencyFormatter, responsiveResize, palette } from '../../utils/charts'
 import ChartCard from './ChartCard.vue'
 
 const props = defineProps({

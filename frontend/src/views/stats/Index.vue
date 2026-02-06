@@ -35,7 +35,10 @@ const monthFilter = computed({
 let _removeInvalidateListener = null
 onMounted(async () => {
   await stats.ensurePersons()
-  if (route.name) activeTab.value = route.name
+  // Set initial activeTab from route
+  if (route.name) {
+    activeTab.value = route.name
+  }
   const handler = () => stats.refreshAll()
   window.addEventListener('stats:invalidate', handler)
   _removeInvalidateListener = () => window.removeEventListener('stats:invalidate', handler)
@@ -45,15 +48,21 @@ onBeforeUnmount(() => {
   if (_removeInvalidateListener) _removeInvalidateListener()
 })
 
-watch(() => route.name, (n) => { if (n) { activeTab.value = n; setTimeout(() => window.dispatchEvent(new Event('resize')), 0) } })
-
-function onTabClick(tab) {
-  const t = tabs.find(t => t.name === tab.paneName)
-  if (t) {
-    router.push(t.path)
+// Watch route changes and update activeTab
+watch(() => route.name, (newName) => {
+  if (newName && newName !== activeTab.value) {
+    activeTab.value = newName
     setTimeout(() => window.dispatchEvent(new Event('resize')), 0)
   }
-}
+})
+
+// Watch activeTab changes and navigate
+watch(activeTab, (newTab) => {
+  const targetTab = tabs.find(t => t.name === newTab)
+  if (targetTab && route.path !== targetTab.path) {
+    router.push(targetTab.path)
+  }
+})
 </script>
 
 <template>
@@ -120,12 +129,12 @@ function onTabClick(tab) {
       </template>
     </PageHeader>
 
-    <el-tabs v-model="activeTab" @tab-click="onTabClick" class="stats-tabs">
+    <el-tabs v-model="activeTab" class="stats-tabs">
       <el-tab-pane v-for="t in tabs" :key="t.name" :label="t.label" :name="t.name" />
     </el-tabs>
 
     <div class="stats-content">
-      <router-view />
+      <router-view :key="$route.fullPath" />
     </div>
   </PageContainer>
 </template>

@@ -529,7 +529,10 @@ async def payslip_html(record_id: int, user=Depends(get_current_user)):
         "    <div class=\"actions\">",
         "      <button class=\"btn\" onclick=\"window.print()\">"
         "打印/保存为PDF</button>",
-        f"      <a class=\"btn\" href=\"/api/salaries/{rec.id}/payslip.svg\" download>",
+        (
+            "      <a class=\"btn\" id=\"payslip-svg-link\" "
+            f"href=\"/api/salaries/{rec.id}/payslip.svg\" download>"
+        ),
         "        下载图片(SVG)</a>",
         "    </div>",
         "  </div>",

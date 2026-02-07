@@ -193,8 +193,31 @@ async function downloadExport(format) {
   }
 }
 
-function openPayslip(row) {
-  window.open(`/api/salaries/${row.id}/payslip.html`, '_blank')
+async function openPayslip(row) {
+  const win = window.open('', '_blank')
+  if (!win) return
+  try {
+    const { data: html } = await api.get(`/salaries/${row.id}/payslip.html`, {
+      responseType: 'text'
+    })
+    win.document.open()
+    win.document.write(html)
+    win.document.close()
+
+    const { data: svg } = await api.get(`/salaries/${row.id}/payslip.svg`, {
+      responseType: 'text'
+    })
+    const blob = new Blob([svg], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+    const link = win.document.getElementById('payslip-svg-link')
+    if (link) {
+      link.href = url
+      link.download = `payslip-${row.year}-${String(row.month).padStart(2, '0')}.svg`
+    }
+  } catch {
+    win.close()
+    ElMessage.error('打开工资条失败')
+  }
 }
 
 async function handleSaveTemplate(payload) {

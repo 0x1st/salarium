@@ -32,7 +32,20 @@ async def get_template(person_id: int, user=Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="人员不存在")
     tmpl = await SalaryTemplate.filter(person_id=person_id).first()
     if not tmpl:
-        raise HTTPException(status_code=404, detail="模板不存在")
+        return SalaryTemplateOut(
+            person_id=person_id,
+            base_salary=0,
+            performance_salary=0,
+            pension_insurance=0,
+            medical_insurance=0,
+            unemployment_insurance=0,
+            critical_illness_insurance=0,
+            enterprise_annuity=0,
+            housing_fund=0,
+            tax=0,
+            note=None,
+            custom_fields={},
+        )
     return _to_out(person_id, tmpl)
 
 

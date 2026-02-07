@@ -432,18 +432,10 @@ async def payslip_svg(record_id: int, user=Depends(get_current_user)):
 
     title = f"{ctx['year']}年{ctx['month']}月 工资条"
     net = ctx["calc"]["actual_take_home"]
-    insurance_total = (
-        ctx["pension_insurance"]
-        + ctx["medical_insurance"]
-        + ctx["unemployment_insurance"]
-        + ctx["critical_illness_insurance"]
-        + ctx["enterprise_annuity"]
-        + ctx["housing_fund"]
-    )
     svg_lines = [
-        '<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420"',
-        ' viewBox="0 0 720 420">',
-        '  <rect x="20" y="20" width="680" height="380" rx="16"',
+        '<svg xmlns="http://www.w3.org/2000/svg" width="720" height="460"',
+        ' viewBox="0 0 720 460">',
+        '  <rect x="20" y="20" width="680" height="420" rx="16"',
         '    fill="#fffdfb" stroke="#e5e0dc" />',
         '  <text x="40" y="60" font-family="ui-serif, Georgia, serif"',
         f'    font-size="20" fill="#2d2a26">{title}</text>',
@@ -460,15 +452,41 @@ async def payslip_svg(record_id: int, user=Depends(get_current_user)):
         '    font-size="13" fill="#6b6560">绩效工资</text>',
         '  <text x="200" y="165" font-family="system-ui, sans-serif"',
         f'    font-size="13" fill="#2d2a26">¥ {ctx["performance_salary"]:.2f}</text>',
-        '  <text x="40" y="200" font-family="system-ui, sans-serif"',
-        '    font-size="13" fill="#6b6560">五险一金</text>',
-        '  <text x="200" y="200" font-family="system-ui, sans-serif"',
-        f'    font-size="13" fill="#2d2a26">¥ {insurance_total:.2f}</text>',
-        '  <text x="40" y="225" font-family="system-ui, sans-serif"',
+        '  <text x="40" y="195" font-family="system-ui, sans-serif"',
+        '    font-size="13" fill="#6b6560">养老保险</text>',
+        '  <text x="200" y="195" font-family="system-ui, sans-serif"',
+        f'    font-size="13" fill="#2d2a26">¥ {ctx["pension_insurance"]:.2f}</text>',
+        '  <text x="40" y="215" font-family="system-ui, sans-serif"',
+        '    font-size="13" fill="#6b6560">医疗保险</text>',
+        '  <text x="200" y="215" font-family="system-ui, sans-serif"',
+        f'    font-size="13" fill="#2d2a26">¥ {ctx["medical_insurance"]:.2f}</text>',
+        '  <text x="40" y="235" font-family="system-ui, sans-serif"',
+        '    font-size="13" fill="#6b6560">失业保险</text>',
+        '  <text x="200" y="235" font-family="system-ui, sans-serif"',
+        (
+            '    font-size="13" fill="#2d2a26">¥ '
+            f'{ctx["unemployment_insurance"]:.2f}</text>'
+        ),
+        '  <text x="40" y="255" font-family="system-ui, sans-serif"',
+        '    font-size="13" fill="#6b6560">大病保险</text>',
+        '  <text x="200" y="255" font-family="system-ui, sans-serif"',
+        (
+            '    font-size="13" fill="#2d2a26">¥ '
+            f'{ctx["critical_illness_insurance"]:.2f}</text>'
+        ),
+        '  <text x="40" y="275" font-family="system-ui, sans-serif"',
+        '    font-size="13" fill="#6b6560">企业年金</text>',
+        '  <text x="200" y="275" font-family="system-ui, sans-serif"',
+        f'    font-size="13" fill="#2d2a26">¥ {ctx["enterprise_annuity"]:.2f}</text>',
+        '  <text x="40" y="295" font-family="system-ui, sans-serif"',
+        '    font-size="13" fill="#6b6560">公积金</text>',
+        '  <text x="200" y="295" font-family="system-ui, sans-serif"',
+        f'    font-size="13" fill="#2d2a26">¥ {ctx["housing_fund"]:.2f}</text>',
+        '  <text x="40" y="325" font-family="system-ui, sans-serif"',
         '    font-size="13" fill="#6b6560">个税</text>',
-        '  <text x="200" y="225" font-family="system-ui, sans-serif"',
+        '  <text x="200" y="325" font-family="system-ui, sans-serif"',
         f'    font-size="13" fill="#2d2a26">¥ {ctx["tax"]:.2f}</text>',
-        '  <text x="40" y="260" font-family="system-ui, sans-serif"',
+        '  <text x="40" y="360" font-family="system-ui, sans-serif"',
         f'    font-size="12" fill="#9a9590">备注 {ctx["note"]}</text>',
         "</svg>",
     ]
@@ -484,14 +502,6 @@ async def payslip_html(record_id: int, user=Depends(get_current_user)):
     ctx = await _payslip_context(rec, user.id)
     title = f"{ctx['year']}年{ctx['month']}月 工资条"
     net = ctx["calc"]["actual_take_home"]
-    insurance_total = (
-        ctx["pension_insurance"]
-        + ctx["medical_insurance"]
-        + ctx["unemployment_insurance"]
-        + ctx["critical_illness_insurance"]
-        + ctx["enterprise_annuity"]
-        + ctx["housing_fund"]
-    )
     html_lines = [
         "<!doctype html>",
         '<html lang="zh-CN">',
@@ -521,8 +531,18 @@ async def payslip_html(record_id: int, user=Depends(get_current_user)):
         f"<span>¥ {ctx['base_salary']:.2f}</span></div>",
         "    <div class=\"row\"><span>绩效工资</span>"
         f"<span>¥ {ctx['performance_salary']:.2f}</span></div>",
-        "    <div class=\"row\"><span>五险一金</span>"
-        f"<span>¥ {insurance_total:.2f}</span></div>",
+        "    <div class=\"row\"><span>养老保险</span>"
+        f"<span>¥ {ctx['pension_insurance']:.2f}</span></div>",
+        "    <div class=\"row\"><span>医疗保险</span>"
+        f"<span>¥ {ctx['medical_insurance']:.2f}</span></div>",
+        "    <div class=\"row\"><span>失业保险</span>"
+        f"<span>¥ {ctx['unemployment_insurance']:.2f}</span></div>",
+        "    <div class=\"row\"><span>大病保险</span>"
+        f"<span>¥ {ctx['critical_illness_insurance']:.2f}</span></div>",
+        "    <div class=\"row\"><span>企业年金</span>"
+        f"<span>¥ {ctx['enterprise_annuity']:.2f}</span></div>",
+        "    <div class=\"row\"><span>公积金</span>"
+        f"<span>¥ {ctx['housing_fund']:.2f}</span></div>",
         "    <div class=\"row\"><span>个税</span>"
         f"<span>¥ {ctx['tax']:.2f}</span></div>",
         f"    <div class=\"muted\">备注：{ctx['note']}</div>",

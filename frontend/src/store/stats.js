@@ -7,6 +7,7 @@ import {
   getMonthlyNetIncome,
   getGrossVsNetMonthly,
   getIncomeComposition,
+  getCategorySummary,
   getDeductionsBreakdown,
   getContributionsCumulative,
   getMonthlyTable,
@@ -118,6 +119,9 @@ export const useStatsStore = defineStore('stats', {
     async loadIncomeComposition() {
       return this._useCache('incomeComposition', () => getIncomeComposition(this.filter))
     },
+    async loadCategorySummary() {
+      return this._useCache('categorySummary', () => getCategorySummary(this.filter))
+    },
     async loadDeductionsBreakdown() {
       return this._useCache('deductions', () => getDeductionsBreakdown(this.filter))
     },
@@ -157,6 +161,7 @@ export const useStatsStore = defineStore('stats', {
             this.loadMonthlyNetIncome(),
             this.loadGrossVsNetMonthly(),
             this.loadIncomeComposition(),
+            this.loadCategorySummary(),
             this.loadDeductionsBreakdown(),
             this.loadMonthlyTable(),
             this.loadAnnualTable(),

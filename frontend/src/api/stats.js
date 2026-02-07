@@ -43,6 +43,11 @@ export async function getIncomeComposition(filter) {
   return data
 }
 
+export async function getCategorySummary(filter) {
+  const { data } = await api.get('/stats/categories/summary', { params: paramsFromFilter(filter) })
+  return data
+}
+
 export async function getDeductionsBreakdown(filter) {
   const { data } = await api.get('/stats/deductions/breakdown', { params: paramsFromFilter(filter) })
   return data

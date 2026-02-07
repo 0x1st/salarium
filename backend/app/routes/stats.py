@@ -2,7 +2,13 @@ from typing import List, Optional, Dict
 from fastapi import APIRouter, HTTPException, Query, Depends
 from decimal import Decimal
 
-from ..models import SalaryRecord, Person, CustomSalaryValue
+from ..models import (
+    SalaryRecord,
+    Person,
+    CustomSalaryValue,
+    INCOME_CATEGORIES,
+    DEDUCTION_CATEGORIES,
+)
 from ..schemas.stats import (
     MonthlyStats, YearlyStats, FamilySummary,
     PersonCumulativeInsurance, BenefitStats, IncomeComposition,
@@ -10,6 +16,7 @@ from ..schemas.stats import (
     DeductionsBreakdown, DeductionsMonthly, DeductionsBreakdownItem,
     ContributionsCumulative, ContributionsCumulativePoint,
     MonthlyTableRow, AnnualTableRow, AnnualMonthlyRow,
+    CategorySummary, CategorySummaryItem,
 )
 from ..utils.auth import get_current_user
 from ..services.payroll import compute_payroll
@@ -138,6 +145,12 @@ def _gross_income_full(r: SalaryRecord) -> Decimal:
         + _benefits_sum(r)
         + _D(_F(r, "other_income"))
     )
+
+
+def _ordered_categories(categories, totals):
+    ordered_keys = [k for k, _ in categories if k in totals]
+    extras = sorted(k for k in totals.keys() if k not in ordered_keys)
+    return ordered_keys + extras
 
 
 def _ym_num(y: int, m: int) -> int:
@@ -573,6 +586,95 @@ async def income_composition(
         )
 
     return result
+
+
+@router.get("/categories/summary", response_model=CategorySummary)
+async def categories_summary(
+    user=Depends(get_current_user),
+    person_id: Optional[int] = Query(default=None),
+    year: Optional[int] = Query(default=None),
+    month: Optional[int] = Query(default=None),
+    range: Optional[str] = Query(
+        default=None, description="时间范围，如 2024-01..2024-12"
+    ),
+):
+    """Summary totals grouped by income/deduction category."""
+    q = _salary_query(user.id, person_id=person_id, year=year, month=month)
+    recs = _apply_range(await q.all(), range)
+
+    income_totals = {k: Decimal("0") for k, _ in INCOME_CATEGORIES}
+    deduction_totals = {k: Decimal("0") for k, _ in DEDUCTION_CATEGORIES}
+
+    for r in recs:
+        income_totals["base_salary"] += _D(r.base_salary)
+        income_totals["performance"] += _D(r.performance_salary)
+        income_totals["allowance"] += _allowances_sum_full(r)
+        income_totals["welfare"] += _benefits_sum(r)
+        income_totals["other_income"] += _D(_F(r, "other_income"))
+
+        deduction_totals["insurance"] += (
+            _D(r.pension_insurance)
+            + _D(r.medical_insurance)
+            + _D(r.unemployment_insurance)
+            + _D(r.critical_illness_insurance)
+            + _D(r.enterprise_annuity)
+        )
+        deduction_totals["housing_fund"] += _D(r.housing_fund)
+        deduction_totals["tax"] += _D(r.tax)
+        deduction_totals["other_deduction"] += (
+            _D(_F(r, "other_deductions"))
+            + _D(_F(r, "labor_union_fee"))
+            + _D(_F(r, "performance_deduction"))
+        )
+
+    record_ids = [r.id for r in recs]
+    if record_ids:
+        values = await CustomSalaryValue.filter(
+            salary_record_id__in=record_ids
+        ).prefetch_related("salary_field").all()
+        for v in values:
+            cat = v.salary_field.category
+            amount = _D(v.amount)
+            if v.salary_field.field_type == "income":
+                income_totals[cat] = income_totals.get(cat, Decimal("0")) + amount
+            else:
+                deduction_totals[cat] = deduction_totals.get(cat, Decimal("0")) + amount
+
+    income_labels = {k: v for k, v in INCOME_CATEGORIES}
+    deduction_labels = {k: v for k, v in DEDUCTION_CATEGORIES}
+
+    income_items = []
+    for key in _ordered_categories(INCOME_CATEGORIES, income_totals):
+        amount = income_totals.get(key, Decimal("0"))
+        if amount == 0:
+            continue
+        income_items.append(
+            CategorySummaryItem(
+                category=key, label=income_labels.get(key, key), amount=float(amount)
+            )
+        )
+
+    deduction_items = []
+    for key in _ordered_categories(DEDUCTION_CATEGORIES, deduction_totals):
+        amount = deduction_totals.get(key, Decimal("0"))
+        if amount == 0:
+            continue
+        deduction_items.append(
+            CategorySummaryItem(
+                category=key,
+                label=deduction_labels.get(key, key),
+                amount=float(amount),
+            )
+        )
+
+    total_income = sum(income_totals.values())
+    total_deduction = sum(deduction_totals.values())
+    return CategorySummary(
+        income=income_items,
+        deduction=deduction_items,
+        total_income=float(total_income),
+        total_deduction=float(total_deduction),
+    )
 
 
 @router.get("/net-income/monthly", response_model=List[MonthlyNetIncome])

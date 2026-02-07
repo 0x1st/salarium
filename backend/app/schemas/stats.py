@@ -259,3 +259,16 @@ class AnnualMonthlyRow(BaseModel):
     benefits_total: float
     allowances_total: float
     actual_take_home: float
+
+
+class CategorySummaryItem(BaseModel):
+    category: str
+    label: str
+    amount: float
+
+
+class CategorySummary(BaseModel):
+    income: list[CategorySummaryItem]
+    deduction: list[CategorySummaryItem]
+    total_income: float
+    total_deduction: float

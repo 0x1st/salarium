@@ -1,7 +1,10 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(BASE_DIR, "salarium.db"))
+ROOT_DIR = os.path.dirname(BASE_DIR)
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(DATA_DIR, "salarium.db"))
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "super-secret-change-me")
 JWT_ALGORITHM = "HS256"

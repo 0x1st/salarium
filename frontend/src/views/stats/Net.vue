@@ -40,22 +40,31 @@ watch(() => stats.refreshToken, () => { load() })
     <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
     <EmptyState v-else-if="!hasData" />
     <template v-else>
-      <el-card shadow="hover">
-        <KPICards :items="[
-          { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#da7756' },
-          { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#c45c5c' },
-          { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#5a8a6e' }
-        ]" />
-      </el-card>
+      <section class="section">
+        <div class="section-title">概览</div>
+        <el-card shadow="hover">
+          <KPICards :items="[
+            { label: '应发工资', value: formatCurrency(gvn.reduce((s,p)=> s + (p.gross_income||0), 0)), color: '#da7756' },
+            { label: '扣除', value: formatCurrency(Math.max(gvn.reduce((s,p)=> s + (p.gross_income||0), 0) - gvn.reduce((s,p)=> s + (p.net_income||0), 0), 0)), color: '#c45c5c' },
+            { label: '实际到手金额', value: formatCurrency(gvn.reduce((s,p)=> s + (p.net_income||0), 0)), color: '#5a8a6e' }
+          ]" />
+        </el-card>
+      </section>
 
-      <el-card shadow="hover">
-        <NetIncomeChart :data="net" />
-      </el-card>
+      <section class="section">
+        <div class="section-title">趋势</div>
+        <el-card shadow="hover">
+          <NetIncomeChart :data="net" />
+        </el-card>
+      </section>
 
-      <div class="two-col">
-        <el-card shadow="hover"><GrossVsNetBar :data="gvn" /></el-card>
-        <el-card shadow="hover"><WaterfallChart :data="gvn" /></el-card>
-      </div>
+      <section class="section">
+        <div class="section-title">对比</div>
+        <div class="two-col">
+          <el-card shadow="hover"><GrossVsNetBar :data="gvn" /></el-card>
+          <el-card shadow="hover"><WaterfallChart :data="gvn" /></el-card>
+        </div>
+      </section>
     </template>
   </div>
 </template>
@@ -66,6 +75,17 @@ watch(() => stats.refreshToken, () => { load() })
   grid-template-columns: 1fr; 
   gap: 24px; 
   min-height: 400px;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 0.875rem;
+  color: #6b6560;
+  font-weight: 500;
 }
 
 .net-grid :deep(.el-card) {

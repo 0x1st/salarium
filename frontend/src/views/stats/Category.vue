@@ -36,7 +36,9 @@ watch(() => stats.refreshToken, () => { load() })
     <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
     <EmptyState v-else-if="!hasData" />
     <div v-else class="category-grid">
-      <el-card shadow="hover">
+      <div class="section">
+        <div class="section-title">收入分类</div>
+        <el-card shadow="hover">
         <template #header>
           <div class="card-title">收入分类</div>
           <div class="card-total">合计 {{ formatCurrency(info.total_income || 0) }}</div>
@@ -47,9 +49,12 @@ watch(() => stats.refreshToken, () => { load() })
             <div class="row-value">{{ formatCurrency(item.amount) }}</div>
           </div>
         </div>
-      </el-card>
+        </el-card>
+      </div>
 
-      <el-card shadow="hover">
+      <div class="section">
+        <div class="section-title">扣除分类</div>
+        <el-card shadow="hover">
         <template #header>
           <div class="card-title">扣除分类</div>
           <div class="card-total">合计 {{ formatCurrency(info.total_deduction || 0) }}</div>
@@ -60,7 +65,8 @@ watch(() => stats.refreshToken, () => { load() })
             <div class="row-value">{{ formatCurrency(item.amount) }}</div>
           </div>
         </div>
-      </el-card>
+        </el-card>
+      </div>
     </div>
   </div>
 </template>
@@ -70,6 +76,17 @@ watch(() => stats.refreshToken, () => { load() })
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 0.875rem;
+  color: #6b6560;
+  font-weight: 500;
 }
 
 .list {

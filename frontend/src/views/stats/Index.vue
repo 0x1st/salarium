@@ -7,12 +7,12 @@ import PageContainer from '../../components/PageContainer.vue'
 import PageHeader from '../../components/PageHeader.vue'
 
 const tabs = [
-  { name: 'stats-net', label: '实际到手金额', path: '/stats/net' },
-  { name: 'stats-composition', label: '构成', path: '/stats/composition' },
-  { name: 'stats-category', label: '按类别', path: '/stats/category' },
-  { name: 'stats-deductions', label: '扣除', path: '/stats/deductions' },
-  { name: 'stats-cumulative', label: '累计', path: '/stats/cumulative' },
-  { name: 'stats-table', label: '表格', path: '/stats/table' },
+  { name: 'stats-net', label: '概览', path: '/stats/net' },
+  { name: 'stats-composition', label: '收入构成', path: '/stats/composition' },
+  { name: 'stats-category', label: '分类汇总', path: '/stats/category' },
+  { name: 'stats-deductions', label: '扣除分析', path: '/stats/deductions' },
+  { name: 'stats-cumulative', label: '累计贡献', path: '/stats/cumulative' },
+  { name: 'stats-table', label: '明细表', path: '/stats/table' },
 ]
 
 const route = useRoute()

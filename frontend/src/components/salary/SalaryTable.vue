@@ -166,7 +166,7 @@ const tableData = computed(() => {
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="110" min-width="110" fixed align="center">
+        <el-table-column label="操作" width="150" min-width="150" fixed align="center">
           <template #default="{ row }">
             <div class="action-buttons">
               <button
@@ -294,6 +294,7 @@ const tableData = computed(() => {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .action-btn {

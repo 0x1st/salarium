@@ -32,9 +32,12 @@ watch(() => stats.refreshToken, () => { load() })
     <div v-if="loading" style="padding: 16px"><el-skeleton :rows="6" animated /></div>
     <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
     <EmptyState v-else-if="!hasData" />
-    <el-card v-else shadow="hover">
-      <DeductionsBreakdown :summary="info.summary" :monthly="info.monthly" />
-    </el-card>
+    <div v-else class="section">
+      <div class="section-title">扣除结构</div>
+      <el-card shadow="hover">
+        <DeductionsBreakdown :summary="info.summary" :monthly="info.monthly" />
+      </el-card>
+    </div>
   </div>
 </template>
 
@@ -60,5 +63,16 @@ watch(() => stats.refreshToken, () => { load() })
 
 :deep(.el-card__body) {
   padding: 20px;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 0.875rem;
+  color: #6b6560;
+  font-weight: 500;
 }
 </style>

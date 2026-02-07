@@ -33,8 +33,14 @@ watch(() => stats.refreshToken, () => { load() })
     <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
     <EmptyState v-else-if="!hasData" />
     <div v-else class="two-col">
-      <el-card shadow="hover"><IncomeCompositionPie :data="comp" /></el-card>
-      <el-card shadow="hover"><StackedAreaIncome :data="comp" /></el-card>
+      <div class="section">
+        <div class="section-title">收入构成</div>
+        <el-card shadow="hover"><IncomeCompositionPie :data="comp" /></el-card>
+      </div>
+      <div class="section">
+        <div class="section-title">收入趋势</div>
+        <el-card shadow="hover"><StackedAreaIncome :data="comp" /></el-card>
+      </div>
     </div>
   </div>
 </template>
@@ -45,6 +51,17 @@ watch(() => stats.refreshToken, () => { load() })
   grid-template-columns: 1fr 1fr; 
   gap: 24px;
   min-height: 400px;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 0.875rem;
+  color: #6b6560;
+  font-weight: 500;
 }
 
 .two-col :deep(.el-card) {

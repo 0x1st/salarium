@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 from fastapi import APIRouter, HTTPException, Query, Depends
 
 from ..models import SalaryRecord, Person, SalaryField, CustomSalaryValue
@@ -10,27 +10,34 @@ from ..utils.auth import get_current_user
 router = APIRouter()
 
 
-async def get_custom_fields_for_record(record_id: int) -> dict:
-    """Load custom field values for a salary record."""
-    values = await CustomSalaryValue.filter(salary_record_id=record_id).prefetch_related(
-        "salary_field"
-    ).all()
-    return {v.salary_field.field_key: float(v.amount) for v in values}
+async def load_custom_fields(
+    record_ids: List[int],
+) -> Tuple[Dict[int, Dict[str, float]], Dict[int, List[dict]]]:
+    """Batch load custom field values for salary records."""
+    if not record_ids:
+        return {}, {}
 
+    values = await CustomSalaryValue.filter(
+        salary_record_id__in=record_ids
+    ).prefetch_related("salary_field").all()
 
-async def get_custom_fields_for_payroll(record_id: int) -> list:
-    """Load custom field info for payroll calculation."""
-    values = await CustomSalaryValue.filter(salary_record_id=record_id).prefetch_related(
-        "salary_field"
-    ).all()
-    return [
-        {
-            "field_type": v.salary_field.field_type,
-            "is_non_cash": v.salary_field.is_non_cash,
-            "amount": float(v.amount),
-        }
-        for v in values
-    ]
+    by_record: Dict[int, Dict[str, float]] = {}
+    for v in values:
+        by_record.setdefault(v.salary_record_id, {})[v.salary_field.field_key] = float(
+            v.amount
+        )
+
+    payroll_by_record: Dict[int, List[dict]] = {}
+    for v in values:
+        payroll_by_record.setdefault(v.salary_record_id, []).append(
+            {
+                "field_type": v.salary_field.field_type,
+                "is_non_cash": v.salary_field.is_non_cash,
+                "amount": float(v.amount),
+            }
+        )
+
+    return by_record, payroll_by_record
 
 
 async def save_custom_fields(
@@ -57,10 +64,11 @@ async def save_custom_fields(
             )
 
 
-async def to_out(rec: SalaryRecord) -> SalaryOut:
-    custom_fields_data = await get_custom_fields_for_record(rec.id)
-    custom_fields_payroll = await get_custom_fields_for_payroll(rec.id)
-
+def build_salary_out(
+    rec: SalaryRecord,
+    custom_fields_data: Dict[str, float],
+    custom_fields_payroll: List[dict],
+) -> SalaryOut:
     data = compute_payroll(
         base_salary=rec.base_salary,
         performance_salary=rec.performance_salary,
@@ -71,7 +79,7 @@ async def to_out(rec: SalaryRecord) -> SalaryOut:
         enterprise_annuity=rec.enterprise_annuity,
         housing_fund=rec.housing_fund,
         tax=rec.tax,
-        custom_fields=custom_fields_payroll,
+        custom_fields=custom_fields_payroll or [],
     )
     return SalaryOut(
         id=rec.id,
@@ -93,7 +101,7 @@ async def to_out(rec: SalaryRecord) -> SalaryOut:
         actual_take_home=data["actual_take_home"],
         non_cash_benefits=data["non_cash_benefits"],
         note=rec.note,
-        custom_fields=custom_fields_data,
+        custom_fields=custom_fields_data or {},
     )
 
 
@@ -112,7 +120,16 @@ async def list_salaries(
     if month:
         q = q.filter(month=month)
     records = await q.all()
-    return [await to_out(r) for r in records]
+    record_ids = [r.id for r in records]
+    custom_data_map, custom_payroll_map = await load_custom_fields(record_ids)
+    return [
+        build_salary_out(
+            r,
+            custom_data_map.get(r.id, {}),
+            custom_payroll_map.get(r.id, []),
+        )
+        for r in records
+    ]
 
 
 @router.post("/{person_id}", response_model=SalaryOut)
@@ -141,7 +158,12 @@ async def create_salary(person_id: int, payload: SalaryCreate, user=Depends(get_
     if payload.custom_fields:
         await save_custom_fields(rec.id, user.id, payload.custom_fields)
 
-    return await to_out(rec)
+    custom_data_map, custom_payroll_map = await load_custom_fields([rec.id])
+    return build_salary_out(
+        rec,
+        custom_data_map.get(rec.id, {}),
+        custom_payroll_map.get(rec.id, []),
+    )
 
 
 @router.get("/{record_id}", response_model=SalaryOut)
@@ -149,7 +171,12 @@ async def get_salary(record_id: int, user=Depends(get_current_user)):
     rec = await SalaryRecord.filter(id=record_id, person__user_id=user.id).first()
     if not rec:
         raise HTTPException(status_code=404, detail="记录不存在")
-    return await to_out(rec)
+    custom_data_map, custom_payroll_map = await load_custom_fields([rec.id])
+    return build_salary_out(
+        rec,
+        custom_data_map.get(rec.id, {}),
+        custom_payroll_map.get(rec.id, []),
+    )
 
 
 @router.put("/{record_id}", response_model=SalaryOut)
@@ -168,7 +195,12 @@ async def update_salary(record_id: int, payload: SalaryUpdate, user=Depends(get_
     if payload.custom_fields is not None:
         await save_custom_fields(rec.id, user.id, payload.custom_fields)
 
-    return await to_out(rec)
+    custom_data_map, custom_payroll_map = await load_custom_fields([rec.id])
+    return build_salary_out(
+        rec,
+        custom_data_map.get(rec.id, {}),
+        custom_payroll_map.get(rec.id, []),
+    )
 
 
 @router.delete("/{record_id}")

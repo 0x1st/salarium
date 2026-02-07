@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from fastapi import APIRouter, HTTPException, Query, Depends
 from decimal import Decimal
 
@@ -30,19 +30,23 @@ def _F(record, field_name, default=0):
         return default
 
 
-async def get_custom_fields_for_payroll(record_id: int) -> list:
-    """Load custom field info for payroll calculation."""
-    values = await CustomSalaryValue.filter(salary_record_id=record_id).prefetch_related(
-        "salary_field"
-    ).all()
-    return [
-        {
-            "field_type": v.salary_field.field_type,
-            "is_non_cash": v.salary_field.is_non_cash,
-            "amount": float(v.amount),
-        }
-        for v in values
-    ]
+async def load_custom_fields_for_payroll(record_ids: List[int]) -> Dict[int, List[dict]]:
+    """Batch load custom field info for payroll calculation."""
+    if not record_ids:
+        return {}
+    values = await CustomSalaryValue.filter(
+        salary_record_id__in=record_ids
+    ).prefetch_related("salary_field").all()
+    payroll_map: Dict[int, List[dict]] = {}
+    for v in values:
+        payroll_map.setdefault(v.salary_record_id, []).append(
+            {
+                "field_type": v.salary_field.field_type,
+                "is_non_cash": v.salary_field.is_non_cash,
+                "amount": float(v.amount),
+            }
+        )
+    return payroll_map
 
 
 async def get_custom_fields_by_category(record_id: int) -> dict:
@@ -171,6 +175,49 @@ def _parse_range(range_str: str) -> (int, int):
     return (_ym_num(y1, m1), _ym_num(y2, m2))
 
 
+def _salary_query(
+    user_id: int,
+    person_id: Optional[int] = None,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+):
+    q = SalaryRecord.filter(person__user_id=user_id)
+    if person_id:
+        q = q.filter(person_id=person_id)
+    if year:
+        q = q.filter(year=year)
+    if month:
+        q = q.filter(month=month)
+    return q
+
+
+def _payroll_args(r: SalaryRecord, custom_fields: Optional[List[dict]]):
+    return dict(
+        base_salary=r.base_salary,
+        performance_salary=r.performance_salary,
+        high_temp_allowance=_F(r, "high_temp_allowance"),
+        low_temp_allowance=_F(r, "low_temp_allowance"),
+        computer_allowance=_F(r, "computer_allowance"),
+        meal_allowance=_F(r, "meal_allowance"),
+        mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
+        dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
+        spring_festival_benefit=_F(r, "spring_festival_benefit"),
+        other_income=_F(r, "other_income"),
+        comprehensive_allowance=_F(r, "comprehensive_allowance"),
+        pension_insurance=r.pension_insurance,
+        medical_insurance=r.medical_insurance,
+        unemployment_insurance=r.unemployment_insurance,
+        critical_illness_insurance=r.critical_illness_insurance,
+        enterprise_annuity=r.enterprise_annuity,
+        housing_fund=r.housing_fund,
+        other_deductions=_F(r, "other_deductions"),
+        labor_union_fee=_F(r, "labor_union_fee"),
+        performance_deduction=_F(r, "performance_deduction"),
+        tax=r.tax,
+        custom_fields=custom_fields or [],
+    )
+
+
 @router.get("/monthly", response_model=List[MonthlyStats])
 async def monthly_stats(
     user= Depends(get_current_user),
@@ -178,41 +225,12 @@ async def monthly_stats(
     year: Optional[int] = Query(default=None),
     month: Optional[int] = Query(default=None),
 ):
-    q = SalaryRecord.filter(person__user_id=user.id)
-    if person_id:
-        q = q.filter(person_id=person_id)
-    if year:
-        q = q.filter(year=year)
-    if month:
-        q = q.filter(month=month)
+    q = _salary_query(user.id, person_id=person_id, year=year, month=month)
     recs = await q.all()
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
     result: List[MonthlyStats] = []
     for r in recs:
-        custom_fields_payroll = await get_custom_fields_for_payroll(r.id)
-        calc = compute_payroll(
-            base_salary=r.base_salary,
-            performance_salary=r.performance_salary,
-            high_temp_allowance=_F(r, "high_temp_allowance"),
-            low_temp_allowance=_F(r, "low_temp_allowance"),
-            computer_allowance=_F(r, "computer_allowance"),
-            meal_allowance=_F(r, "meal_allowance"),
-            mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
-            dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
-            spring_festival_benefit=_F(r, "spring_festival_benefit"),
-            other_income=_F(r, "other_income"),
-            comprehensive_allowance=_F(r, "comprehensive_allowance"),
-            pension_insurance=r.pension_insurance,
-            medical_insurance=r.medical_insurance,
-            unemployment_insurance=r.unemployment_insurance,
-            critical_illness_insurance=r.critical_illness_insurance,
-            enterprise_annuity=r.enterprise_annuity,
-            housing_fund=r.housing_fund,
-            other_deductions=_F(r, "other_deductions"),
-            labor_union_fee=_F(r, "labor_union_fee"),
-            performance_deduction=_F(r, "performance_deduction"),
-            tax=r.tax,
-            custom_fields=custom_fields_payroll,
-        )
+        calc = compute_payroll(**_payroll_args(r, custom_payroll_map.get(r.id)))
         allowances_total = _F(r, "high_temp_allowance") + _F(r, "low_temp_allowance") + _F(r, "computer_allowance") + _F(r, "communication_allowance") + _F(r, "comprehensive_allowance")
         insurance_total = (r.pension_insurance + r.medical_insurance + r.unemployment_insurance +
                           r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund)
@@ -245,33 +263,10 @@ async def yearly_stats(user= Depends(get_current_user), person_id: Optional[int]
     if person_id:
         person_ids = {person_id}
     recs = await SalaryRecord.filter(person_id__in=list(person_ids), year=year).all()
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
     stats_map = {}
     for r in recs:
-        custom_fields_payroll = await get_custom_fields_for_payroll(r.id)
-        calc = compute_payroll(
-            base_salary=r.base_salary,
-            performance_salary=r.performance_salary,
-            high_temp_allowance=_F(r, "high_temp_allowance"),
-            low_temp_allowance=_F(r, "low_temp_allowance"),
-            computer_allowance=_F(r, "computer_allowance"),
-            meal_allowance=_F(r, "meal_allowance"),
-            mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
-            dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
-            spring_festival_benefit=_F(r, "spring_festival_benefit"),
-            other_income=_F(r, "other_income"),
-            comprehensive_allowance=_F(r, "comprehensive_allowance"),
-            pension_insurance=r.pension_insurance,
-            medical_insurance=r.medical_insurance,
-            unemployment_insurance=r.unemployment_insurance,
-            critical_illness_insurance=r.critical_illness_insurance,
-            enterprise_annuity=r.enterprise_annuity,
-            housing_fund=r.housing_fund,
-            other_deductions=_F(r, "other_deductions"),
-            labor_union_fee=_F(r, "labor_union_fee"),
-            performance_deduction=_F(r, "performance_deduction"),
-            tax=r.tax,
-            custom_fields=custom_fields_payroll,
-        )
+        calc = compute_payroll(**_payroll_args(r, custom_payroll_map.get(r.id)))
         allowances_total = _F(r, "high_temp_allowance") + _F(r, "low_temp_allowance") + _F(r, "computer_allowance") + _F(r, "communication_allowance") + _F(r, "comprehensive_allowance")
         bonuses_total = _F(r, "mid_autumn_benefit") + _F(r, "dragon_boat_benefit") + _F(r, "spring_festival_benefit") + _F(r, "other_income")
         insurance_total = r.pension_insurance + r.medical_insurance + r.unemployment_insurance + r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund
@@ -322,37 +317,14 @@ async def family_summary(user= Depends(get_current_user), year: int = Query(...)
     persons = await Person.filter(user_id=user.id).all()
     person_ids = [p.id for p in persons]
     recs = await SalaryRecord.filter(person_id__in=person_ids, year=year).all()
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
     totals = {pid: Decimal("0") for pid in person_ids}
     insurance_total = Decimal("0")
     tax_total = Decimal("0")
     total_gross = Decimal("0")
     total_net = Decimal("0")
     for r in recs:
-        custom_fields_payroll = await get_custom_fields_for_payroll(r.id)
-        calc = compute_payroll(
-            base_salary=r.base_salary,
-            performance_salary=r.performance_salary,
-            high_temp_allowance=_F(r, "high_temp_allowance"),
-            low_temp_allowance=_F(r, "low_temp_allowance"),
-            computer_allowance=_F(r, "computer_allowance"),
-            meal_allowance=_F(r, "meal_allowance"),
-            mid_autumn_benefit=_F(r, "mid_autumn_benefit"),
-            dragon_boat_benefit=_F(r, "dragon_boat_benefit"),
-            spring_festival_benefit=_F(r, "spring_festival_benefit"),
-            other_income=_F(r, "other_income"),
-            comprehensive_allowance=_F(r, "comprehensive_allowance"),
-            pension_insurance=r.pension_insurance,
-            medical_insurance=r.medical_insurance,
-            unemployment_insurance=r.unemployment_insurance,
-            critical_illness_insurance=r.critical_illness_insurance,
-            enterprise_annuity=r.enterprise_annuity,
-            housing_fund=r.housing_fund,
-            other_deductions=_F(r, "other_deductions"),
-            labor_union_fee=_F(r, "labor_union_fee"),
-            performance_deduction=_F(r, "performance_deduction"),
-            tax=r.tax,
-            custom_fields=custom_fields_payroll,
-        )
+        calc = compute_payroll(**_payroll_args(r, custom_payroll_map.get(r.id)))
         insurance_calc = (r.pension_insurance + r.medical_insurance + r.unemployment_insurance +
                          r.critical_illness_insurance + r.enterprise_annuity + r.housing_fund)
         totals[r.person_id] += calc["net_income"]
@@ -857,6 +829,7 @@ async def annual_table(
             "housing_fund": Decimal("0"),
             "other_deductions": Decimal("0"),
             "labor_union_fee": Decimal("0"),
+            "performance_deduction": Decimal("0"),
             # derived totals
             "income_total": Decimal("0"),
             "deductions_total": Decimal("0"),
@@ -885,6 +858,7 @@ async def annual_table(
         cur["housing_fund"] += _D(r.housing_fund)
         cur["other_deductions"] += _D(_F(r, "other_deductions"))
         cur["labor_union_fee"] += _D(_F(r, "labor_union_fee"))
+        cur["performance_deduction"] += _D(_F(r, "performance_deduction"))
         # derived
         cur["income_total"] += _gross_income_full(r)
         cur["deductions_total"] += _deductions_sum(r)
@@ -930,7 +904,7 @@ async def annual_table(
             housing_fund_total=float(cur["housing_fund"]),
             other_deductions_total=float(cur["other_deductions"]),
             labor_union_fee_total=float(cur["labor_union_fee"]),
-            performance_deduction_total=float(cur["performance_deduction"]) if "performance_deduction" in cur else 0.0,
+            performance_deduction_total=float(cur["performance_deduction"]),
             # grand totals
             income_total=float(cur["income_total"]),
             deductions_total=float(cur["deductions_total"]),

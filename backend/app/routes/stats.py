@@ -156,6 +156,13 @@ def _parse_range(range_str: str) -> (int, int):
     return (_ym_num(y1, m1), _ym_num(y2, m2))
 
 
+def _apply_range(recs: List[SalaryRecord], range_str: Optional[str]) -> List[SalaryRecord]:
+    if not range_str:
+        return recs
+    start_num, end_num = _parse_range(range_str)
+    return [r for r in recs if start_num <= _ym_num(r.year, r.month) <= end_num]
+
+
 def _salary_query(
     user_id: int,
     person_id: Optional[int] = None,
@@ -368,12 +375,7 @@ async def benefit_stats(
     year: Optional[int] = Query(default=None),
 ):
     """Get non-cash benefit statistics"""
-    q = SalaryRecord.filter(person__user_id=user.id)
-    if person_id:
-        q = q.filter(person_id=person_id)
-    if year:
-        q = q.filter(year=year)
-    
+    q = _salary_query(user.id, person_id=person_id, year=year)
     recs = await q.all()
     result: List[BenefitStats] = []
     
@@ -406,23 +408,10 @@ async def income_composition(
     补贴 = 高温补贴 + 低温补贴 + 餐补 + 电脑补贴
     福利 = 中秋福利 + 端午福利 + 春节福利
     """
-    q = SalaryRecord.filter(person__user_id=user.id)
-    if person_id:
-        q = q.filter(person_id=person_id)
-    if year:
-        q = q.filter(year=year)
-    if month:
-        q = q.filter(month=month)
-    
+    q = _salary_query(user.id, person_id=person_id, year=year, month=month)
     recs = await q.all()
 
-    # Apply range filter in Python if provided
-    def _ym(v: SalaryRecord) -> int:
-        return v.year * 100 + v.month
-    
-    if range:
-        start_num, end_num = _parse_range(range)
-        recs = [r for r in recs if start_num <= _ym(r) <= end_num]
+    recs = _apply_range(recs, range)
 
     result: List[IncomeComposition] = []
     
@@ -484,16 +473,8 @@ async def net_income_monthly(
     range: Optional[str] = Query(default=None, description="时间范围，如 2024-01..2024-12"),
 ):
     """Monthly net income series (unified calculation)."""
-    q = SalaryRecord.filter(person__user_id=user.id)
-    if person_id:
-        q = q.filter(person_id=person_id)
-    if year:
-        q = q.filter(year=year)
-    recs = await q.all()
-
-    if range:
-        start_num, end_num = _parse_range(range)
-        recs = [r for r in recs if start_num <= _ym_num(r.year, r.month) <= end_num]
+    q = _salary_query(user.id, person_id=person_id, year=year)
+    recs = _apply_range(await q.all(), range)
 
     sums = {}
     for r in recs:
@@ -517,16 +498,8 @@ async def gross_vs_net_monthly(
     应发 = 基本工资 + 绩效工资 + 高温补贴 + 低温补贴 + 电脑补贴 + 其他（排除：餐补、三节福利）
     实际到手 = 应发 - 扣除
     """
-    q = SalaryRecord.filter(person__user_id=user.id)
-    if person_id:
-        q = q.filter(person_id=person_id)
-    if year:
-        q = q.filter(year=year)
-    recs = await q.all()
-
-    if range:
-        start_num, end_num = _parse_range(range)
-        recs = [r for r in recs if start_num <= _ym_num(r.year, r.month) <= end_num]
+    q = _salary_query(user.id, person_id=person_id, year=year)
+    recs = _apply_range(await q.all(), range)
 
     sums = {}
     for r in recs:
@@ -555,18 +528,8 @@ async def deductions_breakdown(
     """Breakdown of deduction categories with monthly series and percentage share.
     支持按人员、年份、月份过滤；为兼容性保留 range，但前端已不使用。
     """
-    q = SalaryRecord.filter(person__user_id=user.id)
-    if person_id:
-        q = q.filter(person_id=person_id)
-    if year:
-        q = q.filter(year=year)
-    if month:
-        q = q.filter(month=month)
-    recs = await q.all()
-
-    if range:
-        start_num, end_num = _parse_range(range)
-        recs = [r for r in recs if start_num <= _ym_num(r.year, r.month) <= end_num]
+    q = _salary_query(user.id, person_id=person_id, year=year, month=month)
+    recs = _apply_range(await q.all(), range)
 
     # Summary totals by category
     categories = [
@@ -708,18 +671,8 @@ async def monthly_table(
     """Monthly detail table: income items, deduction subtotal, net income (unified), benefits total, note.
     支持按人员、年份、月份过滤；为兼容性保留 range，但前端已不使用。
     """
-    q = SalaryRecord.filter(person__user_id=user.id)
-    if person_id:
-        q = q.filter(person_id=person_id)
-    if year:
-        q = q.filter(year=year)
-    if month:
-        q = q.filter(month=month)
-    recs = await q.all()
-
-    if range:
-        start_num, end_num = _parse_range(range)
-        recs = [r for r in recs if start_num <= _ym_num(r.year, r.month) <= end_num]
+    q = _salary_query(user.id, person_id=person_id, year=year, month=month)
+    recs = _apply_range(await q.all(), range)
 
     # Load person names
     persons = {p.id: p.name for p in await Person.filter(user_id=user.id).all()}

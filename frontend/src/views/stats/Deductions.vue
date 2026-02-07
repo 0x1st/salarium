@@ -4,6 +4,7 @@ import { useStatsStore } from '../../store/stats'
 import DeductionsBreakdown from '../../components/stats/DeductionsBreakdown.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import { hasStatsData } from '../../utils/stats'
+import { formatCurrency } from '../../utils/number'
 
 const stats = useStatsStore()
 const info = ref({ summary: [], monthly: [] })
@@ -11,6 +12,33 @@ const loading = ref(false)
 const error = ref(null)
 
 const hasData = computed(() => hasStatsData(info.value))
+
+const labelMap = {
+  pension_insurance: '养老保险',
+  medical_insurance: '医疗保险',
+  unemployment_insurance: '失业保险',
+  critical_illness_insurance: '大病互助保险',
+  enterprise_annuity: '企业年金',
+  housing_fund: '住房公积金',
+  other_deductions: '其他扣除',
+  labor_union_fee: '工会',
+  performance_deduction: '绩效扣除',
+}
+
+const totalDeduction = computed(() => (info.value.summary || []).reduce((s, i) => s + (i.amount || 0), 0))
+
+const topItem = computed(() => {
+  const items = [...(info.value.summary || [])]
+  items.sort((a, b) => (b.amount || 0) - (a.amount || 0))
+  return items[0] || null
+})
+
+const avgMonthly = computed(() => {
+  const months = info.value.monthly?.length || 0
+  if (!months) return 0
+  const total = info.value.monthly.reduce((s, m) => s + (m.total || 0), 0)
+  return total / months
+})
 
 async function load() {
   loading.value = true
@@ -33,7 +61,25 @@ watch(() => stats.refreshToken, () => { load() })
     <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
     <EmptyState v-else-if="!hasData" />
     <div v-else class="section">
-      <div class="section-title">扣除结构</div>
+      <div class="section-title">扣除概览</div>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">扣除合计</div>
+          <div class="summary-value">{{ formatCurrency(totalDeduction) }}</div>
+          <div class="summary-note">选定范围合计</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">月均扣除</div>
+          <div class="summary-value">{{ formatCurrency(avgMonthly) }}</div>
+          <div class="summary-note">按有记录月份</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">最高扣除项</div>
+          <div class="summary-value">{{ topItem ? (labelMap[topItem.category] || topItem.category) : '—' }}</div>
+          <div class="summary-note">{{ topItem ? formatCurrency(topItem.amount) : '—' }}</div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top: 12px;">扣除结构</div>
       <el-card shadow="hover">
         <DeductionsBreakdown :summary="info.summary" :monthly="info.monthly" />
       </el-card>
@@ -42,6 +88,37 @@ watch(() => stats.refreshToken, () => { load() })
 </template>
 
 <style scoped>
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  background: #fffdfb;
+  border: 1px solid #e5e0dc;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  color: #6b6560;
+}
+
+.summary-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2d2a26;
+}
+
+.summary-note {
+  font-size: 0.75rem;
+  color: #9a9590;
+}
+
 :deep(.el-card) {
   border-radius: 12px;
   overflow: hidden;
@@ -74,5 +151,11 @@ watch(() => stats.refreshToken, () => { load() })
   font-size: 0.875rem;
   color: #6b6560;
   font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import api from '../utils/axios'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, ArrowLeft, Settings } from 'lucide-vue-next'
+import { Plus, ArrowLeft, Settings, Upload, Download } from 'lucide-vue-next'
 import { getSalaryTemplate, upsertSalaryTemplate } from '../api/salary_templates'
 
 import SalaryStatsCards from '../components/salary/SalaryStatsCards.vue'
@@ -30,6 +30,8 @@ const filterMonth = ref(null)
 const customFields = ref([])
 const categories = ref({ income: [], deduction: [] })
 const template = ref(null)
+const importing = ref(false)
+const fileInput = ref(null)
 
 const stats = computed(() => {
   if (filteredList.value.length === 0) return { total: 0, average: 0, latest: 0 }
@@ -145,6 +147,56 @@ async function handleSubmit(formData) {
   }
 }
 
+function openImport() {
+  if (fileInput.value) fileInput.value.click()
+}
+
+async function handleImportFile(event) {
+  const file = event.target.files?.[0]
+  if (!file || !personId.value) return
+  importing.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const { data } = await api.post('/salaries/import', formData, {
+      params: { person_id: personId.value, mode: 'upsert' }
+    })
+    ElMessage.success(`导入完成：新增 ${data.created}，更新 ${data.updated}，跳过 ${data.skipped}`)
+    await load()
+  } catch (error) {
+    const detail = error?.response?.data?.detail
+    ElMessage.error(detail || '导入失败')
+  } finally {
+    importing.value = false
+    if (fileInput.value) fileInput.value.value = ''
+  }
+}
+
+async function downloadExport(format) {
+  if (!personId.value) return
+  try {
+    const { data, headers } = await api.get('/salaries/export', {
+      params: { person_id: personId.value, format },
+      responseType: 'blob'
+    })
+    const disposition = headers['content-disposition'] || ''
+    const match = /filename=([^;]+)/.exec(disposition)
+    const filename = match ? match[1] : `salaries.${format === 'xlsx' ? 'xlsx' : 'csv'}`
+    const url = URL.createObjectURL(new Blob([data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    ElMessage.error('导出失败')
+  }
+}
+
+function openPayslip(row) {
+  window.open(`/api/salaries/${row.id}/payslip.html`, '_blank')
+}
+
 async function handleSaveTemplate(payload) {
   if (!personId.value) return
   try {
@@ -217,6 +269,18 @@ onMounted(load)
           <Settings :size="16" />
           <span>字段管理</span>
         </button>
+        <button class="btn btn-secondary" @click="openImport" :disabled="importing">
+          <Upload :size="16" />
+          <span>{{ importing ? '导入中' : '导入' }}</span>
+        </button>
+        <button class="btn btn-secondary" @click="downloadExport('csv')">
+          <Download :size="16" />
+          <span>导出CSV</span>
+        </button>
+        <button class="btn btn-secondary" @click="downloadExport('xlsx')">
+          <Download :size="16" />
+          <span>导出Excel</span>
+        </button>
         <button class="btn btn-primary" @click="openCreate">
           <Plus :size="16" />
           <span>添加记录</span>
@@ -243,6 +307,7 @@ onMounted(load)
       :categories="categories"
       @edit="openEdit"
       @delete="handleDelete"
+      @payslip="openPayslip"
     />
 
     <!-- Form Dialog -->
@@ -257,6 +322,7 @@ onMounted(load)
       @manage-fields="goToFieldSettings"
     />
   </PageContainer>
+  <input ref="fileInput" type="file" accept=".csv,.xlsx" hidden @change="handleImportFile" />
 </template>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { Calendar, Edit, Trash2 } from 'lucide-vue-next'
+import { Calendar, Edit, Trash2, FileText } from 'lucide-vue-next'
 import { formatCurrency as formatCurrencyUtil } from '../../utils/number'
 
 const props = defineProps({
@@ -22,7 +22,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete', 'payslip'])
 
 function formatCurrency(amount) {
   return formatCurrencyUtil(amount, { decimals: 2 })
@@ -170,6 +170,13 @@ const tableData = computed(() => {
           <template #default="{ row }">
             <div class="action-buttons">
               <button
+                class="action-btn action-btn-slip"
+                @click="emit('payslip', row)"
+                title="工资条"
+              >
+                <FileText :size="14" />
+              </button>
+              <button
                 class="action-btn action-btn-edit"
                 @click="emit('edit', row)"
                 title="编辑"
@@ -306,6 +313,15 @@ const tableData = computed(() => {
 }
 
 .action-btn-edit:hover {
+  background: #f0dcd4;
+}
+
+.action-btn-slip {
+  background: #f5e6e0;
+  color: #2d2a26;
+}
+
+.action-btn-slip:hover {
   background: #f0dcd4;
 }
 

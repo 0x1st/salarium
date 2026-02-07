@@ -2,7 +2,7 @@ from typing import List, Optional, Dict
 from fastapi import APIRouter, HTTPException, Query, Depends
 from decimal import Decimal
 
-from ..models import SalaryRecord, Person, CustomSalaryValue, SalaryField
+from ..models import SalaryRecord, Person, CustomSalaryValue
 from ..schemas.stats import (
     MonthlyStats, YearlyStats, FamilySummary,
     PersonCumulativeInsurance, BenefitStats, IncomeComposition,
@@ -48,25 +48,6 @@ async def load_custom_fields_for_payroll(record_ids: List[int]) -> Dict[int, Lis
         )
     return payroll_map
 
-
-async def get_custom_fields_by_category(record_id: int) -> dict:
-    """Get custom field values grouped by category for stats."""
-    values = await CustomSalaryValue.filter(salary_record_id=record_id).prefetch_related(
-        "salary_field"
-    ).all()
-    result = {
-        "income": {"total": Decimal("0"), "by_category": {}},
-        "deduction": {"total": Decimal("0"), "by_category": {}},
-    }
-    for v in values:
-        field_type = v.salary_field.field_type
-        category = v.salary_field.category
-        amount = _D(v.amount)
-        result[field_type]["total"] += amount
-        if category not in result[field_type]["by_category"]:
-            result[field_type]["by_category"][category] = Decimal("0")
-        result[field_type]["by_category"][category] += amount
-    return result
 
 # Allowances used for net income (exclude meal allowance as per spec)
 # net = base + performance + high + low + computer - deductions

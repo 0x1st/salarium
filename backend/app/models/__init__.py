@@ -8,6 +8,7 @@ from .salary_field import (
     DEDUCTION_CATEGORIES as DEDUCTION_CATEGORIES,
     ALL_CATEGORIES as ALL_CATEGORIES,
 )
+from .salary_template import SalaryTemplate as SalaryTemplate
 
 __all__ = [
     "User",
@@ -18,4 +19,5 @@ __all__ = [
     "INCOME_CATEGORIES",
     "DEDUCTION_CATEGORIES",
     "ALL_CATEGORIES",
+    "SalaryTemplate",
 ]

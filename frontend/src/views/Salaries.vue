@@ -4,6 +4,7 @@ import api from '../utils/axios'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, ArrowLeft, Settings } from 'lucide-vue-next'
+import { getSalaryTemplate, upsertSalaryTemplate } from '../api/salary_templates'
 
 import SalaryStatsCards from '../components/salary/SalaryStatsCards.vue'
 import SalaryFilter from '../components/salary/SalaryFilter.vue'
@@ -28,6 +29,7 @@ const filterMonth = ref(null)
 
 const customFields = ref([])
 const categories = ref({ income: [], deduction: [] })
+const template = ref(null)
 
 const stats = computed(() => {
   if (filteredList.value.length === 0) return { total: 0, average: 0, latest: 0 }
@@ -83,6 +85,12 @@ async function load() {
     const { data } = await api.get('/salaries/', { params: { person_id: personId.value } })
     list.value = data
 
+    try {
+      template.value = await getSalaryTemplate(personId.value)
+    } catch {
+      template.value = null
+    }
+
     const { data: persons } = await api.get('/persons/')
     const person = persons.find(p => p.id === personId.value)
     personName.value = person ? person.name : `人员 ${personId.value}`
@@ -134,6 +142,16 @@ async function handleSubmit(formData) {
     } else {
       ElMessage.error('操作工资记录失败，请检查网络连接')
     }
+  }
+}
+
+async function handleSaveTemplate(payload) {
+  if (!personId.value) return
+  try {
+    template.value = await upsertSalaryTemplate(personId.value, payload)
+    ElMessage.success('模板已保存')
+  } catch {
+    ElMessage.error('保存模板失败')
   }
 }
 
@@ -233,7 +251,9 @@ onMounted(load)
       :is-editing="isEditing"
       :initial-data="editingData"
       :custom-fields="customFields"
+      :template="template"
       @submit="handleSubmit"
+      @save-template="handleSaveTemplate"
       @manage-fields="goToFieldSettings"
     />
   </PageContainer>

@@ -18,10 +18,14 @@ const props = defineProps({
   customFields: {
     type: Array,
     default: () => []
+  },
+  template: {
+    type: Object,
+    default: null
   }
 })
 
-const emit = defineEmits(['update:visible', 'submit', 'manage-fields'])
+const emit = defineEmits(['update:visible', 'submit', 'manage-fields', 'save-template'])
 
 const form = ref({
   year: new Date().getFullYear(),
@@ -83,9 +87,36 @@ watch(() => props.visible, (visible) => {
       props.customFields.forEach(f => {
         customFieldValues.value[f.field_key] = 0
       })
+      if (props.template) {
+        applyTemplate()
+      }
     }
   }
 })
+
+function applyTemplate() {
+  if (!props.template) return
+  const year = form.value.year
+  const month = form.value.month
+  form.value = {
+    year,
+    month,
+    base_salary: props.template.base_salary || 0,
+    performance_salary: props.template.performance_salary || 0,
+    pension_insurance: props.template.pension_insurance || 0,
+    medical_insurance: props.template.medical_insurance || 0,
+    unemployment_insurance: props.template.unemployment_insurance || 0,
+    critical_illness_insurance: props.template.critical_illness_insurance || 0,
+    enterprise_annuity: props.template.enterprise_annuity || 0,
+    housing_fund: props.template.housing_fund || 0,
+    tax: props.template.tax || 0,
+    note: props.template.note || ''
+  }
+  customFieldValues.value = {}
+  props.customFields.forEach(f => {
+    customFieldValues.value[f.field_key] = props.template.custom_fields?.[f.field_key] || 0
+  })
+}
 
 function handleSubmit() {
   const customFieldsPayload = {}
@@ -100,6 +131,23 @@ function handleSubmit() {
     ...form.value,
     custom_fields: Object.keys(customFieldsPayload).length > 0 ? customFieldsPayload : null
   })
+}
+
+function handleSaveTemplate() {
+  const payload = {
+    base_salary: form.value.base_salary || 0,
+    performance_salary: form.value.performance_salary || 0,
+    pension_insurance: form.value.pension_insurance || 0,
+    medical_insurance: form.value.medical_insurance || 0,
+    unemployment_insurance: form.value.unemployment_insurance || 0,
+    critical_illness_insurance: form.value.critical_illness_insurance || 0,
+    enterprise_annuity: form.value.enterprise_annuity || 0,
+    housing_fund: form.value.housing_fund || 0,
+    tax: form.value.tax || 0,
+    note: form.value.note || '',
+    custom_fields: { ...customFieldValues.value },
+  }
+  emit('save-template', payload)
 }
 
 function close() {
@@ -258,6 +306,15 @@ function close() {
           </form>
 
           <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="handleSaveTemplate">保存为模板</button>
+            <button
+              v-if="!isEditing && template"
+              type="button"
+              class="btn btn-secondary"
+              @click="applyTemplate"
+            >
+              套用模板
+            </button>
             <button type="button" class="btn btn-secondary" @click="close">取消</button>
             <button type="button" class="btn btn-primary" @click="handleSubmit">保存</button>
           </div>

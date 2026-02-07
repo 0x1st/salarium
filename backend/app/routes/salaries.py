@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Tuple
 from fastapi import APIRouter, HTTPException, Query, Depends
+from tortoise.exceptions import IntegrityError
 
 from ..models import SalaryRecord, Person, SalaryField, CustomSalaryValue
 from ..schemas.salary import SalaryCreate, SalaryUpdate, SalaryOut
@@ -140,21 +141,24 @@ async def create_salary(
     if not person:
         raise HTTPException(status_code=404, detail="人员不存在")
 
-    rec = await SalaryRecord.create(
-        person_id=person_id,
-        year=payload.year,
-        month=payload.month,
-        base_salary=payload.base_salary,
-        performance_salary=payload.performance_salary,
-        pension_insurance=payload.pension_insurance,
-        medical_insurance=payload.medical_insurance,
-        unemployment_insurance=payload.unemployment_insurance,
-        critical_illness_insurance=payload.critical_illness_insurance,
-        enterprise_annuity=payload.enterprise_annuity,
-        housing_fund=payload.housing_fund,
-        tax=payload.tax,
-        note=payload.note,
-    )
+    try:
+        rec = await SalaryRecord.create(
+            person_id=person_id,
+            year=payload.year,
+            month=payload.month,
+            base_salary=payload.base_salary,
+            performance_salary=payload.performance_salary,
+            pension_insurance=payload.pension_insurance,
+            medical_insurance=payload.medical_insurance,
+            unemployment_insurance=payload.unemployment_insurance,
+            critical_illness_insurance=payload.critical_illness_insurance,
+            enterprise_annuity=payload.enterprise_annuity,
+            housing_fund=payload.housing_fund,
+            tax=payload.tax,
+            note=payload.note,
+        )
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="该月份工资记录已存在")
 
     # Save custom fields
     if payload.custom_fields:

@@ -54,15 +54,18 @@ const topMix = computed(() => {
 
 const otherBreakdown = computed(() => {
   const totals = new Map()
+  const labels = new Map()
   for (const r of comp.value || []) {
     const baseOther = r.other_income_base || 0
     if (baseOther) {
       totals.set('other_income', (totals.get('other_income') || 0) + baseOther)
+      labels.set('other_income', '其他收入')
     }
     for (const item of r.custom_income_items || []) {
       if (!item || !item.amount) continue
       const key = item.key || item.label || 'custom'
       totals.set(key, (totals.get(key) || 0) + (item.amount || 0))
+      if (item.label) labels.set(key, item.label)
     }
   }
   const rows = []
@@ -70,7 +73,7 @@ const otherBreakdown = computed(() => {
     if (!amount) continue
     rows.push({
       key,
-      label: key === 'other_income' ? '其他收入' : key,
+      label: labels.get(key) || key,
       amount,
     })
   }

@@ -57,7 +57,7 @@ function closeMobileMenu() {
       </div>
       
       <nav class="sidebar-nav">
-        <router-link to="/stats" class="nav-item" @click="closeMobileMenu">
+        <router-link to="/stats/net" class="nav-item" @click="closeMobileMenu">
           <BarChart3 class="nav-icon" />
           <span v-if="!sidebarCollapsed" class="nav-text">统计分析</span>
         </router-link>
@@ -120,7 +120,7 @@ function closeMobileMenu() {
     <!-- 移动端侧边栏 -->
     <aside class="sidebar mobile-sidebar" :class="{ open: mobileMenuOpen }">
       <nav class="sidebar-nav">
-        <router-link to="/stats" class="nav-item" @click="closeMobileMenu">
+        <router-link to="/stats/net" class="nav-item" @click="closeMobileMenu">
           <BarChart3 class="nav-icon" />
           <span class="nav-text">统计分析</span>
         </router-link>

@@ -35,12 +35,12 @@ README.zh.md      # 中文文档
 #### 启动步骤
 ```bash
 # 直接拉取镜像并运行（容器内部端口 8000，需要映射到主机）
-docker pull styin8/salarium:latest
+docker pull 0x1st/salarium:latest
 docker run -d \
   --name salarium \
   -p 8000:8000 \
   -v $(pwd)/data:/app/data \
-  styin8/salarium:latest
+  0x1st/salarium:latest
 
 # 访问应用
 # 前端：http://localhost:8000

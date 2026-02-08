@@ -35,12 +35,12 @@ README.zh.md      # Chinese documentation
 #### Steps
 ```bash
 # Pull and run directly (container internal port 8000; map to host)
-docker pull styin8/salarium:latest
+docker pull 0x1st/salarium:latest
 docker run -d \
   --name salarium \
   -p 8000:8000 \
   -v $(pwd)/data:/app/data \
-  styin8/salarium:latest
+  0x1st/salarium:latest
 
 # Access the application
 # Frontend: http://localhost:8000

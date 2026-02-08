@@ -44,6 +44,7 @@ export const useStatsStore = defineStore('stats', {
     errors: {},
     isRefreshing: false,
     _refreshTimer: null,
+    _yearCheckedKey: null,
 
     // invalidation token for cross-view refresh
     refreshToken: 0,
@@ -74,6 +75,22 @@ export const useStatsStore = defineStore('stats', {
         this.errorPersons = e
       } finally {
         this.loadingPersons = false
+      }
+    },
+
+    async ensureYearWithData() {
+      const key = this.personId ? `p:${this.personId}` : 'all'
+      if (this._yearCheckedKey === key) return
+      this._yearCheckedKey = key
+      try {
+        const data = await getMonthlyStats({ personId: this.personId })
+        if (!data?.length) return
+        const latest = Math.max(...data.map(r => r.year).filter(Boolean))
+        if (Number.isFinite(latest) && latest !== this.year) {
+          this.year = latest
+        }
+      } catch {
+        // ignore; keep current year
       }
     },
 

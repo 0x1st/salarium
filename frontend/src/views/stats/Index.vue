@@ -34,6 +34,7 @@ const monthFilter = computed({
 let _removeInvalidateListener = null
 onMounted(async () => {
   await stats.ensurePersons()
+  await stats.ensureYearWithData()
   // Set initial activeTab from route
   if (route.name) {
     activeTab.value = route.name

@@ -154,6 +154,12 @@ const tableData = computed(() => {
           </template>
         </el-table-column>
 
+        <el-table-column prop="other_deductions" label="其他扣款" width="150" min-width="130" sortable="custom" align="right">
+          <template #default="{ row }">
+            <span class="text-danger">-{{ formatCurrency(row.total_deductions - row.insurance_total) }}</span>
+          </template>
+        </el-table-column>
+
         <el-table-column prop="tax" label="个税" width="130" min-width="120" sortable="custom" align="right">
           <template #default="{ row }">
             <span class="text-danger">-{{ formatCurrency(row.tax) }}</span>

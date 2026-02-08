@@ -19,7 +19,6 @@ from ..schemas.stats import (
     CategorySummary, CategorySummaryItem,
 )
 from ..utils.auth import get_current_user
-from ..services.payroll import compute_payroll
 
 
 router = APIRouter()
@@ -149,6 +148,23 @@ def _gross_income_full(r: SalaryRecord) -> Decimal:
     )
 
 
+def _custom_sums(custom_items: List[dict]) -> (Decimal, Decimal, Decimal):
+    custom_cash = Decimal("0")
+    custom_non_cash = Decimal("0")
+    custom_deduction = Decimal("0")
+    for cf in custom_items or []:
+        amount = _D(cf.get("amount", 0))
+        field_type = cf.get("field_type")
+        if field_type == "income":
+            if cf.get("is_non_cash"):
+                custom_non_cash += amount
+            else:
+                custom_cash += amount
+        elif field_type == "deduction":
+            custom_deduction += amount
+    return custom_cash, custom_non_cash, custom_deduction
+
+
 def _ordered_categories(categories, totals):
     ordered_keys = [k for k, _ in categories if k in totals]
     extras = sorted(k for k in totals.keys() if k not in ordered_keys)
@@ -269,7 +285,9 @@ async def monthly_stats(
     custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
     result: List[MonthlyStats] = []
     for r in recs:
-        calc = compute_payroll(**_payroll_args(r, custom_payroll_map.get(r.id)))
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
         allowances_total = (
             _F(r, "high_temp_allowance")
             + _F(r, "low_temp_allowance")
@@ -285,6 +303,18 @@ async def monthly_stats(
             + r.enterprise_annuity
             + r.housing_fund
         )
+        benefits_total = _benefits_sum(r) + custom_non_cash
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        deductions_total = (
+            _deductions_sum(r) + custom_deduction
+        )
+        actual_take_home = cash_income - deductions_total - _D(r.tax)
         result.append(
             MonthlyStats(
                 person_id=r.person_id,
@@ -295,11 +325,11 @@ async def monthly_stats(
                 allowances_total=allowances_total,
                 bonuses_total=0.0,
                 insurance_total=insurance_total,
-                tax=calc["tax"],
-                gross_income=calc["gross_income"],
-                net_income=calc["net_income"],
-                actual_take_home=calc["actual_take_home"],
-                non_cash_benefits=calc["non_cash_benefits"],
+                tax=float(_D(r.tax)),
+                gross_income=float(cash_income),
+                net_income=float(actual_take_home),
+                actual_take_home=float(actual_take_home),
+                non_cash_benefits=float(benefits_total),
             )
         )
     return result
@@ -321,7 +351,9 @@ async def yearly_stats(
     custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
     stats_map = {}
     for r in recs:
-        calc = compute_payroll(**_payroll_args(r, custom_payroll_map.get(r.id)))
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
         allowances_total = (
             _F(r, "high_temp_allowance")
             + _F(r, "low_temp_allowance")
@@ -343,6 +375,16 @@ async def yearly_stats(
             + r.enterprise_annuity
             + r.housing_fund
         )
+        benefits_total = _benefits_sum(r) + custom_non_cash
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        deductions_total = _deductions_sum(r) + custom_deduction
+        actual_take_home = cash_income - deductions_total - _D(r.tax)
 
         s = stats_map.get(r.person_id, {
             "months": 0,
@@ -356,13 +398,13 @@ async def yearly_stats(
             "non_cash_benefits": Decimal("0"),
         })
         s["months"] += 1
-        s["gross"] += calc["gross_income"]
-        s["net"] += calc["net_income"]
+        s["gross"] += cash_income
+        s["net"] += actual_take_home
         s["insurance"] += insurance_total
-        s["tax"] += calc["tax"]
+        s["tax"] += _D(r.tax)
         s["allowances"] += allowances_total
-        s["actual_take_home"] += calc["actual_take_home"]
-        s["non_cash_benefits"] += calc["non_cash_benefits"]
+        s["actual_take_home"] += actual_take_home
+        s["non_cash_benefits"] += benefits_total
         s["bonuses"] += bonuses_total
         stats_map[r.person_id] = s
     result: List[YearlyStats] = []
@@ -399,7 +441,9 @@ async def family_summary(user=Depends(get_current_user), year: int = Query(...))
     total_gross = Decimal("0")
     total_net = Decimal("0")
     for r in recs:
-        calc = compute_payroll(**_payroll_args(r, custom_payroll_map.get(r.id)))
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
         insurance_calc = (
             r.pension_insurance
             + r.medical_insurance
@@ -408,11 +452,20 @@ async def family_summary(user=Depends(get_current_user), year: int = Query(...))
             + r.enterprise_annuity
             + r.housing_fund
         )
-        totals[r.person_id] += calc["net_income"]
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        deductions_total = _deductions_sum(r) + custom_deduction
+        actual_take_home = cash_income - deductions_total - _D(r.tax)
+        totals[r.person_id] += actual_take_home
         insurance_total += insurance_calc
-        tax_total += calc["tax"]
-        total_gross += calc["gross_income"]
-        total_net += calc["net_income"]
+        tax_total += _D(r.tax)
+        total_gross += cash_income
+        total_net += actual_take_home
     return FamilySummary(
         year=year,
         persons=person_ids,
@@ -519,7 +572,6 @@ async def income_composition(
     """
     q = _salary_query(user.id, person_id=person_id, year=year, month=month)
     recs = _apply_range(await q.all(), range)
-    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
     custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     result: List[IncomeComposition] = []
@@ -719,11 +771,24 @@ async def net_income_monthly(
     """Monthly net income series (unified calculation)."""
     q = _salary_query(user.id, person_id=person_id, year=year)
     recs = _apply_range(await q.all(), range)
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     sums = {}
     for r in recs:
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        deductions_total = _deductions_sum(r) + custom_deduction
+        actual_take_home = cash_income - deductions_total - _D(r.tax)
         key = (r.year, r.month)
-        sums[key] = sums.get(key, Decimal("0")) + _unified_net_income(r)
+        sums[key] = sums.get(key, Decimal("0")) + actual_take_home
 
     result: List[MonthlyNetIncome] = []
     for (y, m) in sorted(sums.keys()):
@@ -750,13 +815,23 @@ async def gross_vs_net_monthly(
     """
     q = _salary_query(user.id, person_id=person_id, year=year)
     recs = _apply_range(await q.all(), range)
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     sums = {}
     for r in recs:
         key = (r.year, r.month)
-        gross = _gross_income_for_net_charts(r)
-        deductions = _deductions_sum(r)
-        net = gross - deductions  # For waterfall: net = gross - deductions
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
+        gross = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        deductions = _deductions_sum(r) + custom_deduction + _D(r.tax)
+        net = gross - deductions  # actual take-home
         prev_g, prev_n = sums.get(key, (Decimal("0"), Decimal("0")))
         sums[key] = (prev_g + gross, prev_n + net)
 
@@ -959,16 +1034,28 @@ async def monthly_table(
     """
     q = _salary_query(user.id, person_id=person_id, year=year, month=month)
     recs = _apply_range(await q.all(), range)
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     # Load person names
     persons = {p.id: p.name for p in await Person.filter(user_id=user.id).all()}
 
     rows: List[MonthlyTableRow] = []
     for r in sorted(recs, key=lambda x: (x.year, x.month, x.person_id)):
-        benefits = _benefits_sum(r)
-        deductions = _deductions_sum(r)
-        net = _unified_net_income(r)
-        income_total = _gross_income_full(r)
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
+        benefits = _benefits_sum(r) + custom_non_cash
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        deductions = _deductions_sum(r) + custom_deduction
+        income_total = cash_income + benefits
+        net = cash_income - deductions - _D(r.tax)
+        other_income = _D(_F(r, "other_income")) + custom_cash
         rows.append(
             MonthlyTableRow(
                 person_id=r.person_id,
@@ -993,7 +1080,7 @@ async def monthly_table(
                 spring_festival_benefit=float(
                     _D(_F(r, "spring_festival_benefit"))
                 ),
-                other_income=float(_D(_F(r, "other_income"))),
+                other_income=float(other_income),
                 # deductions
                 pension_insurance=float(_D(r.pension_insurance)),
                 medical_insurance=float(_D(r.medical_insurance)),
@@ -1003,7 +1090,9 @@ async def monthly_table(
                 ),
                 enterprise_annuity=float(_D(r.enterprise_annuity)),
                 housing_fund=float(_D(r.housing_fund)),
-                other_deductions=float(_D(_F(r, "other_deductions"))),
+                other_deductions=float(
+                    _D(_F(r, "other_deductions")) + custom_deduction
+                ),
                 labor_union_fee=float(_D(_F(r, "labor_union_fee"))),
                 performance_deduction=float(
                     _D(_F(r, "performance_deduction"))
@@ -1013,7 +1102,7 @@ async def monthly_table(
                 deductions_total=float(deductions),
                 benefits_total=float(benefits),
                 allowances_total=float(
-                    _D(_F(r, "meal_allowance")) + _D(_F(r, "other_income"))
+                    _D(_F(r, "meal_allowance")) + other_income
                 ),
                 actual_take_home=float(net),
                 net_income=float(net),
@@ -1036,6 +1125,7 @@ async def annual_table(
     name_map = {p.id: p.name for p in persons}
 
     recs = await SalaryRecord.filter(person_id__in=person_ids, year=year).all()
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     # Current year aggregates across all fixed fields
     agg = {}
@@ -1071,6 +1161,9 @@ async def annual_table(
             "actual_take_home_total": Decimal("0"),
             "net": Decimal("0"),
         })
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
         # accumulate incomes
         cur["base_salary"] += _D(r.base_salary)
         cur["performance_salary"] += _D(r.performance_salary)
@@ -1082,7 +1175,7 @@ async def annual_table(
         cur["mid_autumn_benefit"] += _D(_F(r, "mid_autumn_benefit"))
         cur["dragon_boat_benefit"] += _D(_F(r, "dragon_boat_benefit"))
         cur["spring_festival_benefit"] += _D(_F(r, "spring_festival_benefit"))
-        cur["other_income"] += _D(_F(r, "other_income"))
+        cur["other_income"] += _D(_F(r, "other_income")) + custom_cash
         # accumulate deductions
         cur["pension_insurance"] += _D(r.pension_insurance)
         cur["medical_insurance"] += _D(r.medical_insurance)
@@ -1090,15 +1183,22 @@ async def annual_table(
         cur["critical_illness_insurance"] += _D(r.critical_illness_insurance)
         cur["enterprise_annuity"] += _D(r.enterprise_annuity)
         cur["housing_fund"] += _D(r.housing_fund)
-        cur["other_deductions"] += _D(_F(r, "other_deductions"))
+        cur["other_deductions"] += _D(_F(r, "other_deductions")) + custom_deduction
         cur["labor_union_fee"] += _D(_F(r, "labor_union_fee"))
         cur["performance_deduction"] += _D(_F(r, "performance_deduction"))
         # derived
-        cur["income_total"] += _gross_income_full(r)
-        cur["deductions_total"] += _deductions_sum(r)
-        b_total = _benefits_sum(r)
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        b_total = _benefits_sum(r) + custom_non_cash
+        cur["income_total"] += cash_income + b_total
+        cur["deductions_total"] += _deductions_sum(r) + custom_deduction
         cur["benefits_total"] += b_total
-        n = _unified_net_income(r)
+        n = cash_income - (_deductions_sum(r) + custom_deduction) - _D(r.tax)
         cur["actual_take_home_total"] += n
         cur["net"] += n
         agg[pid] = cur
@@ -1107,11 +1207,25 @@ async def annual_table(
     prev_recs = await SalaryRecord.filter(
         person_id__in=person_ids, year=year - 1
     ).all()
+    prev_custom_map = await load_custom_fields_for_payroll([r.id for r in prev_recs])
     prev_net = {}
     for r in prev_recs:
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            prev_custom_map.get(r.id, [])
+        )
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        prev_take_home = (
+            cash_income - (_deductions_sum(r) + custom_deduction) - _D(r.tax)
+        )
         prev_net[r.person_id] = prev_net.get(
             r.person_id, Decimal("0")
-        ) + _unified_net_income(r)
+        ) + prev_take_home
 
     rows: List[AnnualTableRow] = []
     for pid, cur in agg.items():
@@ -1187,6 +1301,7 @@ async def annual_monthly_table(
         person_ids = [person_id]
 
     recs = await SalaryRecord.filter(person_id__in=person_ids, year=year).all()
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     # Aggregate by month (1-12)
     monthly_agg = {}
@@ -1222,6 +1337,9 @@ async def annual_monthly_table(
     for r in recs:
         m = r.month
         agg = monthly_agg[m]
+        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
+            custom_payroll_map.get(r.id, [])
+        )
 
         # Accumulate income fields
         agg["base_salary"] += _D(r.base_salary)
@@ -1235,7 +1353,7 @@ async def annual_monthly_table(
         agg["mid_autumn_benefit"] += _D(_F(r, "mid_autumn_benefit"))
         agg["dragon_boat_benefit"] += _D(_F(r, "dragon_boat_benefit"))
         agg["spring_festival_benefit"] += _D(_F(r, "spring_festival_benefit"))
-        agg["other_income"] += _D(_F(r, "other_income"))
+        agg["other_income"] += _D(_F(r, "other_income")) + custom_cash
 
         # Accumulate deduction fields
         agg["pension_insurance"] += _D(r.pension_insurance)
@@ -1244,18 +1362,28 @@ async def annual_monthly_table(
         agg["critical_illness_insurance"] += _D(r.critical_illness_insurance)
         agg["enterprise_annuity"] += _D(r.enterprise_annuity)
         agg["housing_fund"] += _D(r.housing_fund)
-        agg["other_deductions"] += _D(_F(r, "other_deductions"))
+        agg["other_deductions"] += _D(_F(r, "other_deductions")) + custom_deduction
         agg["labor_union_fee"] += _D(_F(r, "labor_union_fee"))
         agg["performance_deduction"] += _D(_F(r, "performance_deduction"))
 
         # Calculate totals
-        agg["income_total"] += _gross_income_full(r)
-        agg["deductions_total"] += _deductions_sum(r)
-        agg["benefits_total"] += _benefits_sum(r)
+        cash_income = (
+            _D(r.base_salary)
+            + _D(r.performance_salary)
+            + _allowances_sum_full(r)
+            + _D(_F(r, "other_income"))
+            + custom_cash
+        )
+        benefits_total = _benefits_sum(r) + custom_non_cash
+        agg["income_total"] += cash_income + benefits_total
+        agg["deductions_total"] += _deductions_sum(r) + custom_deduction
+        agg["benefits_total"] += benefits_total
         agg["allowances_total"] = agg.get(
             "allowances_total", Decimal("0")
-        ) + (_D(_F(r, "meal_allowance")) + _D(_F(r, "other_income")))
-        agg["actual_take_home"] += _unified_net_income(r)
+        ) + (_D(_F(r, "meal_allowance")) + _D(_F(r, "other_income")) + custom_cash)
+        agg["actual_take_home"] += cash_income - (
+            _deductions_sum(r) + custom_deduction + _D(r.tax)
+        )
 
     def is_empty(agg):
         """Check if a month's aggregation is empty (all zeros)."""

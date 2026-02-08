@@ -147,7 +147,7 @@ function exportCSV() {
         '基本工资', '绩效工资', '高温补贴', '低温补贴', '电脑补贴', '通信补贴', '综合补贴', '餐补',
         '中秋福利', '端午福利', '春节福利', '其他收入',
         '养老保险', '医疗保险', '失业保险', '大病互助', '企业年金', '住房公积金', '其他扣除', '工会', '绩效扣除',
-        '收入合计', '扣除合计', '福利合计', '补贴合计', '实际到手'
+        '总收入', '扣除合计', '非现金福利合计', '补贴合计', '实际到手'
       ]
       csvContent = headers.join(',') + '\n'
       
@@ -191,7 +191,7 @@ function exportCSV() {
         '基本工资', '绩效工资', '高温补贴', '低温补贴', '电脑补贴', '通信补贴', '综合补贴', '餐补',
         '中秋福利', '端午福利', '春节福利', '其他收入',
         '养老保险', '医疗保险', '失业保险', '大病互助', '企业年金', '住房公积金', '其他扣除', '工会', '绩效扣除',
-        '收入合计', '扣除合计', '福利合计', '补贴合计', '实际到手'
+        '总收入', '扣除合计', '非现金福利合计', '补贴合计', '实际到手'
       ]
       csvContent = headers.join(',') + '\n'
       
@@ -388,13 +388,13 @@ watch(() => stats.refreshToken, () => { load() })
           </el-table-column>
 
           <!-- Totals -->
-          <el-table-column prop="income_total" label="收入合计" width="150" min-width="140" sortable align="right" class-name="highlight-col">
+          <el-table-column prop="income_total" label="总收入" width="150" min-width="140" sortable align="right" class-name="highlight-col">
             <template #default="{ row }">{{ formatCurrency(row.income_total) }}</template>
           </el-table-column>
           <el-table-column prop="deductions_total" label="扣除合计" width="150" min-width="140" sortable align="right" class-name="highlight-col">
             <template #default="{ row }">{{ formatCurrency(row.deductions_total) }}</template>
           </el-table-column>
-          <el-table-column prop="benefits_total" label="福利合计" width="150" min-width="140" sortable align="right" class-name="highlight-col">
+          <el-table-column prop="benefits_total" label="非现金福利合计" width="150" min-width="140" sortable align="right" class-name="highlight-col">
             <template #default="{ row }">{{ formatCurrency(row.benefits_total) }}</template>
           </el-table-column>
           <el-table-column prop="allowances_total" label="非现金补贴" width="150" min-width="140" sortable align="right" class-name="highlight-col">
@@ -506,13 +506,13 @@ watch(() => stats.refreshToken, () => { load() })
           </el-table-column>
 
           <!-- Totals -->
-          <el-table-column prop="income_total" label="收入合计" width="150" min-width="140" align="right" class-name="highlight-col">
+          <el-table-column prop="income_total" label="总收入" width="150" min-width="140" align="right" class-name="highlight-col">
             <template #default="{ row }">{{ formatCurrency(row.income_total) }}</template>
           </el-table-column>
           <el-table-column prop="deductions_total" label="扣除合计" width="150" min-width="140" align="right" class-name="highlight-col">
             <template #default="{ row }">{{ formatCurrency(row.deductions_total) }}</template>
           </el-table-column>
-          <el-table-column prop="benefits_total" label="福利合计" width="150" min-width="140" align="right" class-name="highlight-col">
+          <el-table-column prop="benefits_total" label="非现金福利合计" width="150" min-width="140" align="right" class-name="highlight-col">
             <template #default="{ row }">{{ formatCurrency(row.benefits_total) }}</template>
           </el-table-column>
           <el-table-column prop="allowances_total" label="非现金补贴" width="150" min-width="140" align="right" class-name="highlight-col">

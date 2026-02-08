@@ -139,7 +139,9 @@ function closeMobileMenu() {
       <div class="content-wrapper">
         <router-view v-slot="{ Component, route }">
           <transition name="page" mode="out-in">
-            <component :is="Component" :key="route.path" />
+            <div class="page-shell" :key="route.path">
+              <component :is="Component" />
+            </div>
           </transition>
         </router-view>
       </div>
@@ -546,6 +548,10 @@ function closeMobileMenu() {
 
 .main-content.sidebar-collapsed {
   margin-left: 80px;
+}
+
+.page-shell {
+  min-height: 100%;
 }
 
 .content-wrapper {

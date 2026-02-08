@@ -41,33 +41,6 @@ const totals = computed(() => {
   return { ...agg, months: agg.months.size }
 })
 
-const netSeries = computed(() => {
-  const points = [...(net.value || [])]
-  points.sort((a, b) => (a.year - b.year) || (a.month - b.month))
-  return points
-})
-
-const bestMonth = computed(() => {
-  if (!netSeries.value.length) return null
-  return netSeries.value.reduce((best, cur) => (cur.net_income > best.net_income ? cur : best))
-})
-
-const worstMonth = computed(() => {
-  if (!netSeries.value.length) return null
-  return netSeries.value.reduce((worst, cur) => (cur.net_income < worst.net_income ? cur : worst))
-})
-
-const momChange = computed(() => {
-  const s = netSeries.value
-  if (s.length < 2) return null
-  const last = s[s.length - 1]
-  const prev = s[s.length - 2]
-  return {
-    amount: (last.net_income || 0) - (prev.net_income || 0),
-    latest: last,
-  }
-})
-
 function formatPercent(value) {
   if (!Number.isFinite(value)) return '—'
   return `${(value * 100).toFixed(1)}%`
@@ -101,61 +74,17 @@ watch(() => stats.refreshToken, () => { load() })
       <section class="section">
         <div class="section-title">核心指标</div>
         <el-card shadow="hover">
-          <KPICards :items="[
+          <KPICards class="kpi-compact" :items="[
             { label: '应发合计', value: formatCurrency(totals.gross), color: '#da7756' },
             { label: '实际到手', value: formatCurrency(totals.takeHome), color: '#5a8a6e' },
-            { label: '税费合计', value: formatCurrency(totals.tax), color: '#c45c5c' },
             { label: '五险一金', value: formatCurrency(totals.insurance), color: '#c9a227' },
-            { label: '补贴合计', value: formatCurrency(totals.allowances), color: '#b77a55' },
-            { label: '非现金福利', value: formatCurrency(totals.nonCash), color: '#7c6f64' }
+            { label: '非现金福利', value: formatCurrency(totals.nonCash), color: '#7c6f64' },
+            { label: '到手率', value: formatPercent(totals.gross ? (totals.takeHome / totals.gross) : NaN), color: '#5a8a6e' },
+            { label: '税负率', value: formatPercent(totals.gross ? (totals.tax / totals.gross) : NaN), color: '#c45c5c' },
+            { label: '五险一金占比', value: formatPercent(totals.gross ? (totals.insurance / totals.gross) : NaN), color: '#c9a227' },
+            { label: '月均到手', value: formatCurrency(totals.months ? (totals.takeHome / totals.months) : 0), color: '#5a8a6e' }
           ]" />
         </el-card>
-      </section>
-
-      <section class="section">
-        <div class="section-title">效率与波动</div>
-        <div class="insight-grid">
-          <div class="insight-card">
-            <div class="insight-label">到手率</div>
-            <div class="insight-value">{{ formatPercent(totals.gross ? (totals.takeHome / totals.gross) : NaN) }}</div>
-            <div class="insight-note">实际到手 / 应发</div>
-          </div>
-          <div class="insight-card">
-            <div class="insight-label">税负率</div>
-            <div class="insight-value">{{ formatPercent(totals.gross ? (totals.tax / totals.gross) : NaN) }}</div>
-            <div class="insight-note">税费 / 应发</div>
-          </div>
-          <div class="insight-card">
-            <div class="insight-label">五险一金占比</div>
-            <div class="insight-value">{{ formatPercent(totals.gross ? (totals.insurance / totals.gross) : NaN) }}</div>
-            <div class="insight-note">社保公积金 / 应发</div>
-          </div>
-          <div class="insight-card">
-            <div class="insight-label">月均到手</div>
-            <div class="insight-value">{{ formatCurrency(totals.months ? (totals.takeHome / totals.months) : 0) }}</div>
-            <div class="insight-note">按有记录月份计算</div>
-          </div>
-        </div>
-        <div class="insight-list">
-          <div class="insight-row">
-            <span class="insight-label">最高月份</span>
-            <span class="insight-value">
-              {{ bestMonth ? `${bestMonth.year}-${String(bestMonth.month).padStart(2, '0')} · ${formatCurrency(bestMonth.net_income)}` : '—' }}
-            </span>
-          </div>
-          <div class="insight-row">
-            <span class="insight-label">最低月份</span>
-            <span class="insight-value">
-              {{ worstMonth ? `${worstMonth.year}-${String(worstMonth.month).padStart(2, '0')} · ${formatCurrency(worstMonth.net_income)}` : '—' }}
-            </span>
-          </div>
-          <div class="insight-row">
-            <span class="insight-label">最近环比</span>
-            <span class="insight-value">
-              {{ momChange ? `${momChange.latest.year}-${String(momChange.latest.month).padStart(2, '0')} · ${formatCurrency(momChange.amount)}` : '—' }}
-            </span>
-          </div>
-        </div>
       </section>
 
       <section class="section">
@@ -195,51 +124,8 @@ watch(() => stats.refreshToken, () => { load() })
   font-weight: 500;
 }
 
-.insight-grid {
-  display: grid;
+.kpi-compact :deep(.kpi-grid) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.insight-card {
-  background: #fffdfb;
-  border: 1px solid #e5e0dc;
-  border-radius: 12px;
-  padding: 14px 16px;
-  display: grid;
-  gap: 6px;
-}
-
-.insight-label {
-  font-size: 0.8rem;
-  color: #6b6560;
-}
-
-.insight-value {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #2d2a26;
-}
-
-.insight-note {
-  font-size: 0.75rem;
-  color: #9a9590;
-}
-
-.insight-list {
-  margin-top: 12px;
-  display: grid;
-  gap: 8px;
-}
-
-.insight-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: #fff;
-  border: 1px solid #f1ebe7;
-  border-radius: 10px;
 }
 
 .net-grid :deep(.el-card) {
@@ -272,10 +158,14 @@ watch(() => stats.refreshToken, () => { load() })
 
 @media (max-width: 992px) {
   .two-col { grid-template-columns: 1fr; }
-  .insight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-compact :deep(.kpi-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
-  .insight-grid { grid-template-columns: 1fr; }
+  .kpi-compact :deep(.kpi-grid) {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

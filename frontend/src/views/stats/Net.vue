@@ -9,13 +9,28 @@ import EmptyState from '../../components/EmptyState.vue'
 import { formatCurrency } from '../../utils/number'
 
 const stats = useStatsStore()
-const net = ref([])
-const gvn = ref([])
 const monthly = ref([])
 const loading = ref(false)
 const error = ref(null)
 
-const hasData = computed(() => (net.value?.length || 0) > 0 || (gvn.value?.length || 0) > 0)
+const net = computed(() => {
+  return (monthly.value || []).map(r => ({
+    year: r.year,
+    month: r.month,
+    net_income: r.actual_take_home,
+  }))
+})
+
+const gvn = computed(() => {
+  return (monthly.value || []).map(r => ({
+    year: r.year,
+    month: r.month,
+    gross_income: r.gross_income,
+    net_income: r.actual_take_home,
+  }))
+})
+
+const hasData = computed(() => (monthly.value?.length || 0) > 0)
 
 const totals = computed(() => {
   const agg = {
@@ -50,8 +65,6 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    net.value = await stats.loadMonthlyNetIncome()
-    gvn.value = await stats.loadGrossVsNetMonthly()
     monthly.value = await stats.loadMonthlyStats()
   } catch (e) {
     error.value = e

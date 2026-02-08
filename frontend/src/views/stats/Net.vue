@@ -125,7 +125,7 @@ watch(() => stats.refreshToken, () => { load() })
 }
 
 .kpi-compact :deep(.kpi-grid) {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
 }
 
 .net-grid :deep(.el-card) {

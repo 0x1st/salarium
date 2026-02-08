@@ -81,6 +81,14 @@ def build_salary_out(
     custom_fields_data: Dict[str, float],
     custom_fields_payroll: List[dict],
 ) -> SalaryOut:
+    insurance_total = (
+        rec.pension_insurance
+        + rec.medical_insurance
+        + rec.unemployment_insurance
+        + rec.critical_illness_insurance
+        + rec.enterprise_annuity
+        + rec.housing_fund
+    )
     data = compute_payroll(
         base_salary=rec.base_salary,
         performance_salary=rec.performance_salary,
@@ -105,6 +113,7 @@ def build_salary_out(
         critical_illness_insurance=rec.critical_illness_insurance,
         enterprise_annuity=rec.enterprise_annuity,
         housing_fund=rec.housing_fund,
+        insurance_total=insurance_total,
         tax=data["tax"],
         total_income=data["total_income"],
         total_deductions=data["total_deductions"],

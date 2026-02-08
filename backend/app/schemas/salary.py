@@ -44,6 +44,7 @@ class SalaryOut(BaseModel):
     critical_illness_insurance: float
     enterprise_annuity: float
     housing_fund: float
+    insurance_total: float
     tax: float
     total_income: float
     total_deductions: float

@@ -148,9 +148,9 @@ const tableData = computed(() => {
           <template #default="{ row }">{{ formatCurrency(row.total_income) }}</template>
         </el-table-column>
 
-        <el-table-column prop="total_deductions" label="五险一金" width="150" min-width="130" sortable="custom" align="right">
+        <el-table-column prop="insurance_total" label="五险一金" width="150" min-width="130" sortable="custom" align="right">
           <template #default="{ row }">
-            <span class="text-danger">-{{ formatCurrency(row.total_deductions) }}</span>
+            <span class="text-danger">-{{ formatCurrency(row.insurance_total) }}</span>
           </template>
         </el-table-column>
 

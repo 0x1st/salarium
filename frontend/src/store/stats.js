@@ -8,7 +8,6 @@ import {
   getGrossVsNetMonthly,
   getIncomeComposition,
   getDeductionsBreakdown,
-  getContributionsCumulative,
   getMonthlyTable,
   getAnnualTable,
   getAnnualMonthlyTable,
@@ -138,9 +137,6 @@ export const useStatsStore = defineStore('stats', {
     async loadDeductionsBreakdown() {
       return this._useCache('deductions', () => getDeductionsBreakdown(this.filter))
     },
-    async loadContributionsCumulative() {
-      return this._useCache('contribCumulative', () => getContributionsCumulative(this.filter))
-    },
     async loadMonthlyTable() {
       return this._useCache('tableMonthly', () => getMonthlyTable(this.filter))
     },
@@ -178,7 +174,6 @@ export const useStatsStore = defineStore('stats', {
             this.loadMonthlyTable(),
             this.loadAnnualTable(),
           ]
-          if (this.personId) tasks.push(this.loadContributionsCumulative())
           await Promise.allSettled(tasks)
         } finally {
           this.isRefreshing = false

@@ -48,14 +48,6 @@ export async function getDeductionsBreakdown(filter) {
   return data
 }
 
-export async function getContributionsCumulative(filter) {
-  // contributions requires person_id; ensure it's present
-  const params = paramsFromFilter(filter)
-  if (!params.person_id) throw new Error('请选择人员以查看累计曲线')
-  const { data } = await api.get('/stats/contributions/cumulative', { params })
-  return data
-}
-
 export async function getMonthlyTable(filter) {
   const { data } = await api.get('/stats/tables/monthly', { params: paramsFromFilter(filter) })
   return data

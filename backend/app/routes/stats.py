@@ -516,21 +516,33 @@ async def income_composition(
     福利 = 中秋福利 + 端午福利 + 春节福利
     """
     q = _salary_query(user.id, person_id=person_id, year=year, month=month)
-    recs = await q.all()
-
-    recs = _apply_range(recs, range)
+    recs = _apply_range(await q.all(), range)
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     result: List[IncomeComposition] = []
 
     for r in recs:
+        custom_income = Decimal("0")
+        custom_non_cash = Decimal("0")
+        for cf in custom_payroll_map.get(r.id, []):
+            amount = _D(cf.get("amount", 0))
+            if cf.get("field_type") != "income":
+                continue
+            custom_income += amount
+            if cf.get("is_non_cash"):
+                custom_non_cash += amount
+        custom_cash = custom_income - custom_non_cash
+
         allowances = float(_allowances_sum_full(r))
-        benefits = float(_benefits_sum(r))
+        benefits = float(_benefits_sum(r) + custom_non_cash)
+        other_income = float(_D(_F(r, "other_income")) + custom_cash)
         total_income = float(
             _D(r.base_salary)
             + _D(r.performance_salary)
             + _D(allowances)
             + _D(benefits)
-            + _D(_F(r, "other_income"))
+            + _D(other_income)
         )
         
         # Calculate percentages (avoid division by zero)
@@ -547,9 +559,7 @@ async def income_composition(
             benefits_percent = float(
                 _D(benefits) / _D(total_income) * 100
             )
-            other_percent = float(
-                _D(_F(r, "other_income")) / _D(total_income) * 100
-            )
+            other_percent = float(_D(other_income) / _D(total_income) * 100)
         else:
             base_salary_percent = 0.0
             performance_percent = 0.0
@@ -574,7 +584,7 @@ async def income_composition(
                     _D(_F(r, "comprehensive_allowance"))
                 ),
                 meal_allowance=float(_D(_F(r, "meal_allowance"))),
-                other_income=float(_D(_F(r, "other_income"))),
+                other_income=other_income,
                 non_cash_benefits=float(_D(benefits)),
                 total_income=total_income,
                 base_salary_percent=base_salary_percent,
@@ -756,6 +766,7 @@ async def deductions_breakdown(
     """
     q = _salary_query(user.id, person_id=person_id, year=year, month=month)
     recs = _apply_range(await q.all(), range)
+    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
 
     # Summary totals by category
     categories = [
@@ -772,8 +783,15 @@ async def deductions_breakdown(
 
     totals = {key: Decimal("0") for _, key in categories}
     for r in recs:
+        custom_deduction = Decimal("0")
+        for cf in custom_payroll_map.get(r.id, []):
+            if cf.get("field_type") == "deduction":
+                custom_deduction += _D(cf.get("amount", 0))
         for _, key in categories:
-            totals[key] += _D(_F(r, key))
+            if key == "other_deductions":
+                totals[key] += _D(_F(r, key)) + custom_deduction
+            else:
+                totals[key] += _D(_F(r, key))
 
     grand_total = sum(totals.values()) if totals else Decimal("0")
     summary: List[DeductionsBreakdownItem] = []
@@ -792,8 +810,15 @@ async def deductions_breakdown(
         k = (r.year, r.month)
         if k not in monthly_map:
             monthly_map[k] = {key: Decimal("0") for _, key in categories}
+        custom_deduction = Decimal("0")
+        for cf in custom_payroll_map.get(r.id, []):
+            if cf.get("field_type") == "deduction":
+                custom_deduction += _D(cf.get("amount", 0))
         for _, key in categories:
-            monthly_map[k][key] += _D(_F(r, key))
+            if key == "other_deductions":
+                monthly_map[k][key] += _D(_F(r, key)) + custom_deduction
+            else:
+                monthly_map[k][key] += _D(_F(r, key))
 
     monthly: List[DeductionsMonthly] = []
     for (y, m) in sorted(monthly_map.keys()):

@@ -18,16 +18,19 @@ FROM python:3.12-slim AS runtime
 # 设置工作目录
 WORKDIR /app
 
-# 安装健康检查所需工具，创建非 root 用户，并准备数据目录
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/* && \
-    groupadd -r appuser && useradd -r -g appuser appuser && \
+# 运行时优化与基础目录
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+# 创建非 root 用户，并准备数据目录
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
     mkdir -p /app/data
 
 # 先复制依赖清单并安装，利用 pip 缓存层
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --no-compile -r requirements.txt
 
 # 复制后端源码
 COPY backend/ .
@@ -49,7 +52,7 @@ ENV UVICORN_HOST=0.0.0.0 \
 
 # 健康检查：访问自动生成的文档页，若失败则判定不健康
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:${UVICORN_PORT}/docs || exit 1
+  CMD python -c "import os,urllib.request as u; u.urlopen(f'http://localhost:{os.getenv(\"UVICORN_PORT\",\"8000\")}/docs',timeout=5).read()"
 
 # 同时提供后端 API 与前端静态站点（挂载在根路径 /）
 CMD ["sh", "-c", "uvicorn app.main:app --host ${UVICORN_HOST} --port ${UVICORN_PORT} --workers ${UVICORN_WORKERS}"]

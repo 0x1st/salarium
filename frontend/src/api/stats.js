@@ -28,16 +28,6 @@ export async function getFamilySummary(filter) {
   return data
 }
 
-export async function getMonthlyNetIncome(filter) {
-  const { data } = await api.get('/stats/net-income/monthly', { params: paramsFromFilter(filter) })
-  return data
-}
-
-export async function getGrossVsNetMonthly(filter) {
-  const { data } = await api.get('/stats/gross-vs-net/monthly', { params: paramsFromFilter(filter) })
-  return data
-}
-
 export async function getIncomeComposition(filter) {
   const { data } = await api.get('/stats/income-composition', { params: paramsFromFilter(filter) })
   return data
@@ -45,22 +35,5 @@ export async function getIncomeComposition(filter) {
 
 export async function getDeductionsBreakdown(filter) {
   const { data } = await api.get('/stats/deductions/breakdown', { params: paramsFromFilter(filter) })
-  return data
-}
-
-export async function getMonthlyTable(filter) {
-  const { data } = await api.get('/stats/tables/monthly', { params: paramsFromFilter(filter) })
-  return data
-}
-
-export async function getAnnualTable(filter) {
-  const { data } = await api.get('/stats/tables/annual', { params: paramsFromFilter(filter) })
-  return data
-}
-
-export async function getAnnualMonthlyTable(filter) {
-  const params = paramsFromFilter(filter)
-  params.hide_empty = true
-  const { data } = await api.get('/stats/tables/annual-monthly', { params })
   return data
 }

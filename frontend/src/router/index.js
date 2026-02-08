@@ -11,7 +11,6 @@ const StatsIndex = () => import('../views/stats/Index.vue')
 const StatsNet = () => import('../views/stats/Net.vue')
 const StatsComposition = () => import('../views/stats/Composition.vue')
 const StatsDeductions = () => import('../views/stats/Deductions.vue')
-const StatsTable = () => import('../views/stats/Table.vue')
 
 const routes = [
   { path: '/', redirect: '/stats' },
@@ -25,7 +24,6 @@ const routes = [
       { path: 'net', name: 'stats-net', component: StatsNet, meta: { title: '概览' } },
       { path: 'composition', name: 'stats-composition', component: StatsComposition, meta: { title: '收入分析' } },
       { path: 'deductions', name: 'stats-deductions', component: StatsDeductions, meta: { title: '扣除分析' } },
-      { path: 'table', name: 'stats-table', component: StatsTable, meta: { title: '明细表' } },
     ],
   },
   { path: '/persons', component: Persons },

@@ -4,13 +4,8 @@ import {
   getYearlyStats,
   getMonthlyStats,
   getFamilySummary,
-  getMonthlyNetIncome,
-  getGrossVsNetMonthly,
   getIncomeComposition,
   getDeductionsBreakdown,
-  getMonthlyTable,
-  getAnnualTable,
-  getAnnualMonthlyTable,
 } from '../api/stats'
 
 function cacheKey(name, filter) {
@@ -125,26 +120,11 @@ export const useStatsStore = defineStore('stats', {
     async loadFamilySummary() {
       return this._useCache('family', () => getFamilySummary(this.filter))
     },
-    async loadMonthlyNetIncome() {
-      return this._useCache('netMonthly', () => getMonthlyNetIncome(this.filter))
-    },
-    async loadGrossVsNetMonthly() {
-      return this._useCache('grossVsNet', () => getGrossVsNetMonthly(this.filter))
-    },
     async loadIncomeComposition() {
       return this._useCache('incomeComposition', () => getIncomeComposition(this.filter))
     },
     async loadDeductionsBreakdown() {
       return this._useCache('deductions', () => getDeductionsBreakdown(this.filter))
-    },
-    async loadMonthlyTable() {
-      return this._useCache('tableMonthly', () => getMonthlyTable(this.filter))
-    },
-    async loadAnnualTable() {
-      return this._useCache('tableAnnual', () => getAnnualTable(this.filter))
-    },
-    async loadAnnualMonthlyTable() {
-      return this._useCache('tableAnnualMonthly', () => getAnnualMonthlyTable(this.filter))
     },
 
     // helpers
@@ -167,12 +147,8 @@ export const useStatsStore = defineStore('stats', {
         this.isRefreshing = true
         try {
           const tasks = [
-            this.loadMonthlyNetIncome(),
-            this.loadGrossVsNetMonthly(),
             this.loadIncomeComposition(),
             this.loadDeductionsBreakdown(),
-            this.loadMonthlyTable(),
-            this.loadAnnualTable(),
           ]
           await Promise.allSettled(tasks)
         } finally {

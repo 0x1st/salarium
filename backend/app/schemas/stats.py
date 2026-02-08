@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List, Optional
+from typing import Dict, List
 from decimal import Decimal
 
 
@@ -58,17 +58,6 @@ class PersonCumulativeInsurance(BaseModel):
     housing_fund_total: Decimal
 
 
-class BenefitStats(BaseModel):
-    year: int
-    month: int
-    person_id: int
-    meal_allowance: float
-    mid_autumn_benefit: float
-    dragon_boat_benefit: float
-    spring_festival_benefit: float
-    total_benefits: float
-
-
 class BreakdownItem(BaseModel):
     key: str
     label: str
@@ -101,19 +90,6 @@ class IncomeComposition(BaseModel):
     allowances_percent: float
     benefits_percent: float
     other_percent: float
-
-
-class MonthlyNetIncome(BaseModel):
-    year: int
-    month: int
-    net_income: float
-
-
-class GrossVsNetMonthly(BaseModel):
-    year: int
-    month: int
-    gross_income: float
-    net_income: float
 
 
 class DeductionsBreakdownItem(BaseModel):
@@ -163,124 +139,3 @@ class ContributionsCumulative(BaseModel):
     pension_total: float
     medical_total: float
     housing_fund_total: float
-
-
-class MonthlyTableRow(BaseModel):
-    person_id: int
-    person_name: str
-    year: int
-    month: int
-    # Income fields
-    base_salary: float
-    performance_salary: float
-    high_temp_allowance: float
-    low_temp_allowance: float
-    computer_allowance: float
-    communication_allowance: float
-    comprehensive_allowance: float
-    meal_allowance: float
-    mid_autumn_benefit: float
-    dragon_boat_benefit: float
-    spring_festival_benefit: float
-    other_income: float
-    # Deduction fields
-    pension_insurance: float
-    medical_insurance: float
-    unemployment_insurance: float
-    critical_illness_insurance: float
-    enterprise_annuity: float
-    housing_fund: float
-    other_deductions: float
-    labor_union_fee: float
-    performance_deduction: float
-    # Totals
-    income_total: float
-    deductions_total: float
-    benefits_total: float
-    allowances_total: float
-    actual_take_home: float
-    net_income: float
-    tax: float
-    note: Optional[str]
-
-
-class AnnualTableRow(BaseModel):
-    person_id: int
-    person_name: str
-    year: int
-    # Income totals
-    base_salary_total: float
-    performance_salary_total: float
-    high_temp_allowance_total: float
-    low_temp_allowance_total: float
-    computer_allowance_total: float
-    communication_allowance_total: float
-    comprehensive_allowance_total: float
-    meal_allowance_total: float
-    mid_autumn_benefit_total: float
-    dragon_boat_benefit_total: float
-    spring_festival_benefit_total: float
-    other_income_total: float
-    # Deduction totals
-    pension_insurance_total: float
-    medical_insurance_total: float
-    unemployment_insurance_total: float
-    critical_illness_insurance_total: float
-    enterprise_annuity_total: float
-    housing_fund_total: float
-    other_deductions_total: float
-    labor_union_fee_total: float
-    performance_deduction_total: float
-    # Grand totals
-    income_total: float
-    deductions_total: float
-    benefits_total: float
-    actual_take_home_total: float
-    yoy_growth: Optional[float]
-
-
-class AnnualMonthlyRow(BaseModel):
-    """Annual summary by month (1-12) for stats table redesign"""
-    month: int
-    # Income fields
-    base_salary: float
-    performance_salary: float
-    high_temp_allowance: float
-    low_temp_allowance: float
-    computer_allowance: float
-    communication_allowance: float
-    comprehensive_allowance: float
-    meal_allowance: float
-    mid_autumn_benefit: float
-    dragon_boat_benefit: float
-    spring_festival_benefit: float
-    other_income: float
-    # Deduction fields
-    pension_insurance: float
-    medical_insurance: float
-    unemployment_insurance: float
-    critical_illness_insurance: float
-    enterprise_annuity: float
-    housing_fund: float
-    other_deductions: float
-    labor_union_fee: float
-    performance_deduction: float
-    # Totals
-    income_total: float
-    deductions_total: float
-    benefits_total: float
-    allowances_total: float
-    actual_take_home: float
-
-
-class CategorySummaryItem(BaseModel):
-    category: str
-    label: str
-    amount: float
-
-
-class CategorySummary(BaseModel):
-    income: list[CategorySummaryItem]
-    deduction: list[CategorySummaryItem]
-    total_income: float
-    total_deduction: float

@@ -22,37 +22,6 @@ function sumAllowances(row) {
     + (row.comprehensive_allowance || 0)
 }
 
-const incomeRows = computed(() => {
-  const totals = {
-    base: 0,
-    perf: 0,
-    allow: 0,
-    other: 0,
-    nonCash: 0,
-  }
-  for (const r of comp.value || []) {
-    totals.base += r.base_salary || 0
-    totals.perf += r.performance_salary || 0
-    totals.allow += sumAllowances(r)
-    totals.other += r.other_income || 0
-    totals.nonCash += r.non_cash_benefits || 0
-  }
-  const total = totals.base + totals.perf + totals.allow + totals.other + totals.nonCash
-  const rows = [
-    { key: 'base', label: '基本工资', amount: totals.base },
-    { key: 'perf', label: '绩效工资', amount: totals.perf },
-    { key: 'allow', label: '补贴', amount: totals.allow },
-    { key: 'other', label: '其他收入', amount: totals.other },
-    { key: 'noncash', label: '非现金福利', amount: totals.nonCash },
-  ].filter(r => r.amount !== 0)
-  return rows.map(r => ({
-    ...r,
-    percent: total ? (r.amount / total) : 0,
-  }))
-})
-
-const incomeTotal = computed(() => incomeRows.value.reduce((s, r) => s + r.amount, 0))
-
 const takeHomeRows = computed(() => {
   const totals = { base: 0, perf: 0, allow: 0, other: 0 }
   const index = new Map()
@@ -141,74 +110,52 @@ watch(() => stats.refreshToken, () => { load() })
     <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
     <EmptyState v-else-if="!hasData" />
     <div v-else>
-      <div class="section">
-        <div class="section-title">收入构成</div>
-        <div class="breakdown-grid">
-          <div class="breakdown-card">
-            <div class="card-title">金额与比例</div>
-            <div class="rows">
-              <div v-for="row in incomeRows" :key="row.key" class="row">
-                <span class="row-label">{{ row.label }}</span>
-                <span class="row-value">{{ formatCurrency(row.amount) }}</span>
-                <span class="row-percent">{{ formatPercent(row.percent) }}</span>
-              </div>
-              <div class="row total">
-                <span class="row-label">总收入</span>
-                <span class="row-value">{{ formatCurrency(incomeTotal) }}</span>
-                <span class="row-percent">100%</span>
+      <div class="section-stack">
+        <div class="section">
+          <div class="section-title">到手构成</div>
+          <div class="breakdown-grid">
+            <div class="breakdown-card">
+              <div class="card-title">金额与比例</div>
+              <div class="rows">
+                <div v-for="row in takeHomeRows" :key="row.key" class="row">
+                  <span class="row-label">{{ row.label }}</span>
+                  <span class="row-value">{{ formatCurrency(row.amount) }}</span>
+                  <span class="row-percent">{{ formatPercent(row.percent) }}</span>
+                </div>
+                <div class="row total">
+                  <span class="row-label">实际到手</span>
+                  <span class="row-value">{{ formatCurrency(takeHomeTotal) }}</span>
+                  <span class="row-percent">100%</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="breakdown-card">
-            <PieBreakdown title="收入构成" :data="incomeRows.map(r => ({ label: r.label, value: r.amount }))" />
+            <div class="breakdown-card">
+              <PieBreakdown title="到手构成" :data="takeHomeRows.map(r => ({ label: r.label, value: r.amount }))" />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="section">
-        <div class="section-title">到手构成</div>
-        <div class="breakdown-grid">
-          <div class="breakdown-card">
-            <div class="card-title">金额与比例</div>
-            <div class="rows">
-              <div v-for="row in takeHomeRows" :key="row.key" class="row">
-                <span class="row-label">{{ row.label }}</span>
-                <span class="row-value">{{ formatCurrency(row.amount) }}</span>
-                <span class="row-percent">{{ formatPercent(row.percent) }}</span>
-              </div>
-              <div class="row total">
-                <span class="row-label">实际到手</span>
-                <span class="row-value">{{ formatCurrency(takeHomeTotal) }}</span>
-                <span class="row-percent">100%</span>
+        <div class="section">
+          <div class="section-title">非现金构成</div>
+          <div class="breakdown-grid">
+            <div class="breakdown-card">
+              <div class="card-title">金额与比例</div>
+              <div class="rows">
+                <div v-for="row in nonCashRows" :key="row.key" class="row">
+                  <span class="row-label">{{ row.label }}</span>
+                  <span class="row-value">{{ formatCurrency(row.amount) }}</span>
+                  <span class="row-percent">{{ formatPercent(row.percent) }}</span>
+                </div>
+                <div class="row total">
+                  <span class="row-label">非现金福利</span>
+                  <span class="row-value">{{ formatCurrency(nonCashTotal) }}</span>
+                  <span class="row-percent">100%</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="breakdown-card">
-            <PieBreakdown title="到手构成" :data="takeHomeRows.map(r => ({ label: r.label, value: r.amount }))" />
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">非现金构成</div>
-        <div class="breakdown-grid">
-          <div class="breakdown-card">
-            <div class="card-title">金额与比例</div>
-            <div class="rows">
-              <div v-for="row in nonCashRows" :key="row.key" class="row">
-                <span class="row-label">{{ row.label }}</span>
-                <span class="row-value">{{ formatCurrency(row.amount) }}</span>
-                <span class="row-percent">{{ formatPercent(row.percent) }}</span>
-              </div>
-              <div class="row total">
-                <span class="row-label">非现金福利</span>
-                <span class="row-value">{{ formatCurrency(nonCashTotal) }}</span>
-                <span class="row-percent">100%</span>
-              </div>
+            <div class="breakdown-card">
+              <PieBreakdown title="非现金构成" :data="nonCashRows.map(r => ({ label: r.label, value: r.amount }))" />
             </div>
-          </div>
-          <div class="breakdown-card">
-            <PieBreakdown title="非现金构成" :data="nonCashRows.map(r => ({ label: r.label, value: r.amount }))" />
           </div>
         </div>
       </div>
@@ -217,6 +164,10 @@ watch(() => stats.refreshToken, () => { load() })
 </template>
 
 <style scoped>
+.section-stack {
+  display: grid;
+  gap: 24px;
+}
 .breakdown-grid {
   display: grid;
   grid-template-columns: 1.1fr 1fr;

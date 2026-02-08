@@ -54,6 +54,8 @@ async def load_custom_fields_for_payroll(
                 "field_type": v.salary_field.field_type,
                 "is_non_cash": v.salary_field.is_non_cash,
                 "amount": float(v.amount),
+                "field_key": v.salary_field.field_key,
+                "label": v.salary_field.name,
             }
         )
     return payroll_map
@@ -525,6 +527,8 @@ async def income_composition(
     for r in recs:
         custom_income = Decimal("0")
         custom_non_cash = Decimal("0")
+        custom_cash = Decimal("0")
+        custom_items = []
         for cf in custom_payroll_map.get(r.id, []):
             amount = _D(cf.get("amount", 0))
             if cf.get("field_type") != "income":
@@ -532,11 +536,25 @@ async def income_composition(
             custom_income += amount
             if cf.get("is_non_cash"):
                 custom_non_cash += amount
-        custom_cash = custom_income - custom_non_cash
+            else:
+                custom_cash += amount
+                if amount != 0:
+                    custom_items.append(
+                        {
+                            "key": cf.get("field_key") or "",
+                            "label": (
+                                cf.get("label")
+                                or cf.get("field_key")
+                                or "自定义收入"
+                            ),
+                            "amount": float(amount),
+                        }
+                    )
 
         allowances = float(_allowances_sum_full(r))
+        base_other = _D(_F(r, "other_income"))
         benefits = float(_benefits_sum(r) + custom_non_cash)
-        other_income = float(_D(_F(r, "other_income")) + custom_cash)
+        other_income = float(base_other + custom_cash)
         total_income = float(
             _D(r.base_salary)
             + _D(r.performance_salary)
@@ -585,7 +603,9 @@ async def income_composition(
                 ),
                 meal_allowance=float(_D(_F(r, "meal_allowance"))),
                 other_income=other_income,
+                other_income_base=float(base_other),
                 non_cash_benefits=float(_D(benefits)),
+                custom_income_items=custom_items,
                 total_income=total_income,
                 base_salary_percent=base_salary_percent,
                 performance_percent=performance_percent,

@@ -69,6 +69,12 @@ class BenefitStats(BaseModel):
     total_benefits: float
 
 
+class BreakdownItem(BaseModel):
+    key: str
+    label: str
+    amount: float
+
+
 class IncomeComposition(BaseModel):
     person_id: int
     year: int
@@ -82,7 +88,9 @@ class IncomeComposition(BaseModel):
     comprehensive_allowance: float
     meal_allowance: float
     other_income: float
+    other_income_base: float
     non_cash_benefits: float
+    custom_income_items: list[BreakdownItem] = []
     total_income: float
     base_salary_percent: float
     performance_percent: float

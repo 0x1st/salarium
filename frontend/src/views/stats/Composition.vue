@@ -52,6 +52,31 @@ const topMix = computed(() => {
     .slice(0, 3)
 })
 
+const otherBreakdown = computed(() => {
+  const totals = new Map()
+  for (const r of comp.value || []) {
+    const baseOther = r.other_income_base || 0
+    if (baseOther) {
+      totals.set('other_income', (totals.get('other_income') || 0) + baseOther)
+    }
+    for (const item of r.custom_income_items || []) {
+      if (!item || !item.amount) continue
+      const key = item.key || item.label || 'custom'
+      totals.set(key, (totals.get(key) || 0) + (item.amount || 0))
+    }
+  }
+  const rows = []
+  for (const [key, amount] of totals.entries()) {
+    if (!amount) continue
+    rows.push({
+      key,
+      label: key === 'other_income' ? '其他收入' : key,
+      amount,
+    })
+  }
+  return rows.sort((a, b) => b.amount - a.amount)
+})
+
 function formatPercent(value) {
   if (!Number.isFinite(value)) return '—'
   return `${(value * 100).toFixed(1)}%`
@@ -113,6 +138,15 @@ watch(() => stats.refreshToken, () => { load() })
             <span class="mix-label">{{ item.label }}</span>
             <span class="mix-value">{{ formatCurrency(item.value) }}</span>
             <span class="mix-share">{{ formatPercent(item.share) }}</span>
+          </div>
+        </div>
+        <div v-if="otherBreakdown.length" class="other-breakdown">
+          <div class="section-title">其他收入明细</div>
+          <div class="breakdown-list">
+            <div v-for="item in otherBreakdown" :key="item.key" class="breakdown-row">
+              <span class="breakdown-label">{{ item.label }}</span>
+              <span class="breakdown-value">{{ formatCurrency(item.amount) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +230,36 @@ watch(() => stats.refreshToken, () => { load() })
   font-size: 0.85rem;
 }
 
+.other-breakdown {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.breakdown-list {
+  display: grid;
+  gap: 8px;
+}
+
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid #f1ebe7;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.breakdown-label {
+  color: #6b6560;
+  font-size: 0.875rem;
+}
+
+.breakdown-value {
+  font-weight: 500;
+  color: #2d2a26;
+}
 .two-col { 
   display: grid; 
   grid-template-columns: 1fr 1fr; 

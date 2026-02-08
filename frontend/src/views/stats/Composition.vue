@@ -1,84 +1,120 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useStatsStore } from '../../store/stats'
-import IncomeCompositionPie from '../../components/stats/IncomeCompositionPie.vue'
-import StackedAreaIncome from '../../components/stats/StackedAreaIncome.vue'
+import PieBreakdown from '../../components/stats/PieBreakdown.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import { formatCurrency } from '../../utils/number'
 
 const stats = useStatsStore()
 const comp = ref([])
+const monthly = ref([])
 const loading = ref(false)
 const error = ref(null)
 
 const hasData = computed(() => (comp.value?.length || 0) > 0)
 
-const summary = computed(() => {
-  const agg = { base: 0, perf: 0, allow: 0, benefits: 0, other: 0 }
-  for (const r of comp.value || []) {
-    agg.base += r.base_salary || 0
-    agg.perf += r.performance_salary || 0
-    const allow = (r.high_temp_allowance || 0)
-      + (r.low_temp_allowance || 0)
-      + (r.meal_allowance || 0)
-      + (r.computer_allowance || 0)
-      + (r.communication_allowance || 0)
-      + (r.comprehensive_allowance || 0)
-    agg.allow += allow
-    agg.benefits += r.non_cash_benefits || 0
-    agg.other += r.other_income || 0
+function sumAllowances(row) {
+  return (row.high_temp_allowance || 0)
+    + (row.low_temp_allowance || 0)
+    + (row.meal_allowance || 0)
+    + (row.computer_allowance || 0)
+    + (row.communication_allowance || 0)
+    + (row.comprehensive_allowance || 0)
+}
+
+const incomeRows = computed(() => {
+  const totals = {
+    base: 0,
+    perf: 0,
+    allow: 0,
+    other: 0,
+    nonCash: 0,
   }
-  return agg
-})
-
-const totalIncome = computed(() => {
-  const s = summary.value
-  return s.base + s.perf + s.allow + s.benefits + s.other
-})
-
-const topMix = computed(() => {
-  const s = summary.value
-  const total = totalIncome.value || 1
+  for (const r of comp.value || []) {
+    totals.base += r.base_salary || 0
+    totals.perf += r.performance_salary || 0
+    totals.allow += sumAllowances(r)
+    totals.other += r.other_income || 0
+    totals.nonCash += r.non_cash_benefits || 0
+  }
+  const total = totals.base + totals.perf + totals.allow + totals.other + totals.nonCash
   const rows = [
-    { label: '基本工资', value: s.base },
-    { label: '绩效工资', value: s.perf },
-    { label: '补贴', value: s.allow },
-    { label: '福利', value: s.benefits },
-    { label: '其他收入', value: s.other },
-  ]
-  return rows
-    .map(r => ({ ...r, share: r.value / total }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3)
+    { key: 'base', label: '基本工资', amount: totals.base },
+    { key: 'perf', label: '绩效工资', amount: totals.perf },
+    { key: 'allow', label: '补贴', amount: totals.allow },
+    { key: 'other', label: '其他收入', amount: totals.other },
+    { key: 'noncash', label: '非现金福利', amount: totals.nonCash },
+  ].filter(r => r.amount !== 0)
+  return rows.map(r => ({
+    ...r,
+    percent: total ? (r.amount / total) : 0,
+  }))
 })
 
-const otherBreakdown = computed(() => {
-  const totals = new Map()
-  const labels = new Map()
+const incomeTotal = computed(() => incomeRows.value.reduce((s, r) => s + r.amount, 0))
+
+const takeHomeRows = computed(() => {
+  const totals = { base: 0, perf: 0, allow: 0, other: 0 }
+  const index = new Map()
+  for (const m of monthly.value || []) {
+    const key = `${m.person_id}-${m.year}-${m.month}`
+    index.set(key, m)
+  }
   for (const r of comp.value || []) {
-    const baseOther = r.other_income_base || 0
-    if (baseOther) {
-      totals.set('other_income', (totals.get('other_income') || 0) + baseOther)
-      labels.set('other_income', '其他收入')
-    }
-    for (const item of r.custom_income_items || []) {
-      if (!item || !item.amount) continue
-      const key = item.key || item.label || 'custom'
-      totals.set(key, (totals.get(key) || 0) + (item.amount || 0))
-      if (item.label) labels.set(key, item.label)
-    }
+    const key = `${r.person_id}-${r.year}-${r.month}`
+    const m = index.get(key)
+    const cashIncome = (r.base_salary || 0) + (r.performance_salary || 0) + sumAllowances(r) + (r.other_income || 0)
+    const gross = m?.gross_income || cashIncome
+    const takeHome = m?.actual_take_home || 0
+    const ratio = gross ? (takeHome / gross) : 0
+    totals.base += (r.base_salary || 0) * ratio
+    totals.perf += (r.performance_salary || 0) * ratio
+    totals.allow += sumAllowances(r) * ratio
+    totals.other += (r.other_income || 0) * ratio
   }
-  const rows = []
-  for (const [key, amount] of totals.entries()) {
-    if (!amount) continue
-    rows.push({
-      key,
-      label: labels.get(key) || key,
-      amount,
-    })
-  }
-  return rows.sort((a, b) => b.amount - a.amount)
+  const total = totals.base + totals.perf + totals.allow + totals.other
+  const rows = [
+    { key: 'base', label: '基本工资', amount: totals.base },
+    { key: 'perf', label: '绩效工资', amount: totals.perf },
+    { key: 'allow', label: '补贴', amount: totals.allow },
+    { key: 'other', label: '其他收入', amount: totals.other },
+  ].filter(r => r.amount !== 0)
+  return rows.map(r => ({
+    ...r,
+    percent: total ? (r.amount / total) : 0,
+  }))
 })
+
+const takeHomeTotal = computed(() => takeHomeRows.value.reduce((s, r) => s + r.amount, 0))
+
+const nonCashRows = computed(() => {
+  const totals = new Map()
+  const add = (key, label, amount) => {
+    if (!amount) return
+    totals.set(key, { label, amount: (totals.get(key)?.amount || 0) + amount })
+  }
+  for (const r of comp.value || []) {
+    add('mid_autumn', '中秋福利', r.mid_autumn_benefit || 0)
+    add('dragon_boat', '端午福利', r.dragon_boat_benefit || 0)
+    add('spring_festival', '春节福利', r.spring_festival_benefit || 0)
+    for (const item of r.custom_non_cash_items || []) {
+      if (!item || !item.amount) continue
+      add(item.key || item.label, item.label || item.key, item.amount || 0)
+    }
+  }
+  const rows = Array.from(totals.entries()).map(([key, v]) => ({
+    key,
+    label: v.label || key,
+    amount: v.amount,
+  }))
+  const total = rows.reduce((s, r) => s + r.amount, 0)
+  return rows.map(r => ({
+    ...r,
+    percent: total ? (r.amount / total) : 0,
+  }))
+})
+
+const nonCashTotal = computed(() => nonCashRows.value.reduce((s, r) => s + r.amount, 0))
 
 function formatPercent(value) {
   if (!Number.isFinite(value)) return '—'
@@ -90,13 +126,12 @@ async function load() {
   error.value = null
   try {
     comp.value = await stats.loadIncomeComposition()
+    monthly.value = await stats.loadMonthlyStats()
   } catch (e) { error.value = e } finally { loading.value = false }
 }
 
 onMounted(load)
-// Reload when filters change
 watch(() => [stats.personId, stats.year, stats.month], () => { stats.invalidate(); load() }, { deep: true })
-// Reload when external invalidation occurs (e.g., salary CRUD elsewhere)
 watch(() => stats.refreshToken, () => { load() })
 </script>
 
@@ -107,61 +142,74 @@ watch(() => stats.refreshToken, () => { load() })
     <EmptyState v-else-if="!hasData" />
     <div v-else>
       <div class="section">
-        <div class="section-title">结构概览</div>
-        <div class="summary-grid">
-          <div class="summary-card">
-            <div class="summary-label">总收入</div>
-            <div class="summary-value">{{ formatCurrency(totalIncome) }}</div>
-            <div class="summary-note">选定范围合计</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">补贴+福利占比</div>
-            <div class="summary-value">
-              {{ formatPercent(totalIncome ? ((summary.allow + summary.benefits) / totalIncome) : NaN) }}
-            </div>
-            <div class="summary-note">补贴/福利对收入贡献</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">绩效占比</div>
-            <div class="summary-value">
-              {{ formatPercent(totalIncome ? (summary.perf / totalIncome) : NaN) }}
-            </div>
-            <div class="summary-note">绩效工资占比</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-label">主导来源</div>
-            <div class="summary-value">{{ topMix[0]?.label || '—' }}</div>
-            <div class="summary-note">
-              {{ topMix[0] ? formatPercent(topMix[0].share) : '—' }}
+        <div class="section-title">收入构成</div>
+        <div class="breakdown-grid">
+          <div class="breakdown-card">
+            <div class="card-title">金额与比例</div>
+            <div class="rows">
+              <div v-for="row in incomeRows" :key="row.key" class="row">
+                <span class="row-label">{{ row.label }}</span>
+                <span class="row-value">{{ formatCurrency(row.amount) }}</span>
+                <span class="row-percent">{{ formatPercent(row.percent) }}</span>
+              </div>
+              <div class="row total">
+                <span class="row-label">总收入</span>
+                <span class="row-value">{{ formatCurrency(incomeTotal) }}</span>
+                <span class="row-percent">100%</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="top-mix">
-          <div v-for="item in topMix" :key="item.label" class="mix-row">
-            <span class="mix-label">{{ item.label }}</span>
-            <span class="mix-value">{{ formatCurrency(item.value) }}</span>
-            <span class="mix-share">{{ formatPercent(item.share) }}</span>
-          </div>
-        </div>
-        <div v-if="otherBreakdown.length" class="other-breakdown">
-          <div class="section-title">其他收入明细</div>
-          <div class="breakdown-list">
-            <div v-for="item in otherBreakdown" :key="item.key" class="breakdown-row">
-              <span class="breakdown-label">{{ item.label }}</span>
-              <span class="breakdown-value">{{ formatCurrency(item.amount) }}</span>
-            </div>
+          <div class="breakdown-card">
+            <PieBreakdown title="收入构成" :data="incomeRows.map(r => ({ label: r.label, value: r.amount }))" />
           </div>
         </div>
       </div>
 
-      <div class="two-col">
-        <div class="section">
-          <div class="section-title">收入构成</div>
-          <el-card shadow="hover"><IncomeCompositionPie :data="comp" /></el-card>
+      <div class="section">
+        <div class="section-title">到手构成</div>
+        <div class="breakdown-grid">
+          <div class="breakdown-card">
+            <div class="card-title">金额与比例</div>
+            <div class="rows">
+              <div v-for="row in takeHomeRows" :key="row.key" class="row">
+                <span class="row-label">{{ row.label }}</span>
+                <span class="row-value">{{ formatCurrency(row.amount) }}</span>
+                <span class="row-percent">{{ formatPercent(row.percent) }}</span>
+              </div>
+              <div class="row total">
+                <span class="row-label">实际到手</span>
+                <span class="row-value">{{ formatCurrency(takeHomeTotal) }}</span>
+                <span class="row-percent">100%</span>
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-card">
+            <PieBreakdown title="到手构成" :data="takeHomeRows.map(r => ({ label: r.label, value: r.amount }))" />
+          </div>
         </div>
-        <div class="section">
-          <div class="section-title">收入趋势</div>
-          <el-card shadow="hover"><StackedAreaIncome :data="comp" /></el-card>
+      </div>
+
+      <div class="section">
+        <div class="section-title">非现金构成</div>
+        <div class="breakdown-grid">
+          <div class="breakdown-card">
+            <div class="card-title">金额与比例</div>
+            <div class="rows">
+              <div v-for="row in nonCashRows" :key="row.key" class="row">
+                <span class="row-label">{{ row.label }}</span>
+                <span class="row-value">{{ formatCurrency(row.amount) }}</span>
+                <span class="row-percent">{{ formatPercent(row.percent) }}</span>
+              </div>
+              <div class="row total">
+                <span class="row-label">非现金福利</span>
+                <span class="row-value">{{ formatCurrency(nonCashTotal) }}</span>
+                <span class="row-percent">100%</span>
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-card">
+            <PieBreakdown title="非现金构成" :data="nonCashRows.map(r => ({ label: r.label, value: r.amount }))" />
+          </div>
         </div>
       </div>
     </div>
@@ -169,44 +217,33 @@ watch(() => stats.refreshToken, () => { load() })
 </template>
 
 <style scoped>
-.summary-grid {
+.breakdown-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
 }
 
-.summary-card {
+.breakdown-card {
   background: #fffdfb;
   border: 1px solid #e5e0dc;
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 16px;
   display: grid;
-  gap: 6px;
+  gap: 12px;
 }
 
-.summary-label {
-  font-size: 0.8rem;
+.card-title {
+  font-size: 0.875rem;
   color: #6b6560;
+  font-weight: 500;
 }
 
-.summary-value {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #2d2a26;
-}
-
-.summary-note {
-  font-size: 0.75rem;
-  color: #9a9590;
-}
-
-.top-mix {
+.rows {
   display: grid;
   gap: 8px;
-  margin-top: 12px;
 }
 
-.mix-row {
+.row {
   display: grid;
   grid-template-columns: 1.4fr 1fr 0.6fr;
   gap: 8px;
@@ -217,57 +254,26 @@ watch(() => stats.refreshToken, () => { load() })
   background: #fff;
 }
 
-.mix-label {
+.row.total {
+  background: #f8f2ee;
+  border-color: #e5e0dc;
+  font-weight: 600;
+}
+
+.row-label {
   color: #6b6560;
   font-size: 0.875rem;
 }
 
-.mix-value {
+.row-value {
   font-weight: 500;
   color: #2d2a26;
 }
 
-.mix-share {
+.row-percent {
   color: #9a9590;
   text-align: right;
   font-size: 0.85rem;
-}
-
-.other-breakdown {
-  margin-top: 16px;
-  display: grid;
-  gap: 8px;
-}
-
-.breakdown-list {
-  display: grid;
-  gap: 8px;
-}
-
-.breakdown-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border: 1px solid #f1ebe7;
-  border-radius: 10px;
-  background: #fff;
-}
-
-.breakdown-label {
-  color: #6b6560;
-  font-size: 0.875rem;
-}
-
-.breakdown-value {
-  font-weight: 500;
-  color: #2d2a26;
-}
-.two-col { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 24px;
-  min-height: 400px;
 }
 
 .section {
@@ -281,36 +287,12 @@ watch(() => stats.refreshToken, () => { load() })
   font-weight: 500;
 }
 
-.two-col :deep(.el-card) {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #e5e0dc;
-  box-shadow: none;
-  transition: all 0.2s ease;
-}
-
-.two-col :deep(.el-card:hover) {
-  border-color: #d5d0cc;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.two-col :deep(.el-card__header) {
-  padding: 18px 20px;
-  border-bottom: 1px solid #e5e0dc;
-}
-
-.two-col :deep(.el-card__body) {
-  padding: 20px;
-}
-
 @media (max-width: 992px) {
-  .two-col { grid-template-columns: 1fr; }
-  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .breakdown-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
-  .summary-grid { grid-template-columns: 1fr; }
-  .mix-row { grid-template-columns: 1fr; text-align: left; }
-  .mix-share { text-align: left; }
+  .row { grid-template-columns: 1fr; text-align: left; }
+  .row-percent { text-align: left; }
 }
 </style>

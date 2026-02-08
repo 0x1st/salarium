@@ -87,10 +87,14 @@ class IncomeComposition(BaseModel):
     communication_allowance: float
     comprehensive_allowance: float
     meal_allowance: float
+    mid_autumn_benefit: float
+    dragon_boat_benefit: float
+    spring_festival_benefit: float
     other_income: float
     other_income_base: float
     non_cash_benefits: float
     custom_income_items: list[BreakdownItem] = []
+    custom_non_cash_items: list[BreakdownItem] = []
     total_income: float
     base_salary_percent: float
     performance_percent: float

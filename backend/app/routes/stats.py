@@ -581,6 +581,7 @@ async def income_composition(
         custom_non_cash = Decimal("0")
         custom_cash = Decimal("0")
         custom_items = []
+        custom_non_cash_items = []
         for cf in custom_payroll_map.get(r.id, []):
             amount = _D(cf.get("amount", 0))
             if cf.get("field_type") != "income":
@@ -588,6 +589,18 @@ async def income_composition(
             custom_income += amount
             if cf.get("is_non_cash"):
                 custom_non_cash += amount
+                if amount != 0:
+                    custom_non_cash_items.append(
+                        {
+                            "key": cf.get("field_key") or "",
+                            "label": (
+                                cf.get("label")
+                                or cf.get("field_key")
+                                or "自定义福利"
+                            ),
+                            "amount": float(amount),
+                        }
+                    )
             else:
                 custom_cash += amount
                 if amount != 0:
@@ -654,10 +667,16 @@ async def income_composition(
                     _D(_F(r, "comprehensive_allowance"))
                 ),
                 meal_allowance=float(_D(_F(r, "meal_allowance"))),
+                mid_autumn_benefit=float(_D(_F(r, "mid_autumn_benefit"))),
+                dragon_boat_benefit=float(_D(_F(r, "dragon_boat_benefit"))),
+                spring_festival_benefit=float(
+                    _D(_F(r, "spring_festival_benefit"))
+                ),
                 other_income=other_income,
                 other_income_base=float(base_other),
                 non_cash_benefits=float(_D(benefits)),
                 custom_income_items=custom_items,
+                custom_non_cash_items=custom_non_cash_items,
                 total_income=total_income,
                 base_salary_percent=base_salary_percent,
                 performance_percent=performance_percent,

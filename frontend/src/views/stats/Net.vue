@@ -35,6 +35,7 @@ const hasData = computed(() => (monthly.value?.length || 0) > 0)
 const totals = computed(() => {
   const agg = {
     gross: 0,
+    total: 0,
     net: 0,
     takeHome: 0,
     tax: 0,
@@ -44,13 +45,16 @@ const totals = computed(() => {
     months: new Set(),
   }
   for (const r of monthly.value || []) {
-    agg.gross += r.gross_income || 0
+    const gross = r.gross_income || 0
+    const nonCash = r.non_cash_benefits || 0
+    agg.gross += gross
+    agg.total += gross + nonCash
     agg.net += r.net_income || 0
     agg.takeHome += r.actual_take_home || 0
     agg.tax += r.tax || 0
     agg.insurance += r.insurance_total || 0
     agg.allowances += r.allowances_total || 0
-    agg.nonCash += r.non_cash_benefits || 0
+    agg.nonCash += nonCash
     if (r.year && r.month) agg.months.add(`${r.year}-${r.month}`)
   }
   return { ...agg, months: agg.months.size }
@@ -88,7 +92,8 @@ watch(() => stats.refreshToken, () => { load() })
         <div class="section-title">核心指标</div>
         <el-card shadow="hover">
           <KPICards class="kpi-compact" :items="[
-            { label: '应发合计', value: formatCurrency(totals.gross), color: '#da7756' },
+            { label: '总收入', value: formatCurrency(totals.total), color: '#da7756' },
+            { label: '应发合计', value: formatCurrency(totals.gross), color: '#b77a55' },
             { label: '实际到手', value: formatCurrency(totals.takeHome), color: '#5a8a6e' },
             { label: '五险一金', value: formatCurrency(totals.insurance), color: '#c9a227' },
             { label: '非现金福利', value: formatCurrency(totals.nonCash), color: '#7c6f64' },

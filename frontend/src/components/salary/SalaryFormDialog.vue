@@ -158,7 +158,7 @@ function close() {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="visible" class="modal-overlay" @click.self="close">
+      <div v-if="visible" class="modal-overlay">
         <div class="modal-container">
           <div class="modal-header">
             <h2>{{ isEditing ? '编辑工资记录' : '添加工资记录' }}</h2>

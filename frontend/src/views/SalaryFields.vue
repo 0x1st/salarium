@@ -270,7 +270,7 @@ onMounted(() => {
     <!-- Add/Edit Field Dialog -->
     <Teleport to="body">
       <Transition name="modal">
-        <div v-if="dialogVisible" class="modal-overlay" @click.self="dialogVisible = false">
+        <div v-if="dialogVisible" class="modal-overlay">
           <div class="modal-container">
             <div class="modal-header">
               <h2>{{ isEditing ? '编辑字段' : '添加字段' }}</h2>

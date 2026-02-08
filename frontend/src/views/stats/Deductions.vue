@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useStatsStore } from '../../store/stats'
-import DeductionsBreakdown from '../../components/stats/DeductionsBreakdown.vue'
+import PieBreakdown from '../../components/stats/PieBreakdown.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import { hasStatsData } from '../../utils/stats'
 import { formatCurrency } from '../../utils/number'
@@ -13,32 +13,40 @@ const error = ref(null)
 
 const hasData = computed(() => hasStatsData(info.value))
 
-const labelMap = {
-  pension_insurance: '养老保险',
-  medical_insurance: '医疗保险',
-  unemployment_insurance: '失业保险',
-  critical_illness_insurance: '大病互助保险',
-  enterprise_annuity: '企业年金',
-  housing_fund: '住房公积金',
-  other_deductions: '其他扣除',
-  labor_union_fee: '工会',
-  performance_deduction: '绩效扣除',
+const insuranceKeys = new Map([
+  ['养老保险', 'pension_insurance'],
+  ['医疗保险', 'medical_insurance'],
+  ['失业保险', 'unemployment_insurance'],
+  ['大病互助保险', 'critical_illness_insurance'],
+  ['企业年金', 'enterprise_annuity'],
+  ['住房公积金', 'housing_fund'],
+])
+
+const insuranceRows = computed(() => {
+  const totals = new Map()
+  for (const item of info.value.summary || []) {
+    const key = insuranceKeys.get(item.category)
+    if (!key) continue
+    totals.set(item.category, (totals.get(item.category) || 0) + (item.amount || 0))
+  }
+  const rows = []
+  for (const [label, amount] of totals.entries()) {
+    if (!amount) continue
+    rows.push({ key: label, label, amount })
+  }
+  const total = rows.reduce((s, r) => s + r.amount, 0)
+  return rows.map(r => ({
+    ...r,
+    percent: total ? (r.amount / total) : 0,
+  }))
+})
+
+const insuranceTotal = computed(() => insuranceRows.value.reduce((s, r) => s + r.amount, 0))
+
+function formatPercent(value) {
+  if (!Number.isFinite(value)) return '—'
+  return `${(value * 100).toFixed(1)}%`
 }
-
-const totalDeduction = computed(() => (info.value.summary || []).reduce((s, i) => s + (i.amount || 0), 0))
-
-const topItem = computed(() => {
-  const items = [...(info.value.summary || [])]
-  items.sort((a, b) => (b.amount || 0) - (a.amount || 0))
-  return items[0] || null
-})
-
-const avgMonthly = computed(() => {
-  const months = info.value.monthly?.length || 0
-  if (!months) return 0
-  const total = info.value.monthly.reduce((s, m) => s + (m.total || 0), 0)
-  return total / months
-})
 
 async function load() {
   loading.value = true
@@ -49,9 +57,7 @@ async function load() {
 }
 
 onMounted(load)
-// Reload on filter changes
 watch(() => [stats.personId, stats.year, stats.month], () => { stats.invalidate(); load() }, { deep: true })
-// Reload when external modules invalidate stats (e.g., after salary CRUD)
 watch(() => stats.refreshToken, () => { load() })
 </script>
 
@@ -60,86 +66,92 @@ watch(() => stats.refreshToken, () => { load() })
     <div v-if="loading" style="padding: 16px"><el-skeleton :rows="6" animated /></div>
     <div v-else-if="error" class="empty"><p>加载失败，请重试</p><el-button type="primary" @click="load">重试</el-button></div>
     <EmptyState v-else-if="!hasData" />
-    <div v-else class="section">
-      <div class="section-title">扣除概览</div>
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-label">扣除合计</div>
-          <div class="summary-value">{{ formatCurrency(totalDeduction) }}</div>
-          <div class="summary-note">选定范围合计</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-label">月均扣除</div>
-          <div class="summary-value">{{ formatCurrency(avgMonthly) }}</div>
-          <div class="summary-note">按有记录月份</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-label">最高扣除项</div>
-          <div class="summary-value">{{ topItem ? (labelMap[topItem.category] || topItem.category) : '—' }}</div>
-          <div class="summary-note">{{ topItem ? formatCurrency(topItem.amount) : '—' }}</div>
+    <div v-else>
+      <div class="section">
+        <div class="section-title">五险一金构成</div>
+        <div class="breakdown-grid">
+          <div class="breakdown-card">
+            <div class="card-title">金额与比例</div>
+            <div class="rows">
+              <div v-for="row in insuranceRows" :key="row.key" class="row">
+                <span class="row-label">{{ row.label }}</span>
+                <span class="row-value">{{ formatCurrency(row.amount) }}</span>
+                <span class="row-percent">{{ formatPercent(row.percent) }}</span>
+              </div>
+              <div class="row total">
+                <span class="row-label">五险一金合计</span>
+                <span class="row-value">{{ formatCurrency(insuranceTotal) }}</span>
+                <span class="row-percent">100%</span>
+              </div>
+            </div>
+          </div>
+          <div class="breakdown-card">
+            <PieBreakdown title="五险一金构成" :data="insuranceRows.map(r => ({ label: r.label, value: r.amount }))" />
+          </div>
         </div>
       </div>
-      <div class="section-title" style="margin-top: 12px;">扣除结构</div>
-      <el-card shadow="hover">
-        <DeductionsBreakdown :summary="info.summary" :monthly="info.monthly" />
-      </el-card>
     </div>
   </div>
 </template>
 
 <style scoped>
-.summary-grid {
+.breakdown-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
 }
 
-.summary-card {
+.breakdown-card {
   background: #fffdfb;
   border: 1px solid #e5e0dc;
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 16px;
   display: grid;
-  gap: 6px;
+  gap: 12px;
 }
 
-.summary-label {
-  font-size: 0.8rem;
+.card-title {
+  font-size: 0.875rem;
   color: #6b6560;
+  font-weight: 500;
 }
 
-.summary-value {
-  font-size: 1.05rem;
+.rows {
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.6fr;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #f1ebe7;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.row.total {
+  background: #f8f2ee;
+  border-color: #e5e0dc;
   font-weight: 600;
+}
+
+.row-label {
+  color: #6b6560;
+  font-size: 0.875rem;
+}
+
+.row-value {
+  font-weight: 500;
   color: #2d2a26;
 }
 
-.summary-note {
-  font-size: 0.75rem;
+.row-percent {
   color: #9a9590;
-}
-
-:deep(.el-card) {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #e5e0dc;
-  box-shadow: none;
-  transition: all 0.2s ease;
-  min-height: 400px;
-}
-
-:deep(.el-card:hover) {
-  border-color: #d5d0cc;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-:deep(.el-card__header) {
-  padding: 18px 20px;
-  border-bottom: 1px solid #e5e0dc;
-}
-
-:deep(.el-card__body) {
-  padding: 20px;
+  text-align: right;
+  font-size: 0.85rem;
 }
 
 .section {
@@ -153,9 +165,12 @@ watch(() => stats.refreshToken, () => { load() })
   font-weight: 500;
 }
 
-@media (max-width: 900px) {
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 992px) {
+  .breakdown-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .row { grid-template-columns: 1fr; text-align: left; }
+  .row-percent { text-align: left; }
 }
 </style>

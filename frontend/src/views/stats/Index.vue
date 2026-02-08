@@ -8,7 +8,7 @@ import PageHeader from '../../components/PageHeader.vue'
 
 const tabs = [
   { name: 'stats-net', label: '概览', path: '/stats/net' },
-  { name: 'stats-composition', label: '收入构成', path: '/stats/composition' },
+  { name: 'stats-composition', label: '收入分析', path: '/stats/composition' },
   { name: 'stats-deductions', label: '扣除分析', path: '/stats/deductions' },
   { name: 'stats-table', label: '明细表', path: '/stats/table' },
 ]

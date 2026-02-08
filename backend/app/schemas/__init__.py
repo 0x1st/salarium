@@ -8,8 +8,6 @@ from .salary import SalaryCreate as SalaryCreate
 from .salary import SalaryUpdate as SalaryUpdate
 from .salary import SalaryOut as SalaryOut
 from .stats import MonthlyStats as MonthlyStats
-from .stats import YearlyStats as YearlyStats
-from .stats import FamilySummary as FamilySummary
 from .salary_template import SalaryTemplateUpsert as SalaryTemplateUpsert
 from .salary_template import SalaryTemplateOut as SalaryTemplateOut
 
@@ -24,8 +22,6 @@ __all__ = [
     "SalaryUpdate",
     "SalaryOut",
     "MonthlyStats",
-    "YearlyStats",
-    "FamilySummary",
     "SalaryTemplateUpsert",
     "SalaryTemplateOut",
 ]

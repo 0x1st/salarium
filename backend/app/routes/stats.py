@@ -1,17 +1,17 @@
 from typing import List, Optional, Dict
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, Query, Depends
 from decimal import Decimal
 
 from ..models import (
     SalaryRecord,
-    Person,
     CustomSalaryValue,
 )
 from ..schemas.stats import (
-    MonthlyStats, YearlyStats, FamilySummary,
-    PersonCumulativeInsurance, IncomeComposition,
-    DeductionsBreakdown, DeductionsMonthly, DeductionsBreakdownItem,
-    ContributionsCumulative, ContributionsCumulativePoint,
+    MonthlyStats,
+    IncomeComposition,
+    DeductionsBreakdown,
+    DeductionsMonthly,
+    DeductionsBreakdownItem,
 )
 from ..utils.auth import get_current_user
 
@@ -55,19 +55,6 @@ async def load_custom_fields_for_payroll(
     return payroll_map
 
 
-# Allowances used for net income (exclude meal allowance as per spec)
-# net = base + performance + high + low + computer - deductions
-# meal allowance is not counted toward actual take-home
-
-def _allowances_sum_net(r: SalaryRecord) -> Decimal:
-    return (
-        _D(_F(r, "high_temp_allowance"))
-        + _D(_F(r, "low_temp_allowance"))
-        + _D(_F(r, "computer_allowance"))
-        + _D(_F(r, "communication_allowance"))
-        + _D(_F(r, "comprehensive_allowance"))
-    )
-
 # Allowances for composition/gross (include meal allowance)
 
 def _allowances_sum_full(r: SalaryRecord) -> Decimal:
@@ -99,17 +86,6 @@ def _deductions_sum(r: SalaryRecord) -> Decimal:
         + _D(_F(r, "other_deductions"))
         + _D(_F(r, "labor_union_fee"))
         + _D(_F(r, "performance_deduction"))
-    )
-
-
-def _gross_income_full(r: SalaryRecord) -> Decimal:
-    """Gross income for charts: sum of all income incl. non-cash and other income."""
-    return (
-        _D(r.base_salary)
-        + _D(r.performance_salary)
-        + _allowances_sum_full(r)
-        + _benefits_sum(r)
-        + _D(_F(r, "other_income"))
     )
 
 
@@ -297,193 +273,6 @@ async def monthly_stats(
                 non_cash_benefits=float(benefits_total),
             )
         )
-    return result
-
-
-@router.get("/yearly", response_model=List[YearlyStats])
-async def yearly_stats(
-    user=Depends(get_current_user),
-    person_id: Optional[int] = Query(default=None),
-    year: int = Query(...),
-):
-    persons = await Person.filter(user_id=user.id).all()
-    person_ids = {p.id for p in persons}
-    if person_id and person_id not in person_ids:
-        raise HTTPException(status_code=404, detail="人员不存在")
-    if person_id:
-        person_ids = {person_id}
-    recs = await SalaryRecord.filter(person_id__in=list(person_ids), year=year).all()
-    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
-    stats_map = {}
-    for r in recs:
-        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
-            custom_payroll_map.get(r.id, [])
-        )
-        allowances_total = (
-            _F(r, "high_temp_allowance")
-            + _F(r, "low_temp_allowance")
-            + _F(r, "computer_allowance")
-            + _F(r, "communication_allowance")
-            + _F(r, "comprehensive_allowance")
-        )
-        bonuses_total = (
-            _F(r, "mid_autumn_benefit")
-            + _F(r, "dragon_boat_benefit")
-            + _F(r, "spring_festival_benefit")
-            + _F(r, "other_income")
-        )
-        insurance_total = (
-            r.pension_insurance
-            + r.medical_insurance
-            + r.unemployment_insurance
-            + r.critical_illness_insurance
-            + r.enterprise_annuity
-            + r.housing_fund
-        )
-        benefits_total = _benefits_sum(r) + custom_non_cash
-        cash_income = (
-            _D(r.base_salary)
-            + _D(r.performance_salary)
-            + _allowances_sum_full(r)
-            + _D(_F(r, "other_income"))
-            + custom_cash
-        )
-        deductions_total = _deductions_sum(r) + custom_deduction
-        actual_take_home = cash_income - deductions_total - _D(r.tax)
-
-        s = stats_map.get(r.person_id, {
-            "months": 0,
-            "gross": Decimal("0"),
-            "net": Decimal("0"),
-            "insurance": Decimal("0"),
-            "tax": Decimal("0"),
-            "allowances": Decimal("0"),
-            "bonuses": Decimal("0"),
-            "actual_take_home": Decimal("0"),
-            "non_cash_benefits": Decimal("0"),
-        })
-        s["months"] += 1
-        s["gross"] += cash_income
-        s["net"] += actual_take_home
-        s["insurance"] += insurance_total
-        s["tax"] += _D(r.tax)
-        s["allowances"] += allowances_total
-        s["actual_take_home"] += actual_take_home
-        s["non_cash_benefits"] += benefits_total
-        s["bonuses"] += bonuses_total
-        stats_map[r.person_id] = s
-    result: List[YearlyStats] = []
-    for pid, s in stats_map.items():
-        avg_net = s["net"] / s["months"] if s["months"] else Decimal("0")
-        result.append(
-            YearlyStats(
-                person_id=pid,
-                year=year,
-                months=s["months"],
-                total_gross=s["gross"],
-                total_net=s["net"],
-                avg_net=avg_net,
-                insurance_total=s["insurance"],
-                tax_total=s["tax"],
-                allowances_total=s["allowances"],
-                bonuses_total=s["bonuses"],
-                total_actual_take_home=s["actual_take_home"],
-                total_non_cash_benefits=s["non_cash_benefits"],
-            )
-        )
-    return result
-
-
-@router.get("/family", response_model=FamilySummary)
-async def family_summary(user=Depends(get_current_user), year: int = Query(...)):
-    persons = await Person.filter(user_id=user.id).all()
-    person_ids = [p.id for p in persons]
-    recs = await SalaryRecord.filter(person_id__in=person_ids, year=year).all()
-    custom_payroll_map = await load_custom_fields_for_payroll([r.id for r in recs])
-    totals = {pid: Decimal("0") for pid in person_ids}
-    insurance_total = Decimal("0")
-    tax_total = Decimal("0")
-    total_gross = Decimal("0")
-    total_net = Decimal("0")
-    for r in recs:
-        custom_cash, custom_non_cash, custom_deduction = _custom_sums(
-            custom_payroll_map.get(r.id, [])
-        )
-        insurance_calc = (
-            r.pension_insurance
-            + r.medical_insurance
-            + r.unemployment_insurance
-            + r.critical_illness_insurance
-            + r.enterprise_annuity
-            + r.housing_fund
-        )
-        cash_income = (
-            _D(r.base_salary)
-            + _D(r.performance_salary)
-            + _allowances_sum_full(r)
-            + _D(_F(r, "other_income"))
-            + custom_cash
-        )
-        deductions_total = _deductions_sum(r) + custom_deduction
-        actual_take_home = cash_income - deductions_total - _D(r.tax)
-        totals[r.person_id] += actual_take_home
-        insurance_total += insurance_calc
-        tax_total += _D(r.tax)
-        total_gross += cash_income
-        total_net += actual_take_home
-    return FamilySummary(
-        year=year,
-        persons=person_ids,
-        total_gross=total_gross,
-        total_net=total_net,
-        insurance_total=insurance_total,
-        tax_total=tax_total,
-        by_person=totals,
-    )
-
-
-@router.get("/cumulative-insurance", response_model=List[PersonCumulativeInsurance])
-async def cumulative_insurance(user=Depends(get_current_user)):
-    """Get cumulative insurance and housing fund for all persons"""
-    persons = await Person.filter(user_id=user.id).all()
-    result: List[PersonCumulativeInsurance] = []
-
-    for person in persons:
-        # Get all salary records for this person
-        recs = await SalaryRecord.filter(person_id=person.id).all()
-
-        # Calculate system totals
-        pension_system = sum(r.pension_insurance for r in recs)
-        medical_system = sum(r.medical_insurance for r in recs)
-        housing_fund_system = sum(r.housing_fund for r in recs)
-
-        # Calculate total = history + system
-        pension_total = Decimal(str(person.pension_history)) + Decimal(
-            str(pension_system)
-        )
-        medical_total = Decimal(str(person.medical_history)) + Decimal(
-            str(medical_system)
-        )
-        housing_fund_total = Decimal(str(person.housing_fund_history)) + Decimal(
-            str(housing_fund_system)
-        )
-
-        result.append(
-            PersonCumulativeInsurance(
-                person_id=person.id,
-                person_name=person.name,
-                pension_history=person.pension_history,
-                medical_history=person.medical_history,
-                housing_fund_history=person.housing_fund_history,
-                pension_system=pension_system,
-                medical_system=medical_system,
-                housing_fund_system=housing_fund_system,
-                pension_total=pension_total,
-                medical_total=medical_total,
-                housing_fund_total=housing_fund_total,
-            )
-        )
-
     return result
 
 
@@ -714,81 +503,3 @@ async def deductions_breakdown(
 
     return DeductionsBreakdown(summary=summary, monthly=monthly)
 
-
-@router.get("/contributions/cumulative", response_model=ContributionsCumulative)
-async def contributions_cumulative(
-    user=Depends(get_current_user),
-    person_id: int = Query(..., description="人员ID"),
-    range: Optional[str] = Query(
-        default=None, description="时间范围，如 2024-01..2024-12"
-    ),
-):
-    """Cumulative lines for pension/medical/housing fund, with history."""
-    person = await Person.get_or_none(id=person_id, user_id=user.id)
-    if not person:
-        raise HTTPException(status_code=404, detail="人员不存在")
-
-    all_recs = await SalaryRecord.filter(person_id=person_id).all()
-    all_recs.sort(key=lambda r: _ym_num(r.year, r.month))
-
-    if range:
-        start_num, end_num = _parse_range(range)
-    else:
-        start_num, end_num = (0, 999999)
-
-    # Base offsets include history plus any system amounts before the range start
-    base_pension = _D(person.pension_history)
-    base_medical = _D(person.medical_history)
-    base_housing = _D(person.housing_fund_history)
-
-    for r in all_recs:
-        ym = _ym_num(r.year, r.month)
-        if ym < start_num:
-            base_pension += _D(r.pension_insurance)
-            base_medical += _D(r.medical_insurance)
-            base_housing += _D(r.housing_fund)
-
-    # Iterate points inside range
-    points: List[ContributionsCumulativePoint] = []
-    cur_p = base_pension
-    cur_m = base_medical
-    cur_h = base_housing
-
-    for r in all_recs:
-        ym = _ym_num(r.year, r.month)
-        if ym < start_num or ym > end_num:
-            continue
-        cur_p += _D(r.pension_insurance)
-        cur_m += _D(r.medical_insurance)
-        cur_h += _D(r.housing_fund)
-        points.append(
-            ContributionsCumulativePoint(
-                year=r.year,
-                month=r.month,
-                pension_cumulative=float(cur_p),
-                medical_cumulative=float(cur_m),
-                housing_fund_cumulative=float(cur_h),
-            )
-        )
-
-    # Totals over entire dataset (history + system)
-    pension_system_total = float(sum(_D(r.pension_insurance) for r in all_recs))
-    medical_system_total = float(sum(_D(r.medical_insurance) for r in all_recs))
-    housing_system_total = float(sum(_D(r.housing_fund) for r in all_recs))
-
-    return ContributionsCumulative(
-        person_id=person.id,
-        person_name=person.name,
-        pension_history=person.pension_history,
-        medical_history=person.medical_history,
-        housing_fund_history=person.housing_fund_history,
-        points=points,
-        pension_system_total=pension_system_total,
-        medical_system_total=medical_system_total,
-        housing_fund_system_total=housing_system_total,
-        pension_total=float(_D(person.pension_history) + _D(pension_system_total)),
-        medical_total=float(_D(person.medical_history) + _D(medical_system_total)),
-        housing_fund_total=float(
-            _D(person.housing_fund_history) + _D(housing_system_total)
-        ),
-    )

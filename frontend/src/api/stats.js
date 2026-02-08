@@ -13,18 +13,8 @@ export async function fetchPersons() {
   return data
 }
 
-export async function getYearlyStats(filter) {
-  const { data } = await api.get('/stats/yearly', { params: paramsFromFilter(filter) })
-  return data
-}
-
 export async function getMonthlyStats(filter) {
   const { data } = await api.get('/stats/monthly', { params: paramsFromFilter(filter) })
-  return data
-}
-
-export async function getFamilySummary(filter) {
-  const { data } = await api.get('/stats/family', { params: paramsFromFilter(filter) })
   return data
 }
 

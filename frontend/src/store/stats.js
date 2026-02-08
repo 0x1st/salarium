@@ -1,9 +1,7 @@
 import { defineStore } from 'pinia'
 import {
   fetchPersons,
-  getYearlyStats,
   getMonthlyStats,
-  getFamilySummary,
   getIncomeComposition,
   getDeductionsBreakdown,
 } from '../api/stats'
@@ -111,14 +109,8 @@ export const useStatsStore = defineStore('stats', {
     },
 
     // Data loaders
-    async loadYearlyStats() {
-      return this._useCache('yearly', () => getYearlyStats(this.filter))
-    },
     async loadMonthlyStats() {
       return this._useCache('monthly', () => getMonthlyStats(this.filter))
-    },
-    async loadFamilySummary() {
-      return this._useCache('family', () => getFamilySummary(this.filter))
     },
     async loadIncomeComposition() {
       return this._useCache('incomeComposition', () => getIncomeComposition(this.filter))

@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, List
-from decimal import Decimal
+from typing import List
 
 
 class MonthlyStats(BaseModel):
@@ -17,45 +16,6 @@ class MonthlyStats(BaseModel):
     net_income: float
     actual_take_home: float
     non_cash_benefits: float
-
-
-class YearlyStats(BaseModel):
-    person_id: int
-    year: int
-    months: int
-    total_gross: float
-    total_net: float
-    avg_net: float
-    insurance_total: float
-    tax_total: float
-    allowances_total: float
-    bonuses_total: float
-    total_actual_take_home: float
-    total_non_cash_benefits: float
-
-
-class FamilySummary(BaseModel):
-    year: int
-    persons: List[int]
-    total_gross: float
-    total_net: float
-    insurance_total: float
-    tax_total: float
-    by_person: Dict[int, float]
-
-
-class PersonCumulativeInsurance(BaseModel):
-    person_id: int
-    person_name: str
-    pension_history: Decimal
-    medical_history: Decimal
-    housing_fund_history: Decimal
-    pension_system: float
-    medical_system: float
-    housing_fund_system: float
-    pension_total: Decimal
-    medical_total: Decimal
-    housing_fund_total: Decimal
 
 
 class BreakdownItem(BaseModel):
@@ -116,26 +76,3 @@ class DeductionsMonthly(BaseModel):
 class DeductionsBreakdown(BaseModel):
     summary: List[DeductionsBreakdownItem]
     monthly: List[DeductionsMonthly]
-
-
-class ContributionsCumulativePoint(BaseModel):
-    year: int
-    month: int
-    pension_cumulative: float
-    medical_cumulative: float
-    housing_fund_cumulative: float
-
-
-class ContributionsCumulative(BaseModel):
-    person_id: int
-    person_name: str
-    pension_history: Decimal
-    medical_history: Decimal
-    housing_fund_history: Decimal
-    points: List[ContributionsCumulativePoint]
-    pension_system_total: float
-    medical_system_total: float
-    housing_fund_system_total: float
-    pension_total: float
-    medical_total: float
-    housing_fund_total: float
